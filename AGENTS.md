@@ -21,3 +21,14 @@ Those files are the single source of truth. The summary below is a quick referen
 3. **Verify code security.** Check packages/dependencies for vulnerabilities, grant webhooks and API keys least-privilege permissions only, and keep code to OWASP standards.
 4. **Keep `.gitignore` current.** Immediately add backend secrets, database files, keys, and `.env` files to `.gitignore`.
 5. **One `.gitignore` only.** Use only the root `/.gitignore`; never create nested `.gitignore` files. Keep it consistently updated with critical infrastructure from builds, packages, and other applicable pieces.
+6. **Clean up loose ends.** Never leave ports, dev servers, tunnels, or other connections open. Close them as soon as they are no longer in use to minimize the attack surface.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

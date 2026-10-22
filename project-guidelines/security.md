@@ -1,4 +1,5 @@
 # Security Guidelines for this Project and Repo overall
+    This Guideline also extends to implementations
 
 ## Double check before a commit
 * Ensure there are no slips in security regarding keys, private mentions, or any critical infrastructure when adding a commit. Committing anything meant to be hidden is DANGEROUS and cannot be overriden. Risks the entire security of the project.
@@ -16,3 +17,6 @@
 ## Always update the ".gitignore" to house the critical components of this project
 * AI Agents and users should ALWAYS keep the ".gitignore" up-to-date during the course of their time working in this repo. Any backend systems or database sets(especially keys or ".envs") should IMMEDIATELY be added to the ".gitignore" to avoid leaking any high-risk components to the public
 * When making builds and applications, keep only one ".gitignore"(the one under the root directory) and CONSISTENTLY update the "/.gitignore" under the root directory. Always include critical infrastructure to builds, packages, and other applicable pieces within the ".gitignore" to prevent any critical leakage.
+
+## Always clean up loose ends
+* AI Agents and users should never leave ports or any other connection forms open. When ports/other connections have exceeded their use, and the AI-Agent(s) or user(s) are no longer user them, these connections should be CLOSED to minimize the attack surface and risk of bad actors injecting dangerous malware/code.
