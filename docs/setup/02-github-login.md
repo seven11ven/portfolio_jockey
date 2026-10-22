@@ -31,6 +31,12 @@ GITHUB_CLIENT_ID=your client id
 GITHUB_CLIENT_SECRET=your client secret
 ALLOWED_EMAILS=the primary email on your GitHub account
 ```
+**Codespaces in a web browser only:** also add this line. Codespaces' proxy rewrites each request's origin to `https://localhost:3000`, and without it, signing out fails with "Invalid origin":
+```
+TRUSTED_ORIGINS=https://localhost:3000
+```
+Leave `TRUSTED_ORIGINS` empty everywhere else, including Vercel.
+
 `ALLOWED_EMAILS` can hold several emails separated by commas. Use the **primary** email from **github.com > Settings > Emails**. It must be verified.
 
 ## 4. Generate the login secret
@@ -57,6 +63,7 @@ This writes a random secret into `.env` without printing it.
 ## Troubleshooting
 - **"This GitHub account isn't approved":** the email in `ALLOWED_EMAILS` doesn't match your GitHub primary email, or that email isn't verified.
 - **The secret check prints `0`, or the app says `BETTER_AUTH_SECRET` is required:** the commands probably ran in a different folder and created a second `.env` there. Delete that stray `.env`, then rerun step 4. The first command now moves you to the repo root.
+- **Sign out bounces back to the signed-in page, or says "Sign-out didn't work":** the dev server log shows `Invalid origin`. In Codespaces, set `TRUSTED_ORIGINS=https://localhost:3000` as described in step 3.
 - **GitHub says the redirect URI isn't associated with this application:** `BETTER_AUTH_URL` and the OAuth App's callback URL don't match exactly. Check `http` versus `https`, the port, and trailing slashes.
 - **The app won't start and lists invalid environment variables:** fix the variables it names. The error names them but never prints their values.
 

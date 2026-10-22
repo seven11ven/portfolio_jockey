@@ -69,3 +69,35 @@
 
 ## Impacts
 - Documentation only; no `version-control/` backup required.
+
+---
+
+# Sign-out fix for GitHub Codespaces
+
+**Time:** 2026-10-22 02:19 UTC
+**Reported by:** project manager (sign-out showed the login page briefly, then went back to the signed-in page)
+
+## Cause
+- The dev log showed Better Auth rejecting both sign-out attempts with `Invalid origin: https://localhost:3000`.
+- In a browser, Codespaces' port-forwarding proxy rewrites each request's Origin header to `https://localhost:3000`. Better Auth only trusted `BETTER_AUTH_URL`, the github.dev address, so it refused the sign-out. Sign-in still worked, because Better Auth only checks the origin on requests that already carry a login cookie.
+- The sign-out button ignored the failure and went to `/login`. The login page saw the session was still valid and redirected back to `/`.
+- The database confirmed it: the session row was still there after the clicks.
+
+## Change
+- `src/lib/env.ts`: new optional `TRUSTED_ORIGINS` variable, a comma-separated list. Each entry must be a bare origin with no path.
+- `src/lib/auth.ts`: passes `TRUSTED_ORIGINS` to Better Auth's `trustedOrigins`. `BETTER_AUTH_URL` stays trusted automatically.
+- `src/components/sign-out-button.tsx`: checks the sign-out result. On failure it stays on the page and shows "Sign-out didn't work", instead of navigating away.
+- `.env_example`: documents `TRUSTED_ORIGINS` (empty), when it's needed, and to leave it empty on Vercel.
+- `docs/setup/02-github-login.md`: Codespaces note in step 3, plus a troubleshooting entry.
+- Owner's `.env`: added `TRUSTED_ORIGINS=https://localhost:3000`. It isn't a secret.
+
+## Version control
+- Backed up `src/lib/auth.ts`, `src/lib/env.ts`, `src/components/sign-out-button.tsx` and `.env_example` to `version-control/2026-10-22_before-signout-fix/`.
+
+## Verification
+- Against the running dev server, a sign-out request with origin `https://localhost:3000` now succeeds. One from `https://evil.example` is still rejected with `INVALID_ORIGIN`.
+- `npm run lint` and `npx tsc --noEmit` pass.
+
+## Impacts
+- Signing out works in Codespaces.
+- Note for plan step 6: Next.js server actions do their own origin check and may hit the same Codespaces proxy behavior. Handle it with `serverActions.allowedOrigins` for development if it appears.

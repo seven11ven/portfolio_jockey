@@ -46,3 +46,17 @@ Added a "2.1 of 9 GB used" storage bar under the dashboard header in `project-mo
 ## Impacts
 - Supports the zero-cost goal. The app will refuse uploads past a 9 GB quota, which keeps usage inside Cloudflare R2's 10 GB free tier.
 - The owner approved keeping the header search bar and a 500 MB per-file upload limit.
+
+---
+
+# Login error and account menu mockups approved
+
+**Time:** 2026-10-22 02:20 UTC
+**Approved by:** project manager
+
+- `project-mockups/login-error.html` is approved. It's already built into the login page.
+- `project-mockups/account-menu.html` is approved. It's planned for plan step 6, as the avatar menu with Sign out.
+- The mockup review server (port 8000) and the dev server (port 3000) were stopped after review and testing. Both ports were confirmed closed.
+
+## Impacts
+- No code changes. Step 6 builds the account menu from this mockup.

@@ -33,6 +33,28 @@ const envSchema = z.object({
       .filter(Boolean),
   ),
 
+  // Extra addresses allowed to make logged-in requests, besides BETTER_AUTH_URL.
+  // Only needed behind a proxy that rewrites the Origin header, such as
+  // GitHub Codespaces port forwarding. Leave empty on Vercel.
+  // Comma-separated full origins, such as https://localhost:3000
+  TRUSTED_ORIGINS: z
+    .string()
+    .optional()
+    .transform((value) =>
+      (value ?? "")
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+    )
+    .pipe(
+      z.array(
+        z.url("each entry must be a full origin, such as https://localhost:3000").refine(
+          (origin) => new URL(origin).origin === origin,
+          "each entry must be just scheme, host and port, with no path or trailing slash",
+        ),
+      ),
+    ),
+
   // File storage. Used in a later step, so optional for now.
   R2_ACCOUNT_ID: z.string().optional(),
   R2_ACCESS_KEY_ID: z.string().optional(),

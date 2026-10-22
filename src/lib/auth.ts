@@ -19,6 +19,12 @@ export const auth = betterAuth({
   baseURL: env().BETTER_AUTH_URL,
   secret: env().BETTER_AUTH_SECRET,
 
+  // Requests that carry a login cookie must come from a trusted address.
+  // BETTER_AUTH_URL is always trusted. TRUSTED_ORIGINS adds extra ones,
+  // which GitHub Codespaces needs because its proxy rewrites the Origin
+  // header to https://localhost:3000. See .env_example.
+  trustedOrigins: env().TRUSTED_ORIGINS,
+
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
