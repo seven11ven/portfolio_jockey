@@ -10,7 +10,7 @@
 #      tool/allowed-packages.txt. Only pub.dev and Flutter SDK packages are allowed,
 #      plus empty stand-ins in tool/stubs/ (pubspec and README only, no code).
 #   2. No package name matches a known network, analytics or crash-reporting package.
-#   3. The app's own Dart code (lib/, test/) uses no network APIs.
+#   3. The app's own Dart code (lib/, test/, tool/) uses no network APIs.
 #   4. The Linux runner (linux/) uses no network libraries.
 #   5. Every package's compiled code (lib/), build hooks (hook/) and plugin native
 #      code (linux/) are scanned for network and telemetry patterns. Each hit must be listed, for that exact
@@ -148,7 +148,7 @@ done <<<"$packages"
 
 # 3: the app's own Dart code.
 app_src=()
-for d in lib test bin; do [ -d "$app_dir/$d" ] && app_src+=("$app_dir/$d"); done
+for d in lib test bin tool; do [ -d "$app_dir/$d" ] && app_src+=("$app_dir/$d"); done
 hits=$(grep -rnE --include='*.dart' "$net_re|$vm_re" "${app_src[@]}" | strip_comments)
 hits+=$(grep -rniE --include='*.dart' "$tel_re" "${app_src[@]}" | strip_comments)
 if [ -z "$hits" ]; then pass "app code uses no network, telemetry or VM-service APIs"; else
@@ -163,7 +163,7 @@ if [ -z "$hits" ]; then pass "Linux runner uses no network libraries"; else
 # 6: native libraries and symbols.
 native_allowed="$app_dir/tool/allowed-native-libs.txt"
 native_problems=0
-hits=$(grep -rnE --include='*.dart' 'DynamicLibrary\.(process|executable)|@(ffi\.)?Native\b' "$app_dir/lib" | strip_comments)
+hits=$(grep -rnE --include='*.dart' 'DynamicLibrary\.(process|executable)|@(ffi\.)?Native\b' "$app_dir/lib" "$app_dir/tool" | strip_comments)
 if [ -n "$hits" ]; then
   fail "app code looks up native symbols without naming a library:"; [ "$list_only" -eq 1 ] || sed "s|^$app_dir/|      |" <<<"$hits"
   native_problems=$((native_problems + 1))
@@ -204,7 +204,7 @@ while IFS= read -r file; do
       fi
     done
   fi
-done < <(grep -rlE --include='*.dart' 'DynamicLibrary\.open|lookupFunction<|\.lookup<' "$app_dir/lib" | sort)
+done < <(grep -rlE --include='*.dart' 'DynamicLibrary\.open|lookupFunction<|\.lookup<' "$app_dir/lib" "$app_dir/tool" | sort)
 [ "$native_problems" -eq 0 ] && pass "native code loads only allowlisted libraries and symbols"
 
 # 5: dependency code scan.

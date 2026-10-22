@@ -27,3 +27,7 @@ lib/services/native/poppler.dart   libpoppler-glib.so.8,libcairo.so.2,libgobject
 # "Edit in another app": list the apps for a file type and launch one (GIO
 # desktop app info; the OpenURI portal inside a Flatpak). Reviewed 2026-10-22.
 lib/services/native/gio_apps.dart   libgio-2.0.so.0,libgobject-2.0.so.0,libglib-2.0.so.0   g_content_type_guess,g_app_info_get_all_for_type,g_app_info_get_default_for_type,g_app_info_get_id,g_app_info_get_name,g_app_info_launch,g_app_info_launch_default_for_uri,g_file_new_for_path,g_filename_to_uri,g_list_append,g_list_free,g_free,g_error_free,g_object_unref
+
+# libsodium for tool/verify_minisign.dart: checks release downloads against
+# their minisign signatures (phase 8). A build-time tool, not part of the app.
+tool/verify_minisign.dart   libsodium.so.23   sodium_init,sodium_malloc,sodium_free,crypto_generichash,crypto_sign_verify_detached,crypto_sign_seed_keypair,crypto_sign_detached

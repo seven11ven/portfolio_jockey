@@ -1,0 +1,29 @@
+# Native libraries the app may load, used by tool/check-privacy.sh (check 6).
+# Format: file (under app/)  libraries (comma-separated)  symbols ("*" = any, else comma-separated)
+# Only these files may call DynamicLibrary.open or look up symbols, with plain
+# string names. Add a line only after reviewing the library's code (see
+# docs/dependencies.md) and, for general-purpose libraries like libc, list
+# every symbol, so network functions such as socket() stay out of reach.
+
+# libsodium: the vault's cryptography. Reviewed 2026-10-22: no network,
+# process or environment code. Any symbol may be bound.
+lib/vault/native/sodium.dart   libsodium.so.26,libsodium.so.23   *
+
+# The C library: plain memory for non-secret buffers, syncing a folder after a
+# rename, mkdir for the private 0700 folders of "Edit in another app", and
+# statvfs for free disk space before exports and storage moves.
+lib/vault/native/libc.dart     libc.so.6                         malloc,free,open,fsync,close,mkdir,statvfs,getxattr
+
+# GLib's GIO: moving originals to the Trash (g_file_trash uses the Trash portal
+# inside a Flatpak). Reviewed 2026-10-22 in GLib's source. Already loaded by
+# Flutter's GTK engine. Only these functions: GIO's sockets stay unreachable.
+lib/services/native/gio_trash.dart   libgio-2.0.so.0,libgobject-2.0.so.0,libglib-2.0.so.0   g_file_new_for_path,g_file_trash,g_object_unref,g_error_free
+
+# PDF previews: poppler-glib renders pages from memory into cairo image
+# surfaces. Reviewed 2026-10-22. No path/GFile loading, signatures, links or
+# forms are bound, so Poppler's NSS (signature) code is never reached.
+lib/services/native/poppler.dart   libpoppler-glib.so.8,libcairo.so.2,libgobject-2.0.so.0,libglib-2.0.so.0   poppler_document_new_from_bytes,poppler_document_get_n_pages,poppler_document_get_page,poppler_page_get_size,poppler_page_render,cairo_image_surface_create,cairo_surface_status,cairo_create,cairo_scale,cairo_set_source_rgb,cairo_paint,cairo_destroy,cairo_surface_flush,cairo_image_surface_get_data,cairo_image_surface_get_stride,cairo_surface_destroy,g_bytes_new_static,g_bytes_unref,g_error_free,g_object_unref
+
+# "Edit in another app": list the apps for a file type and launch one (GIO
+# desktop app info; the OpenURI portal inside a Flatpak). Reviewed 2026-10-22.
+lib/services/native/gio_apps.dart   libgio-2.0.so.0,libgobject-2.0.so.0,libglib-2.0.so.0   g_content_type_guess,g_app_info_get_all_for_type,g_app_info_get_default_for_type,g_app_info_get_id,g_app_info_get_name,g_app_info_launch,g_app_info_launch_default_for_uri,g_file_new_for_path,g_filename_to_uri,g_list_append,g_list_free,g_free,g_error_free,g_object_unref

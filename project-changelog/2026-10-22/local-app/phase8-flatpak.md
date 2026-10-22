@@ -110,3 +110,52 @@ A research agent read the primary sources (freedesktop-sdk and gnome-build-meta 
 - **Backups:** `version-control/local-app/2026-10-22_before-host-path/` (8 files, with a README).
 - **Slip, fixed:** a `dart format` run reformatted about 30 unrelated files. They were restored from git before any other change, and my edits were applied again without the formatter. Nothing else changed.
 - **Impact:** step 2 is done. The real check happens inside the Flatpak on the PM's PC (`TESTING.md`, step 4). **Not committed.**
+
+## Step 3: packaging files
+**Time:** 2026-10-22 22:57–23:16 UTC (it started after commit `f339521`)
+
+- **PM decisions:**
+  - Check libsodium's signature with a small Dart tool instead of installing minisign.
+  - Ship the icon as an SVG only for now.
+- **Sources pinned** (details in `docs/dependencies.md`, "Flatpak modules"):
+  - libsodium 1.0.22: minisign signature checked with the new tool
+  - libass **0.17.5**, not 0.17.x in general, because it fixes two CVEs: GPG checked
+  - libplacebo v7.360.1, as a git source with tag and commit, because the archives lack the submodules OpenGL needs
+  - mpv 0.41.0, matching Flathub's pin
+  - Poppler 26.10.0: GPG checked
+  - The downloads were only hashed, never extracted or run, and were deleted afterwards.
+- **New: `app/tool/verify_minisign.dart`** with `test/tool/verify_minisign_test.dart` (5 tests), plus a line for it in `allowed-native-libs.txt`.
+  - **`check-privacy.sh`** now scans `app/tool/` as well as `lib/` for native code, and as well as `lib/` and `test/` for network APIs.
+  - **Negative check:** an unlisted libsodium symbol in the tool fails the privacy check.
+- **New: `packaging/flatpak/`:**
+  - **the manifest:** runtime 26.08; libsodium, libass, libplacebo, libmpv, Poppler and the app; the finish-args `wayland`, `fallback-x11`, `ipc`, `dri` and `pulseaudio`, with no network and no filesystem
+  - the `.desktop` file, the `.metainfo.xml` (`AGPL-3.0-only`, OARS) and the SVG icon
+  - **`build.sh`**, for the PM's PC. It checks the tools and the kit's SHA256SUMS, adds Flathub for the user, installs the runtime, builds and installs the app, makes the `.flatpak` file, and prints the permissions, stopping if network access appears. It also checks codecs-extra and runs the validators if they're present.
+- **New: `app/tool/package-bundle.sh`.** It runs the lockdown check, the privacy check, `flutter analyze` and `flutter test`, then the release build. Then it makes a reproducible bundle tarball and the build kit in `packaging/flatpak/dist/`.
+- **`.gitignore`:** `packaging/flatpak/dist/`, `build-dir/`, `.flatpak-builder/` and `*.flatpak`.
+- **Run here:**
+  - `package-bundle.sh` ran end to end: every check and test passed, the release build worked, and the kit was made.
+  - The bundle's direct dependencies are all in the runtime, apart from our own libmpv.
+  - The highest glibc version needed is 2.34; the runtime has 2.44.
+  - The metainfo is well-formed XML.
+- **Not checked here:**
+  - the manifest's YAML syntax, because no parser is installed
+  - mpv's meson option names
+  - `appstreamcli` and `desktop-file-validate`, which aren't installed here
+  - The first build on the PM's PC checks all of these.
+- **Fixed during the step:**
+  - The kit's manifest comment had its placeholders filled in too; the comment was reworded.
+  - The mpv licence entry first said LGPL; it's GPL-2.0+ (mpv's default build), which is compatible with AGPL-3.0.
+- **Backups:** `version-control/local-app/2026-10-22_before-packaging/`.
+- **Impact:** no app behaviour changes. Next is step 4 (`TESTING.md`), then the kit is rebuilt so it includes the checklist. **Not committed.**
+
+## Metainfo homepage link
+**Time:** 2026-10-22 23:32 UTC
+- The PM confirmed the repo is public, so the metainfo now has `<url type="homepage">https://github.com/seven11ven/portfolio_jockey</url>`. It's metadata for software centers only; the app never opens it.
+- The license label (`AGPL-3.0-only` or `AGPL-3.0-or-later`) is still waiting on the PM.
+
+## License label: AGPL-3.0-or-later
+**Time:** 2026-10-22 23:38 UTC
+- PM decision: the app is `AGPL-3.0-or-later` (version 3, or at the user's option any later version).
+- The metainfo's `project_license` is now `AGPL-3.0-or-later`. `README.md` has a new "License" section just above its closing line, saying the same and linking `LICENSE`. The rest of the README is unchanged.
+- **Impact:** metadata and documentation only. The `LICENSE` text itself (AGPL v3) is unchanged.

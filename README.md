@@ -24,4 +24,7 @@
 * ### Can I fork this repo?
     - Duh. That's why I actually bothered to look up the github licenses and what they mean lol. Just keep it open-source, only rule in this household.
 
+## License
+Portfolio Jockey is licensed under the GNU Affero General Public License, version 3 or (at your option) any later version (`AGPL-3.0-or-later`). See [LICENSE](LICENSE).
+
 ----

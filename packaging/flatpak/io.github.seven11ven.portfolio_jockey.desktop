@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Portfolio Jockey
+GenericName=Project Tracker
+Comment=Keep your projects and their files encrypted, on this device only
+Exec=portfolio_jockey
+Icon=io.github.seven11ven.portfolio_jockey
+Terminal=false
+Categories=Office;ProjectManagement;
+Keywords=projects;portfolio;encrypted;vault;files;
+StartupWMClass=portfolio_jockey

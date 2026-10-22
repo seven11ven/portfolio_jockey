@@ -46,3 +46,9 @@ local.properties
 .DS_Store
 *.log
 *.swp
+
+# Flatpak packaging (phase 8): the app bundle, build kit and build output
+/packaging/flatpak/dist/
+/packaging/flatpak/build-dir/
+.flatpak-builder/
+*.flatpak

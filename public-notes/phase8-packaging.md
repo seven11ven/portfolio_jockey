@@ -18,7 +18,8 @@ Flatpak can't run in this Codespace, because the sandbox it needs isn't allowed 
 - **Runtime (2026-10-22):** `org.freedesktop.Platform//26.08` (GTK 3, GLib, cairo, epoxy and glibc 2.44 are included, and it's supported until about 08/2028).
 - **Video codecs (2026-10-22):** mpv uses the runtime's FFmpeg. H.264/HEVC come from Flathub's `org.freedesktop.Platform.codecs-extra` extension, which is installed automatically, so the app never ships patent-restricted decoders itself. The runtime's FFmpeg has network code, but it's unreachable: the sandbox has no network, and the app whitelists only `file`.
 - **Built as modules:** mpv 0.41.0 (libmpv only, with Lua, JavaScript, Blu-ray, DVD, CD audio and libarchive off), libplacebo, libass, Poppler 26.10.0 (GLib binding only, with NSS, GPGME and libcurl off), and libsodium 1.0.22 (minisign signature checked).
-- **App icon (2026-10-22):** the locked card stack (option C).
+- **License (2026-10-22):** `AGPL-3.0-or-later`, in the metainfo and the README.
+- **App icon (2026-10-22):** the locked card stack (option C), shipped as an **SVG only** for now (`hicolor/scalable`). Flathub would also want PNGs (128 and 256 px).
 - **Where it's built and tested (2026-10-22):** on the PM's own Ubuntu-family PC. This Codespace blocks the user namespaces Flatpak needs. Everything is prepared here (manifest, app bundle, `build.sh`, test checklist), and the PM runs the build and tests.
 - **Readable copies only in memory** (phase 6): audio/video copies and "Edit in another app" copies go only in `$XDG_RUNTIME_DIR/portfolio_jockey/`, which must be on tmpfs. Otherwise the app refuses. The Flatpak must not change that rule.
 
@@ -54,6 +55,19 @@ Flatpak can't run in this Codespace, because the sandbox it needs isn't allowed 
     - Writing through a portal path: the export writes a temporary file next to the target, then renames it. Check that the document portal allows creating the temporary file and renaming it. If not, write the target directly and delete it on failure.
     - Import reads a `.pjx` picked through the portal (read-only is enough).
 12. **Moving the storage location** to a folder picked through the portal: it must stay writable across restarts, like the first-run folder (item 5). Check free space (`statvfs`) on a portal path, too.
+
+## Packaging files (built 2026-10-22)
+- `packaging/flatpak/`:
+  - the manifest (`io.github.seven11ven.portfolio_jockey.yml`)
+  - the `.desktop` file, the `.metainfo.xml` and the `.svg` icon
+  - `build.sh`, for the PM's PC
+- `app/tool/package-bundle.sh`: it runs every check, builds the release bundle, and makes `packaging/flatpak/dist/portfolio-jockey-build-kit-<version>.tar.gz`, which is git-ignored.
+- The module versions and how each source was confirmed are in `docs/dependencies.md` ("Flatpak modules").
+- **To confirm on the first build:**
+  - the manifest's syntax (no YAML validator here)
+  - mpv 0.41.0's meson option names
+  - that the Poppler build check passes
+  - the metainfo and desktop file validators, which `build.sh` runs if they're installed
 
 ## Still open
 - **Distribution testing:** check the distributions listed in `linux-support.md`.

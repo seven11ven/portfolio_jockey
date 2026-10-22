@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.seven11ven.portfolio_jockey</id>
+  <name>Portfolio Jockey</name>
+  <summary>Keep your projects and their files encrypted, on this device only</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-or-later</project_license>
+  <developer id="io.github.seven11ven">
+    <name>seven11ven</name>
+  </developer>
+  <description>
+    <p>
+      Portfolio Jockey keeps track of your projects: a name, a description, tags and the
+      files that belong to each one. Everything is stored encrypted on this device and
+      unlocked with your passphrase.
+    </p>
+    <ul>
+      <li>Works fully offline. The app has no network access at all.</li>
+      <li>No accounts, no telemetry, no analytics and no crash reports.</li>
+      <li>Preview images, text, Markdown, PDF, audio and video without leaving a readable copy on disk.</li>
+      <li>Export projects as a passphrase-locked file or as an ordinary ZIP or TAR archive.</li>
+    </ul>
+  </description>
+  <url type="homepage">https://github.com/seven11ven/portfolio_jockey</url>
+  <launchable type="desktop-id">io.github.seven11ven.portfolio_jockey.desktop</launchable>
+  <content_rating type="oars-1.1"/>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <releases>
+    <release version="0.1.0" date="2026-10-22"/>
+  </releases>
+</component>

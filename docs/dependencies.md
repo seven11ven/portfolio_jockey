@@ -256,3 +256,31 @@ Every export, of one project or several, offers exactly two options (PM decision
 1. Check its license and cost, and read its code.
 2. Run `bash app/tool/check-privacy.sh --list-hits` and read every hit for that package.
 3. Add the package to `allowed-packages.txt`, add the reviewed hits with reasons to `reviewed-hits.txt`, and update this table.
+
+## Flatpak modules (plan phase 8)
+The Flatpak (`packaging/flatpak/io.github.seven11ven.portfolio_jockey.yml`) runs on `org.freedesktop.Platform//26.08`. That runtime is free and LGPL/MIT-licensed, has no telemetry, and is supported until about 08/2028. It already ships GTK 3, GLib, cairo, epoxy, FFmpeg ("no patented codecs") and Poppler's build dependencies. It doesn't ship libass, libplacebo, libmpv or poppler-glib, so the manifest builds those itself. Every source is pinned and was confirmed on 2026-10-22 by something other than our own hash:
+
+| Module | Version | Licence | Source | Pin | Confirmed by |
+|---|---|---|---|---|---|
+| libsodium | 1.0.22 | ISC | `download.libsodium.org/libsodium/releases/libsodium-1.0.22.tar.gz` | sha256 `adbdd8f1…191be3349` | minisign signature, checked with `app/tool/verify_minisign.dart` against key `RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3`. Trusted comment: `file:libsodium-1.0.22.tar.gz hashed`, timestamp 2026-04-09 |
+| libass | 0.17.5 | ISC | GitHub release `libass-0.17.5.tar.xz` | sha256 `2dca25c0…288864acc` | GPG `.asc`, signing subkey `DDAFC19E46B2AD2D6B26F84397A08E0CFFD70951` (primary `5EE63F2A…2824C720`, listed in libass's `MAINTAINERS`). Fixes CVE-2026-61626 and CVE-2026-61627 |
+| libplacebo | v7.360.1 | LGPL-2.1+ | git `github.com/haasn/libplacebo.git` | commit `cee9b076f2c63104ccfd497fa79c39a867293ec4` | the code.videolan.org tag, and the same tag and commit in Flathub's `io.mpv.Mpv`. A git source, because the release archives lack the submodules (glad, jinja, markupsafe, fast_float) the OpenGL output needs |
+| mpv (libmpv only) | 0.41.0 | GPL-2.0+ (mpv's default `gpl` build; compatible with the app's AGPL-3.0, like Poppler) | GitHub tag archive `v0.41.0.tar.gz` | sha256 `ee21092a…fad626209` | the same pin in Flathub's `com.matthiasn.lotti`. mpv publishes no checksums or signatures |
+| Poppler (GLib only) | 26.10.0 | GPL-2.0+ | `poppler.freedesktop.org/poppler-26.10.0.tar.xz` | sha256 `6792cb7c…2a6ce35` | GPG `.sig`, key `CA262C6C83DE4D2FB28A332A3A6A4DB839EAA6D7` (Albert Astals Cid), as listed on poppler.freedesktop.org |
+
+- **What's left out:**
+  - mpv: Lua, JavaScript, Blu-ray, DVD, CD audio, DVB, libarchive, libavdevice, C plugins, VapourSynth and Vulkan.
+  - libplacebo: Vulkan, glslang and shaderc.
+  - Poppler: NSS3, GPGME and libcurl (no network-capable library is linked), plus Qt, C++, the command-line tools and introspection.
+- **A build check:** the build fails if `libpoppler-glib.so.8` is missing, because CMake turns the GLib binding off silently.
+- **Video codecs:** H.264 and HEVC come from Flathub's `org.freedesktop.Platform.codecs-extra`, which installs automatically with the runtime. The app never ships patent-restricted decoders itself.
+- **Sandbox permissions:**
+  - Allowed: `wayland`, `fallback-x11`, `ipc`, `dri` and `pulseaudio`.
+  - **Never** `--share=network`, and no `--filesystem`.
+  - `build.sh` prints the permissions after the build and stops if network access shows up.
+- **The app bundle:** `app/tool/package-bundle.sh` runs every check and the full test suite, then builds the release bundle here. It packs the bundle as a reproducible tarball (sorted names, fixed owner and date) and writes that tarball's SHA-256 into the kit's copy of the manifest.
+  - Every direct dependency of the bundle is in the runtime, apart from `libmpv.so.2`, which is our module.
+  - The highest glibc version it needs is 2.34; the runtime has 2.44.
+- **`app/tool/verify_minisign.dart`** is a build-time tool, not part of the app. It binds 7 libsodium functions, listed in `allowed-native-libs.txt`. `check-privacy.sh` now scans `app/tool/` too, both for native code and for network APIs.
+  - It accepts only prehashed (`ED`) signatures, and it checks the key ID, the file signature and the trusted comment.
+  - Its tests make signatures with libsodium. A changed file, a changed comment, a wrong key and a legacy signature are each refused.
