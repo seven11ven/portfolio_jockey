@@ -1,7 +1,7 @@
 # Implementation Guideline for changes and builds in this Project
 
 ## Log your actions
-* All your actions should be logged under a folder(named after the date["YYYY-MM-DD"] the action was done. If one already exists for the current session with the appropiate name, use that one) under "/project-changelog". The markdown file should contain the details of said change/build(ESPECIALLY the time it was done), along with the impacts that come with it.
+* All your actions should be logged under a folder(named after the date["YYYY-MM-DD"] the action was done. If one already exists for the current session with the appropiate name and date, use that one, otherwise create another one) under "/project-changelog". The markdown file should contain the details of said change/build(ESPECIALLY the time it was done), along with the impacts that come with it.
     - This rule DOES NOT apply to any untracked components(anything applicable to ".gitignore")
 
 ## Never edit off the bat
