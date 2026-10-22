@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tags · Portfolio Jockey mockup</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="mock-bar">
+  <span>Design mockup · fake data</span><a href="index.html">All mockups</a>
+  <span class="seg"><button data-set-theme="light">Light</button><button data-set-theme="dark">Dark</button></span>
+  <span class="seg"><button data-set-view="both">Both</button><button data-set-view="desktop">Desktop</button><button data-set-view="phone">Phone</button></span>
+</div>
+<main class="mock-page">
+  <header>
+    <h1>Tags (categories)</h1>
+    <p class="muted">Each project has its own tags. A file can have several. Deleting a tag only removes the label; files are never deleted that way.</p>
+  </header>
+
+  <section class="scene">
+    <div class="scene-title">1. Manage tags</div>
+    <div class="scene-note">Opened from "Manage tags" in the project view. Changes are listed, then saved together with one confirmation.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Tags in “Kitchen Remodel”</h2>
+          <div>
+            <div class="list-row"><span class="chip">Photos</span><span class="spacer"></span><span class="muted small">14 files</span><span class="icon-btn" title="Rename">✎</span><span class="icon-btn" title="Delete tag">🗑</span></div>
+            <div class="list-row"><input class="input" value="Receipts &amp; Invoices" style="flex:1"><span class="muted small">6 files</span><span class="icon-btn">✓</span></div>
+            <div class="list-row"><span class="chip">Plans</span><span class="spacer"></span><span class="muted small">3 files</span><span class="icon-btn">✎</span><span class="icon-btn">🗑</span></div>
+            <div class="list-row" style="opacity:.55"><span class="chip" style="text-decoration:line-through">Inspiration</span><span class="spacer"></span><span class="muted small">to be removed</span><span class="icon-btn" title="Undo">↶</span></div>
+          </div>
+          <div class="row" style="flex-wrap:nowrap"><input class="input" placeholder="New tag name" value="Permits"><button class="btn">Add</button></div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Review changes…</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">2. Confirm tag changes</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Save these tag changes?</h2>
+          <div class="summary-box">
+            <div class="list-row">✎ Rename “Receipts” → “Receipts &amp; Invoices”</div>
+            <div class="list-row">＋ Add “Permits”</div>
+            <div class="list-row">🗑 Remove “Inspiration” from 5 files</div>
+          </div>
+          <p class="small muted">Removing a tag never deletes files. Files left with no tags appear under “Untagged”.</p>
+          <div class="dialog-actions"><button class="btn">Back</button><button class="btn btn-primary">Confirm changes</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">3. Edit a file's tags</div>
+    <div class="scene-note">From the file menu ("Edit tags…"). Tap a tag to toggle it. Several files can be selected first to tag them all at once.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Tags for contractor-quote.pdf</h2>
+          <div class="chips"><span class="chip">Photos</span><span class="chip chip-on">Receipts ✓</span><span class="chip chip-on">Plans ✓</span><span class="chip">Inspiration</span><span class="chip">＋ New tag</span></div>
+          <div class="summary-box small">Was: Receipts · Now: Receipts, Plans</div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Confirm tags</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="mockup.js"></script>
+</body>
+</html>

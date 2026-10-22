@@ -7,18 +7,26 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<main class="container">
-  <h1>Portfolio Jockey mockups</h1>
-  <p class="muted">Static design previews for review before any UI is built. All names and content are fake sample data. Open each file in a browser, and resize the window to see the phone layout.</p>
-  <div class="index-list">
-    <a class="card" href="login.html"><strong>1. Login</strong><br><span class="muted small">GitHub sign-in, limited to approved accounts.</span></a>
-    <a class="card" href="dashboard.html"><strong>2. Dashboard</strong><br><span class="muted small">Projects sorted by most recently opened.</span></a>
-    <a class="card" href="project.html"><strong>3. Project view</strong><br><span class="muted small">Notes and media timeline, with a composer to add more.</span></a>
-    <a class="card" href="upload.html"><strong>4. Upload</strong><br><span class="muted small">Drag-and-drop upload with progress and an error state.</span></a>
-    <a class="card" href="delete.html"><strong>5. Delete confirmation</strong><br><span class="muted small">Type the project name to confirm deletion.</span></a>
-    <a class="card" href="login-error.html"><strong>6. Login error</strong><br><span class="muted small">Message shown when a GitHub account isn't on the allowlist.</span></a>
-    <a class="card" href="account-menu.html"><strong>7. Account menu</strong><br><span class="muted small">Clicking the avatar shows who's signed in and a Sign out option.</span></a>
+<div class="mock-bar">
+  <span>Design mockups · fake data</span>
+  <span class="seg"><button data-set-theme="light">Light</button><button data-set-theme="dark">Dark</button></span>
+</div>
+<main class="mock-page" style="max-width:1000px">
+  <header>
+    <h1>Portfolio Jockey v2: local app mockups</h1>
+    <p class="muted">A fully local, encrypted project tracker for Linux and Android. Every page shows each screen in a desktop window and a phone frame. Use the toggles at the top of each page to switch light/dark or show one layout.</p>
+  </header>
+  <div class="index-grid">
+    <a class="card" href="first-run.html"><h3>First run and unlock</h3><p>Storage location, passphrase with warning, unlock, wrong passphrase.</p></a>
+    <a class="card" href="home.html"><h3>Home and project actions</h3><p>Project grid, new project, the "…" menu, rename, delete project.</p></a>
+    <a class="card" href="project.html"><h3>Project and files</h3><p>File grid with tag filter, add files, file menu, the three delete options.</p></a>
+    <a class="card" href="tags.html"><h3>Tags</h3><p>Manage a project's tags, confirm changes, edit a file's tags.</p></a>
+    <a class="card" href="preview.html"><h3>Preview and editing</h3><p>Image and video preview, "Edit in another app", the editing banner, save.</p></a>
+    <a class="card" href="export.html"><h3>Export and import</h3><p>Export one project, bulk export, progress, import an encrypted export.</p></a>
+    <a class="card" href="settings.html"><h3>Settings</h3><p>Color scheme, storage location and move, export, passphrase, version.</p></a>
   </div>
+  <p class="small muted" style="margin-top:24px">The previous cloud-app mockups are kept in <a href="cloud-service/index.html">cloud-service/</a> for reference.</p>
 </main>
+<script src="mockup.js"></script>
 </body>
 </html>

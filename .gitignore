@@ -2,43 +2,36 @@
 # notes
 /project-notes
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
 # environmental variables
 .env*
 !.env_example
 
+# Flutter / Dart build output and tool caches
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+**/build/
+migrate_working_dir/
+
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
+# signing keys and local SDK paths: never commit (also covers a future Android port)
+*.jks
+*.keystore
+key.properties
+local.properties
+*.pem
 
-# production
-/build
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
 
 # misc
 .DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+*.log

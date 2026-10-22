@@ -1,0 +1,30 @@
+diff --git a/packages/flutter_tools/lib/src/reporting/crash_reporting.dart b/packages/flutter_tools/lib/src/reporting/crash_reporting.dart
+index e81ab3f15ea..cfb9dd054a2 100644
+--- a/packages/flutter_tools/lib/src/reporting/crash_reporting.dart
++++ b/packages/flutter_tools/lib/src/reporting/crash_reporting.dart
+@@ -156,6 +156,8 @@ class CrashReportSender {
+     required String command,
+     String? typeId,
+   }) async {
++    // Portfolio Jockey: crash reporting removed. Nothing is ever sent.
++    return;
+     // Only send one crash report per run.
+     if (_crashReportSent) {
+       return;
+diff --git a/packages/flutter_tools/lib/src/reporting/unified_analytics.dart b/packages/flutter_tools/lib/src/reporting/unified_analytics.dart
+index a7b6bbafb05..21f2d29e1dd 100644
+--- a/packages/flutter_tools/lib/src/reporting/unified_analytics.dart
++++ b/packages/flutter_tools/lib/src/reporting/unified_analytics.dart
+@@ -28,6 +28,12 @@ Analytics getAnalytics({
+   bool enableAsserts = false,
+   FakeAnalytics? analyticsOverride,
+ }) {
++  // Portfolio Jockey: analytics removed. The Flutter tool never creates a
++  // reporting analytics instance, whatever the environment or config says.
++  if (analyticsOverride == null) {
++    return const NoOpAnalytics();
++  }
++
+   final String version = flutterVersion.getVersionString(redactUnknownBranches: true);
+   final suppressEnvFlag = environment['FLUTTER_SUPPRESS_ANALYTICS']?.toLowerCase() == 'true';
+   final String? aiAgentName = AiAgent.detectAgentName(environment);

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Export and import · Portfolio Jockey mockup</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="mock-bar">
+  <span>Design mockup · fake data</span><a href="index.html">All mockups</a>
+  <span class="seg"><button data-set-theme="light">Light</button><button data-set-theme="dark">Dark</button></span>
+  <span class="seg"><button data-set-view="both">Both</button><button data-set-view="desktop">Desktop</button><button data-set-view="phone">Phone</button></span>
+</div>
+<main class="mock-page">
+  <header>
+    <h1>Export and import</h1>
+    <p class="muted">Exports ask each time: readable files, or kept encrypted. Encrypted exports can only be opened by importing them back into Portfolio Jockey.</p>
+  </header>
+
+  <section class="scene">
+    <div class="scene-title">1. Export a project</div>
+    <div class="scene-note">From the project "…" menu. The format is pre-selected from the menu choice (ZIP or TAR) and can be changed here.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Export “Kitchen Remodel”</h2>
+          <div><span class="label">Format</span><div class="seg-app"><span class="on">ZIP</span><span>TAR</span></div></div>
+          <div class="stack" style="gap:8px">
+            <span class="label">Contents</span>
+            <label class="radio-card on"><input type="radio" checked><span><strong>Readable files</strong><br><span class="small muted">Opens anywhere. Each file once, with its real name, plus project.json listing the description and tags.</span></span></label>
+            <label class="radio-card"><input type="radio"><span><strong>Keep encrypted</strong><br><span class="small muted">For backups. Only Portfolio Jockey can open it, with your passphrase.</span></span></label>
+          </div>
+          <div class="notice">Readable exports are <strong>not protected</strong>. Anyone who gets the archive can open every file in it.</div>
+          <div><span class="label">Save to</span><div class="row" style="flex-wrap:nowrap"><div class="path" style="flex:1">~/Documents/Kitchen Remodel.zip</div><button class="btn">Change…</button></div></div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Export 24 files (412 MB)</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">2. Bulk export (from Settings)</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Settings</h3></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Export projects</h2>
+          <div>
+            <label class="check"><input type="checkbox" checked> <strong>All projects (5)</strong></label>
+            <div style="padding-left:24px" class="stack small">
+              <label class="check"><input type="checkbox" checked> Kitchen Remodel · 412 MB</label>
+              <label class="check"><input type="checkbox" checked> Album Artwork · 1.2 GB</label>
+              <label class="check"><input type="checkbox" checked> Thesis Research · 860 MB</label>
+              <label class="check"><input type="checkbox" checked> Garden Planner · 22 MB</label>
+              <label class="check"><input type="checkbox" checked> Bike Restoration · 95 MB</label>
+            </div>
+          </div>
+          <div class="row"><span class="label" style="margin:0">Format</span><div class="seg-app"><span>ZIP</span><span class="on">TAR</span></div><span class="label" style="margin:0 0 0 12px">Contents</span><div class="seg-app"><span>Readable</span><span class="on">Encrypted</span></div></div>
+          <p class="small muted">One archive with a folder per project. Needs about 2.6 GB of free space at the destination.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Export 5 projects</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">3. Exporting</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Settings</h3></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Exporting 5 projects…</h2>
+          <div class="meter"><span style="width:46%"></span></div>
+          <p class="small muted">Album Artwork · file 31 of 58 · 1.2 GB of 2.6 GB</p>
+          <div class="dialog-actions"><button class="btn">Cancel export</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">4. Import an encrypted export</div>
+    <div class="scene-note">From the ⤓ button on Home. If the export was made with a different passphrase, that passphrase is asked for once.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Import projects?</h2>
+          <div class="path">~/Backups/portfolio-jockey-2026-10-01.tar</div>
+          <div class="summary-box">
+            <div class="list-row"><span style="flex:1">Garden Planner</span><span class="muted small">9 files</span></div>
+            <div class="list-row"><span style="flex:1">Bike Restoration</span><span class="muted small">31 files · already exists, imported as “Bike Restoration (2)”</span></div>
+          </div>
+          <div><label class="label">Passphrase used for this export</label><input class="input" type="password" value="old passphrase"><p class="small muted" style="margin-top:4px">It was made with a different passphrase. Files are re-protected with your current one.</p></div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Import 2 projects</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="mockup.js"></script>
+</body>
+</html>

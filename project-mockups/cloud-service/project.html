@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project · Portfolio Jockey mockup</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="mock-banner">Design mockup with fake sample data · <a href="index.html">All mockups</a></div>
+<header class="topbar">
+  <a class="brand" href="dashboard.html"><span class="brand-mark">PJ</span><span class="hide-mobile">Portfolio Jockey</span></a>
+  <div class="search">Search projects and notes…</div>
+  <div class="avatar" title="Signed in"></div>
+</header>
+<main class="container" style="max-width:760px">
+  <a class="back" href="dashboard.html">← All projects</a>
+  <div class="row" style="margin-top:12px">
+    <h1>Onboarding Flow Redesign</h1>
+    <span class="spacer"></span>
+    <button class="btn btn-ghost">Edit</button>
+    <button class="btn">Export</button>
+    <a class="btn btn-ghost" href="delete.html" style="color:var(--danger)">Delete</a>
+  </div>
+  <p class="muted" style="margin:8px 0 0">New sign-up steps, before and after screenshots, and the user-testing recap.</p>
+
+  <section class="card composer">
+    <textarea placeholder="Write a note…"></textarea>
+    <div class="row">
+      <a class="btn" href="upload.html">📎 Attach files</a>
+      <span class="muted small hide-mobile">Images, audio, video, PDF or text</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary">Add note</button>
+    </div>
+  </section>
+
+  <section class="timeline">
+    <article class="card entry">
+      <div class="entry-head"><span>Note · Today, 2:14 PM</span><button class="btn btn-ghost small">⋯</button></div>
+      <p>Testing round two went well. Drop-off on step 3 fell after we merged the address fields. Next up is the confirmation email copy.</p>
+    </article>
+
+    <article class="card entry">
+      <div class="entry-head"><span>Image · Today, 1:02 PM</span><button class="btn btn-ghost small">⋯</button></div>
+      <div class="media-img">signup-step-3-after.png</div>
+      <p class="muted small">Step 3 after the redesign.</p>
+    </article>
+
+    <article class="card entry">
+      <div class="entry-head"><span>Video · Yesterday</span><button class="btn btn-ghost small">⋯</button></div>
+      <div class="media-video">
+        <div class="play">▶</div>
+        <div class="video-bar"><span>0:42</span><div class="track"><span></span></div><span>2:18</span></div>
+      </div>
+      <p class="muted small">walkthrough-demo.mp4 · 48 MB</p>
+    </article>
+
+    <article class="card entry">
+      <div class="entry-head"><span>Audio · Oct 18</span><button class="btn btn-ghost small">⋯</button></div>
+      <div class="audio">
+        <div class="play">▶</div>
+        <div class="track"><span></span></div>
+        <span class="small muted">3:05</span>
+      </div>
+      <p class="muted small">user-interview-recap.m4a</p>
+    </article>
+
+    <article class="card entry">
+      <div class="entry-head"><span>File · Oct 15</span><button class="btn btn-ghost small">⋯</button></div>
+      <div class="file-row">
+        <div class="file-icon">PDF</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600">research-summary.pdf</div>
+          <div class="muted small">1.2 MB</div>
+        </div>
+        <button class="btn">Download</button>
+      </div>
+    </article>
+  </section>
+</main>
+</body>
+</html>

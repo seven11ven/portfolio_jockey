@@ -1,0 +1,16 @@
+// Dev container for Portfolio Jockey.
+// Works with DevPod, Coder, GitHub Codespaces and VS Code Dev Containers,
+// which all read this standard file (https://containers.dev).
+//
+// No secrets live here. If the app needs a .env, create it in the repo root
+// yourself from .env_example. Never commit it.
+{
+  "name": "Portfolio Jockey",
+
+  // Official Microsoft dev container image: image version 4, Node.js 24,
+  // Debian Bookworm. Kept until the new plan picks the app's stack.
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:4-24-bookworm",
+
+  // Run as the image's regular user, not root.
+  "remoteUser": "node"
+}
