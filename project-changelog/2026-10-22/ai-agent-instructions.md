@@ -121,3 +121,20 @@ The Budgeting rule gained a sub-point: always check the resource's own website o
 
 ## Impacts
 - Documentation only; no `version-control/` backup required.
+
+---
+
+# Agent files synced with the latest Budgeting and security edits
+
+**Time:** 2026-10-22 06:15 UTC
+**Requested by:** project manager
+
+Guideline changes, committed in `7629a31`:
+- **Budgeting** (`implementation.md`): when checking a provider's website or documentation, search the pages in their entirety, and never assume a verdict from a first glance.
+- **Security** (`security.md`): OWASP and OSINT standards are now a standalone rule covering all code, whether written, borrowed or reused.
+- `security.md` also fixes a typo in the cleanup rule. Nothing to sync.
+
+Updated `AGENTS.md` (Budgeting rule 7 and security rule 3), `CLAUDE.md` (Budgeting reminder plus a new OWASP/OSINT reminder), `.github/copilot-instructions.md` and `.cursorrules`. `GEMINI.md` imports the guidelines directly.
+
+## Impacts
+- Documentation only; no `version-control/` backup required.
