@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Account menu · Portfolio Jockey mockup</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="mock-banner">Design mockup with fake sample data · <a href="index.html">All mockups</a></div>
+<header class="topbar">
+  <a class="brand" href="dashboard.html"><span class="brand-mark">PJ</span><span class="hide-mobile">Portfolio Jockey</span></a>
+  <div class="search">Search projects and notes…</div>
+  <div class="account" style="position:relative">
+    <div class="avatar" title="Signed in" style="outline:2px solid var(--accent);outline-offset:2px"></div>
+    <div class="card" role="menu" style="position:absolute;right:0;top:44px;width:240px;padding:8px;z-index:10">
+      <div style="padding:8px 10px">
+        <div style="font-weight:600">Sample User</div>
+        <div class="muted small">sample.user@example.com</div>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:6px 0"></div>
+      <a class="btn btn-ghost" href="login.html" role="menuitem" style="width:100%;justify-content:flex-start;color:var(--text)">Sign out</a>
+    </div>
+  </div>
+</header>
+<main class="container">
+  <div class="row" style="margin-bottom:20px">
+    <div>
+      <h1>Your projects</h1>
+      <p class="muted small" style="margin:4px 0 0">Sorted by most recently opened · 6 projects</p>
+    </div>
+    <span class="spacer"></span>
+    <a class="btn btn-primary" href="project.html">+ New project</a>
+  </div>
+  <div class="card" style="padding:12px 16px;margin-bottom:20px;display:flex;flex-direction:column;gap:8px">
+    <div class="row small"><strong>Storage</strong><span class="spacer"></span><span class="muted">2.1 of 9 GB used</span></div>
+    <div class="progress"><span style="width:23%"></span></div>
+  </div>
+  <div class="grid">
+    <a class="card project-card" href="project.html">
+      <h3>Onboarding Flow Redesign</h3>
+      <p>New sign-up steps, before and after screenshots, and the user-testing recap.</p>
+      <div class="chips"><span class="chip chip-accent">Images</span><span class="chip">Video</span><span class="chip">Notes</span></div>
+      <div class="meta"><span>Opened 2 hours ago</span><span>14 entries</span></div>
+    </a>
+    <a class="card project-card" href="project.html">
+      <h3>Inventory API</h3>
+      <p>Endpoint design notes, a demo walkthrough recording, and the final spec PDF.</p>
+      <div class="chips"><span class="chip chip-accent">PDF</span><span class="chip">Video</span></div>
+      <div class="meta"><span>Opened yesterday</span><span>9 entries</span></div>
+    </a>
+    <a class="card project-card" href="project.html">
+      <h3>Team Demo Day</h3>
+      <p>Slides, speaker notes, and the audio from the practice run.</p>
+      <div class="chips"><span class="chip chip-accent">Audio</span><span class="chip">Files</span></div>
+      <div class="meta"><span>Opened 3 days ago</span><span>6 entries</span></div>
+    </a>
+    <a class="card project-card" href="project.html">
+      <h3>Accessibility Audit</h3>
+      <p>Checklist results and screenshots of every fixed issue.</p>
+      <div class="chips"><span class="chip chip-accent">Images</span><span class="chip">Notes</span></div>
+      <div class="meta"><span>Opened last week</span><span>21 entries</span></div>
+    </a>
+    <a class="card project-card" href="project.html">
+      <h3>Data Pipeline Notes</h3>
+      <p>What I learned setting up the nightly import job.</p>
+      <div class="chips"><span class="chip">Notes</span></div>
+      <div class="meta"><span>Opened 2 weeks ago</span><span>4 entries</span></div>
+    </a>
+    <a class="card project-card" href="project.html">
+      <h3>Logo Concepts</h3>
+      <p>Early sketches and the three final directions.</p>
+      <div class="chips"><span class="chip chip-accent">Images</span></div>
+      <div class="meta"><span>Opened last month</span><span>8 entries</span></div>
+    </a>
+  </div>
+</main>
+</body>
+</html>

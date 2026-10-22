@@ -196,6 +196,7 @@ h1, h2, h3 { margin: 0; line-height: 1.25; }
 @media (max-width: 600px) {
   .search { display: none; }
   .avatar { margin-left: auto; }
+  .account { margin-left: auto; }
   .container { padding-top: 16px; }
   .hide-mobile { display: none; }
 }

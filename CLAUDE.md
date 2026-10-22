@@ -8,7 +8,7 @@ Before doing anything in this repository, read and follow all project guidelines
 ## Key reminders
 - Never edit without explicit user permission; plan changes first (plan mode).
 - Ask the user/project manager when uncertain.
-- Log every change in `project-changelog/YYYY-MM-DD/<change>.md` with details and impacts (untracked/.gitignored components are exempt).
+- Log every change in `project-changelog/YYYY-MM-DD/<change>.md` with details, impacts and the time it was done (`**Time:** YYYY-MM-DD HH:MM UTC`) (untracked/.gitignored components are exempt).
 - Back up prior versions of changed application components to `version-control/` (docs exempt).
 - New env variables go in `/.env_example` with EMPTY values and annotations on purpose and setup. Never put real values in annotations.
 - Floor Planning: show UI mockups before building or changing any UI. Agreed format is static HTML with fake data in `/project-mockups/`.

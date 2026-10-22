@@ -1,7 +1,7 @@
 # Implementation Guideline for changes and builds in this Project
 
 ## Log your actions
-* All your actions should be logged under a folder(named after the date["YYYY-MM-DD"] the action was done. If one already exists for the current session with the appropiate name, use that one) under "/project-changelog". The markdown file should contain the details of said change/build, along with the impacts that come with it.
+* All your actions should be logged under a folder(named after the date["YYYY-MM-DD"] the action was done. If one already exists for the current session with the appropiate name, use that one) under "/project-changelog". The markdown file should contain the details of said change/build(ESPECIALLY the time it was done), along with the impacts that come with it.
     - This rule DOES NOT apply to any untracked components(anything applicable to ".gitignore")
 
 ## Never edit off the bat
@@ -20,6 +20,12 @@
         - Guidelines
         - Changelogs 
         - Notes
+    * Rule will NEVER apply to any critical components that can compromise the following, but not limited to:
+        - API Keys
+        - Webhooks
+        - Secrets
+        - Hard-Coded Secrets(SHOULDNT BE PRESENT AT ALL)
+        - Plain-text Secrets(SHOULDNT BE PRESENT AT ALL)
 
 ## Environment variables
 * When introducing new variables, ALWAYS update the "/.env_example" to reflect what the ".env" would look like(obviously keep the variables empty, do NOT give them any values, they are there to serve as a reference and guide to setup the application), along with proper annotation on what the key/variable/secret does, and how to set it up.

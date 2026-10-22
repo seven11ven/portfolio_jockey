@@ -1,6 +1,7 @@
 # UI mockups for portfolio_jockey v1
 
 **Date:** 2026-10-22
+**Time:** 2026-10-22 01:24 UTC
 **Performed by:** Claude Code
 **Guideline:** Floor Planning (mockups before any UI is built)
 
@@ -26,6 +27,8 @@ Added static HTML mockups in `project-mockups/`. They use fake sample data only 
 
 # Display name changed to "Portfolio Jockey"
 
+**Time:** 2026-10-22 01:26 UTC
+
 Replaced the displayed app name "portfolio_jockey" with "Portfolio Jockey" in every mockup page title, header and the shared stylesheet comment.
 
 ## Impacts
@@ -35,6 +38,8 @@ Replaced the displayed app name "portfolio_jockey" with "Portfolio Jockey" in ev
 ---
 
 # Storage meter added to dashboard mockup
+
+**Time:** 2026-10-22 01:30 UTC
 
 Added a "2.1 of 9 GB used" storage bar under the dashboard header in `project-mockups/dashboard.html`.
 
