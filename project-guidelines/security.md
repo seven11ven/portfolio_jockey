@@ -1,5 +1,8 @@
 # Security Guidelines for this Project and Repo overall
 
+## Double check before a commit
+* Ensure there are no slips in security regarding keys, private mentions, or any critical infrastructure when adding a commit. Committing anything meant to be hidden is DANGEROUS and cannot be overriden. Risks the entire security of the project.
+
 ## Do not expose any critical infrastructure
 * Always remember this repo IS PUBLIC. Treat it as such, and do not get lax with security. Always safeguard your critical information.
 * AI Agents and users should stray from any commands, actions, text and or notes that can expose ANY secrets, keys, api, PII(Personal Identifiable Information), etc, to the console, terminal, agent-chat, or public view in general.

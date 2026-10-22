@@ -21,6 +21,10 @@
         - Changelogs 
         - Notes
 
-## environment variables
+## Environment variables
 * When introducing new variables, ALWAYS update the "/.env_example" to reflect what the ".env" would look like(obviously keep the variables empty, do NOT give them any values, they are there to serve as a reference and guide to setup the application), along with proper annotation on what the key/variable/secret does, and how to set it up.
     - Do not be an idiot and expose the secret/api value through the fucking annotation
+
+## Floor Planning
+* Whenever the user or AI-Agent is modifying/constructing any UI Elements, it is best and preferred practice to present the project manager with clear mockups instead of "winging it"(acting without input).
+    - Ask the project manager in what form/manner would they like the mockups presented to them
