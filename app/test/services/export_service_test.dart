@@ -159,6 +159,7 @@ void main() {
         expect(b.tags, a.tags);
         expect(b.key, isNot(a.key), reason: 'imported files get new keys');
         expect(b.originalPath, isNull, reason: 'device paths are not exported');
+        expect(b.originalShownPath, isNull, reason: 'device paths are not exported');
         expect(await content(ids.first, b), await content(kitchen, a));
       }
     });

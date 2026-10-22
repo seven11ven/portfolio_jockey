@@ -233,7 +233,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
               child: Muted(
                 file.originalPath == null
                     ? "The original's location isn't known, so it can't be moved to the Trash. Only the project copy can be deleted."
-                    : "The original is no longer at ${file.originalPath}, so it can't be moved to the Trash. Only the project copy can be deleted.",
+                    : "The original is no longer at ${file.shownOriginal}, so it can't be moved to the Trash. Only the project copy can be deleted.",
               ),
             ),
           ),

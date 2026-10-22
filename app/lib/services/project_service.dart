@@ -7,6 +7,7 @@ import 'package:portfolio_jockey/services/native/gio_trash.dart';
 import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/services/tag_changes.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
+import 'package:portfolio_jockey/vault/native/libc.dart';
 import 'package:portfolio_jockey/vault/native/sodium.dart';
 import 'package:portfolio_jockey/vault/project_index.dart';
 import 'package:portfolio_jockey/vault/secure_buffer.dart';
@@ -87,12 +88,15 @@ final class AddResult {
 /// Nothing here asks for confirmation: each method is called only after the
 /// screen's confirm step. Every write records the project's [ProjectIndex.changedAt].
 final class ProjectService {
-  ProjectService(this.vault, {this.trasher = const GioTrash()});
+  ProjectService(this.vault, {this.trasher = const GioTrash(), String? Function(String path)? hostPathOf}) : _hostPathOf = hostPathOf ?? portalHostPath;
 
   final UnlockedVault vault;
 
   /// Where originals go: the system Trash (tests use a fake).
   final Trasher trasher;
+
+  /// The real path behind a document portal path, or null (tests use a fake).
+  final String? Function(String path) _hostPathOf;
 
   /// Every project, most recently changed first.
   Future<ProjectListing> listProjects() async {
@@ -185,7 +189,8 @@ final class ProjectService {
       final name = source.uri.pathSegments.last;
       try {
         final size = await source.length();
-        final entry = FileEntry.create(name: name, size: size, tags: [...tags], originalPath: source.absolute.path);
+        final original = source.absolute.path;
+        final entry = FileEntry.create(name: name, size: size, tags: [...tags], originalPath: original, originalShownPath: _hostPathOf(original));
         var done = 0;
         final counted = source.openRead().map((chunk) {
           done += chunk.length;
@@ -457,3 +462,11 @@ final class ProjectService {
     orElse: () => throw StateError('No file $fileId in this project'),
   );
 }
+
+/// Whether [path] is inside a document portal mount, where files picked
+/// inside a Flatpak arrive: `/run/user/<uid>/doc/` or `/run/flatpak/doc/`.
+bool isPortalPath(String path) => RegExp(r'^/run/(user/\d+|flatpak)/doc/').hasMatch(path);
+
+/// The real path of a file picked through the document portal, or null for
+/// any other path. Outside a Flatpak, nothing is read.
+String? portalHostPath(String path) => isPortalPath(path) ? Libc.instance.hostPath(path) : null;

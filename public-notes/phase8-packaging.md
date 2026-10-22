@@ -33,7 +33,8 @@ Flatpak can't run in this Codespace, because the sandbox it needs isn't allowed 
      - asking again at delete time
      - greying the option with an explanation
    - Confirm the file really lands in the desktop's Trash and can be restored.
-3. **Show the real location, not the portal path,** in the "Original location" box and the delete dialogs. Use the `user.document-portal.host-path` file attribute, or the Documents portal's `GetHostPaths` (interface version 5+). The attribute can be read through a libc call such as `getxattr`, which needs a line in `app/tool/allowed-native-libs.txt`.
+3. **Built 2026-10-22, to be tested on the PM's PC.** **Show the real location, not the portal path,** in the "Original location" box and the delete dialogs. Use the `user.document-portal.host-path` file attribute, or the Documents portal's `GetHostPaths` (interface version 5+). The attribute can be read through a libc call such as `getxattr`, which needs a line in `app/tool/allowed-native-libs.txt`.
+   - Built: when a file is added from a portal path, the app reads the attribute once and stores it in the encrypted index (`originalShownPath`). The screens show it; Trash and the "original missing" check still use the portal path. Check that the real path shows in the file details and in the "Move to Trash" dialog.
 4. **"Original missing" detection** (greying "Move to Trash") should still be correct with portal paths, including after the original is deleted outside the app.
 5. **The storage location chosen at first run.** A folder picked through the portal must stay writable across restarts. If not, consider a `--filesystem=` permission for that folder only, never the whole home folder.
 6. **Errors are shown, not hidden.** For example, the Trash portal missing (`Trash portal is not available`) or files on drives without a Trash. In the dev container, GLib refuses `/tmp`: "Trashing on system internal mounts is not supported".

@@ -213,7 +213,7 @@ class _Details extends StatelessWidget {
           if (file.tags.isNotEmpty) row('Tags', Wrap(spacing: 4, runSpacing: 4, children: [for (final tag in file.tags) TagChip(tag, small: true)])),
           row('Size', Text(detail == null ? formatBytes(file.size) : '${formatBytes(file.size)} · $detail')),
           row('Added', Text(formatDate(file.addedAt))),
-          if (file.originalPath case final path?) row('Original', Text(path, style: pathStyle)),
+          if (file.shownOriginal case final path?) row('Original', Text(path, style: pathStyle)),
           const SizedBox(height: 2),
           OutlinedButton.icon(onPressed: onEdit, icon: const Icon(Icons.edit_outlined), label: const Text('Edit in another app…')),
         ],

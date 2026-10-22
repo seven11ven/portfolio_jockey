@@ -30,6 +30,7 @@ class AppController extends ChangeNotifier {
     AppLauncher launcher = const GioAppLauncher(),
     PrivateFolders? privateFolders,
     bool? sandboxed,
+    this.hostPathOf,
     this.kdf,
   }) : sandboxed = sandboxed ?? runningInFlatpak(),
        edits = EditSessions(folders: privateFolders ?? PrivateFolders.standard(), launcher: launcher);
@@ -44,6 +45,10 @@ class AppController extends ChangeNotifier {
   /// suggested: storage defaults to the app's own data folder, and exports
   /// need a location chosen through the desktop's save dialog first.
   final bool sandboxed;
+
+  /// Reads the real path behind a document portal path (tests use a fake;
+  /// null uses the real one).
+  final String? Function(String path)? hostPathOf;
 
   /// "Edit in another app", and the memory-only copies media plays from.
   final EditSessions edits;
@@ -136,7 +141,7 @@ class AppController extends ChangeNotifier {
     _settings = _settings.copyWith(storagePath: move.target.path);
     await settingsStore.save(_settings);
     _storagePath = move.target.path;
-    _projects = ProjectService(current.vault.relocatedTo(move.target), trasher: trasher);
+    _projects = ProjectService(current.vault.relocatedTo(move.target), trasher: trasher, hostPathOf: hostPathOf);
     notifyListeners();
     try {
       await move.removeSource();
@@ -192,7 +197,7 @@ class AppController extends ChangeNotifier {
   }
 
   void _open(UnlockedVault vault) {
-    _projects = ProjectService(vault, trasher: trasher);
+    _projects = ProjectService(vault, trasher: trasher, hostPathOf: hostPathOf);
     _stage = AppStage.unlocked;
     notifyListeners();
     unawaited(edits.findLeftovers());

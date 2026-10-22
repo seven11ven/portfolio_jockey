@@ -96,3 +96,17 @@ A research agent read the primary sources (freedesktop-sdk and gnome-build-meta 
 - The PM added two rules to `project-guidelines/`: keep token usage low without bending the other rules (`implementation.md`, Budgeting), and give webhooks and API keys only the permissions they need (`security.md`).
 - Synced both into `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` and `.cursorrules`, as `CLAUDE.md` requires. `AGENTS.md` and `CLAUDE.md` already had the least-privilege rule.
 - **Impact:** documentation only.
+
+## Step 2d: show the original's real location (test item 3)
+**Time:** 2026-10-22 22:47–22:56 UTC
+
+- **Why:** inside the Flatpak, picked files arrive as `/run/user/<uid>/doc/<id>/<name>`. The app showed that path as the "Original location", which means nothing to the user.
+- **`vault/native/libc.dart`:** binds libc's `getxattr` (added to `app/tool/allowed-native-libs.txt`). `Libc.hostPath(path)` reads the document portal's `user.document-portal.host-path` attribute, or gives null.
+- **`vault/project_index.dart`:** `FileEntry.originalShownPath`, an optional field in the encrypted index, written only when it's set. Old indexes load unchanged. `shownOriginal` gives it, or else `originalPath`.
+- **`services/project_service.dart`:** when a file is added, the attribute is read once, and only for paths under `/run/user/<uid>/doc/` or `/run/flatpak/doc/` (`isPortalPath`). Outside a Flatpak, nothing extra is read or stored. `ProjectService` and `AppController` take a `hostPathOf` lookup so tests can fake it.
+- **Screens (text only, no layout change):** the preview details, the "Move to Trash" and delete dialogs, and the "no longer at…" note show `shownOriginal`. Trash and the "original missing" check still use the portal path, which is the only one the sandbox can reach.
+- **Exports:** unchanged. Device paths, including this one, are never exported (tested).
+- **Tests:** `getxattr` on a temp file with the attribute set (real read, including non-ASCII), null for an ordinary or missing file; portal path matching; the service stores the real path while Trash gets the portal path; index round trip and old entries; a UI test of the Trash dialog. Full run: 167 pass, 13 skipped. `flutter analyze` is clean, the privacy check passes, and the debug build works. Negative check: binding libc's `socket` next to `getxattr` fails the privacy check.
+- **Backups:** `version-control/local-app/2026-10-22_before-host-path/` (8 files, with a README).
+- **Slip, fixed:** a `dart format` run reformatted about 30 unrelated files. They were restored from git before any other change, and my edits were applied again without the formatter. Nothing else changed.
+- **Impact:** step 2 is done. The real check happens inside the Flatpak on the PM's PC (`TESTING.md`, step 4). **Not committed.**

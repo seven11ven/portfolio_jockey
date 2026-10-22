@@ -307,7 +307,7 @@ class _DeleteFileDialogState extends WriteDialogState<DeleteFileDialog> {
   @override
   Widget build(BuildContext context) {
     final file = widget.file;
-    final original = file.originalPath ?? 'an unknown location';
+    final original = file.shownOriginal ?? 'an unknown location';
     final service = AppScope.read(context).projects;
     final bold = const TextStyle(fontWeight: FontWeight.w700);
     return switch (widget.target) {

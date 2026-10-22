@@ -10,8 +10,8 @@ import 'ui_helpers.dart';
 
 void main() {
   /// Starts unlocked with one project, "Kitchen Remodel", and returns its ID.
-  Future<(TestApp, String)> withProject(WidgetTester tester, {List<String> tags = const []}) async {
-    final app = await startApp(tester, unlocked: true);
+  Future<(TestApp, String)> withProject(WidgetTester tester, {List<String> tags = const [], String? Function(String path)? hostPathOf}) async {
+    final app = await startApp(tester, unlocked: true, hostPathOf: hostPathOf);
     late String id;
     await tester.runAsync(() async {
       id = await app.controller.projects.createProject(name: 'Kitchen Remodel', description: 'Quotes and photos.');
@@ -200,6 +200,30 @@ void main() {
     expect(find.text('contractor-quote.pdf: original moved to Trash'), findsOneWidget);
     expect((app.controller.trasher as FakeTrash).trashed, [path]);
     expect(find.text('contractor-quote.pdf'), findsOneWidget); // The encrypted copy stays.
+  });
+
+  testWidgets('A file picked through the portal shows its real location; Trash gets the portal path', (tester) async {
+    const shown = '/home/someone/Documents/contractor-quote.pdf';
+    final (app, id) = await withProject(tester, hostPathOf: (_) => shown);
+    late String path;
+    await tester.runAsync(() async {
+      path = '${(await tempFolder()).path}/contractor-quote.pdf';
+      await File(path).writeAsString('quote');
+      await app.controller.projects.addFiles(id, [path]);
+    });
+    await tester.tap(find.text('Kitchen Remodel'));
+    await settleUntil(tester, find.text('contractor-quote.pdf'));
+    await tester.tap(find.text('contractor-quote.pdf'), buttons: kSecondaryButton);
+    await settleUntil(tester, find.text('Move to Trash'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Move to Trash'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(shown), findsOneWidget);
+    expect(find.text(path), findsNothing);
+    await tester.tap(find.widgetWithText(FilledButton, 'Move to Trash'));
+    await settleUntil(tester, find.text('contractor-quote.pdf: original moved to Trash'));
+    expect((app.controller.trasher as FakeTrash).trashed, [path]);
   });
 
   testWidgets('The tag review lists exactly the pending changes, and Back changes nothing', (tester) async {

@@ -59,6 +59,7 @@ Future<TestApp> startApp(
   AppLauncher? launcher,
   PrivateFolders? privateFolders,
   bool sandboxed = false,
+  String? Function(String path)? hostPathOf,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -76,6 +77,7 @@ Future<TestApp> startApp(
       launcher: launcher ?? FakeLauncher(),
       privateFolders: privateFolders ?? await fakePrivateFolders(),
       sandboxed: sandboxed,
+      hostPathOf: hostPathOf,
       kdf: fastKdf,
     );
     if (unlocked) {

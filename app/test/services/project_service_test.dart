@@ -91,6 +91,54 @@ void main() {
   });
 
   group('files', () {
+    test('a portal file keeps its real location for display; Trash still uses the portal path', () async {
+      final looked = <String>[];
+      final portal = ProjectService(
+        service.vault,
+        trasher: trash,
+        hostPathOf: (path) {
+          looked.add(path);
+          return '/home/someone/Documents/a.txt';
+        },
+      );
+      final id = await portal.createProject(name: 'P');
+      final a = await original('a.txt', 'first file');
+
+      await portal.addFiles(id, [a]);
+
+      final file = (await portal.readProject(id)).files.single;
+      expect(looked, [a]);
+      expect(file.originalPath, a);
+      expect(file.shownOriginal, '/home/someone/Documents/a.txt');
+      await portal.trashOriginal(id, file.id);
+      expect(trash.trashed, [a]);
+    });
+
+    test('outside the portal nothing extra is stored', () async {
+      final id = await service.createProject(name: 'P');
+      await service.addFiles(id, [await original('a.txt', 'first file')]);
+      final file = (await service.readProject(id)).files.single;
+      expect(file.originalShownPath, isNull);
+      expect(file.shownOriginal, file.originalPath);
+      expect(file.toJson().containsKey('originalShownPath'), isFalse);
+    });
+
+    test('only document portal mounts count as portal paths', () {
+      expect(isPortalPath('/run/user/1000/doc/a1b2c3/a.txt'), isTrue);
+      expect(isPortalPath('/run/flatpak/doc/a1b2c3/a.txt'), isTrue);
+      expect(isPortalPath('/run/user/1000/portfolio_jockey/a.txt'), isFalse);
+      expect(isPortalPath('/home/someone/run/user/1000/doc/a.txt'), isFalse);
+      expect(isPortalPath('/run/user/x/doc/a.txt'), isFalse);
+      expect(portalHostPath('/tmp/a.txt'), isNull);
+    });
+
+    test('the shown location survives the index round trip, and old entries load without it', () {
+      final entry = FileEntry.create(name: 'a.txt', size: 1, originalPath: '/run/user/1000/doc/x/a.txt', originalShownPath: '/home/someone/a.txt');
+      expect(FileEntry.fromJson(entry.toJson()).originalShownPath, '/home/someone/a.txt');
+      final old = entry.toJson()..remove('originalShownPath');
+      expect(FileEntry.fromJson(old).shownOriginal, '/run/user/1000/doc/x/a.txt');
+    });
+
     test('adding encrypts each file, keeps originals and reports progress', () async {
       final id = await service.createProject(name: 'P');
       final a = await original('a.txt', 'first file');

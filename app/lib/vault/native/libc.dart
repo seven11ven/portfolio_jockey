@@ -5,7 +5,8 @@ import 'dart:typed_data';
 
 /// The few C library functions the app needs: plain memory for buffers that
 /// hold no keys, syncing a folder after a rename, and creating a private
-/// folder whose permissions are right from the start, and free disk space.
+/// folder whose permissions are right from the start, free disk space, and
+/// the real location of a file handed over by the document portal.
 ///
 /// Only the symbols listed in tool/allowed-native-libs.txt may be looked up
 /// here; tool/check-privacy.sh enforces that.
@@ -17,7 +18,8 @@ final class Libc {
       _fsync = lib.lookupFunction<Int Function(Int), int Function(int)>('fsync'),
       _close = lib.lookupFunction<Int Function(Int), int Function(int)>('close'),
       _mkdir = lib.lookupFunction<Int Function(Pointer<Char>, UnsignedInt), int Function(Pointer<Char>, int)>('mkdir'),
-      _statvfs = lib.lookupFunction<Int Function(Pointer<Char>, Pointer<Uint8>), int Function(Pointer<Char>, Pointer<Uint8>)>('statvfs');
+      _statvfs = lib.lookupFunction<Int Function(Pointer<Char>, Pointer<Uint8>), int Function(Pointer<Char>, Pointer<Uint8>)>('statvfs'),
+      _getxattr = lib.lookupFunction<IntPtr Function(Pointer<Char>, Pointer<Char>, Pointer<Uint8>, Size), int Function(Pointer<Char>, Pointer<Char>, Pointer<Uint8>, int)>('getxattr');
 
   static Libc? _instance;
 
@@ -31,6 +33,7 @@ final class Libc {
   final int Function(int) _close;
   final int Function(Pointer<Char>, int) _mkdir;
   final int Function(Pointer<Char>, Pointer<Uint8>) _statvfs;
+  final int Function(Pointer<Char>, Pointer<Char>, Pointer<Uint8>, int) _getxattr;
 
   static const int _readOnly = 0; // O_RDONLY, the same on every Linux architecture.
 
@@ -109,4 +112,42 @@ final class Libc {
   // sizeof(struct statvfs) is 112 bytes on 64-bit glibc; a larger buffer
   // leaves room if a future glibc grows it.
   static const int _statvfsSize = 256;
+
+  /// The real path of a file picked through the document portal (inside a
+  /// Flatpak, picked files arrive as `/run/user/<uid>/doc/<id>/<name>`), or
+  /// null if [path] has no such attribute, doesn't exist or is too long.
+  /// Reads the portal's `user.document-portal.host-path` attribute.
+  String? hostPath(String path) {
+    final cPath = _cString(path);
+    final cName = _cString(_hostPathAttribute);
+    final value = malloc(_hostPathMax);
+    try {
+      final length = _getxattr(cPath.cast(), cName.cast(), value, _hostPathMax);
+      if (length <= 0) {
+        return null;
+      }
+      var bytes = value.asTypedList(length);
+      if (bytes.last == 0) {
+        bytes = bytes.sublist(0, length - 1);
+      }
+      return utf8.decode(bytes, allowMalformed: true);
+    } finally {
+      free(cPath);
+      free(cName);
+      free(value);
+    }
+  }
+
+  Pointer<Uint8> _cString(String text) {
+    final bytes = utf8.encode(text);
+    final pointer = malloc(bytes.length + 1);
+    pointer.asTypedList(bytes.length).setAll(0, bytes);
+    pointer[bytes.length] = 0;
+    return pointer;
+  }
+
+  static const String _hostPathAttribute = 'user.document-portal.host-path';
+
+  // PATH_MAX on Linux. A longer value fails with ERANGE and gives null.
+  static const int _hostPathMax = 4096;
 }

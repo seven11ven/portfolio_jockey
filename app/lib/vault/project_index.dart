@@ -60,13 +60,14 @@ final class FileEntry {
     required this.key,
     List<String>? tags,
     this.originalPath,
+    this.originalShownPath,
   }) : tags = tags ?? [] {
     checkId(id);
   }
 
   /// A new entry with a fresh ID and a fresh random key. [addedAt] defaults
   /// to now; imports keep the original date.
-  factory FileEntry.create({required String name, required int size, List<String>? tags, String? originalPath, DateTime? addedAt}) => FileEntry(
+  factory FileEntry.create({required String name, required int size, List<String>? tags, String? originalPath, String? originalShownPath, DateTime? addedAt}) => FileEntry(
     id: newId(),
     name: name,
     size: size,
@@ -74,6 +75,7 @@ final class FileEntry {
     key: base64.encode(Sodium.instance.randomBytes(Sodium.instance.streamKeyBytes)),
     tags: tags,
     originalPath: originalPath,
+    originalShownPath: originalShownPath,
   );
 
   factory FileEntry.fromJson(Map<String, Object?> json) => FileEntry(
@@ -84,6 +86,7 @@ final class FileEntry {
     key: _field<String>(json, 'key'),
     tags: _field<List<Object?>>(json, 'tags').map(_asString).toList(),
     originalPath: json['originalPath'] as String?,
+    originalShownPath: json['originalShownPath'] as String?,
   );
 
   final String id;
@@ -97,6 +100,13 @@ final class FileEntry {
   /// in the index, it's stored encrypted. Null if unknown.
   final String? originalPath;
 
+  /// The original's real location when [originalPath] is a document portal
+  /// path (inside a Flatpak). Only shown; Trash and checks use [originalPath].
+  final String? originalShownPath;
+
+  /// The original's location as the user should see it.
+  String? get shownOriginal => originalShownPath ?? originalPath;
+
   /// The file's key, copied into guarded memory. Dispose it after use.
   SecureBuffer openKey() => SecureBuffer.takeBytes(base64.decode(key));
 
@@ -108,6 +118,7 @@ final class FileEntry {
     'key': key,
     'tags': tags,
     'originalPath': originalPath,
+    if (originalShownPath != null) 'originalShownPath': originalShownPath,
   };
 }
 
