@@ -1,0 +1,26 @@
+# Implementation Guideline for changes and builds in this Project
+
+## Log your actions
+* All your actions should be logged under a folder(named after the date["YYYY-MM-DD"] the action was done. If one already exists for the current session with the appropiate name, use that one) under "/project-changelog". The markdown file should contain the details of said change/build, along with the impacts that come with it.
+    - This rule DOES NOT apply to any untracked components(anything applicable to ".gitignore")
+
+## Never edit off the bat
+* You can read through the project, but any actions intended to make permamnent or temporary changes should be designed in planning mode to avoid conflict with project structure. NEVER automatically edit anything in the repo without explicit permission given.
+
+## Always ask questions
+* When uncertain about any elements of the project, or any elements regarding the change or build, the user/AI-Agent(s) responsible should consult the project manager with any questions they may have.
+
+## Version control
+* When creating builds, ALWAYS store the prior version of whatever component is changed, updated, or modified in "/version-control." This helps us rewind whenever the repo breaks, and also helps mix-match components to optimize productivity. This rule applies to but is not limited to:
+    - Packages/Dependencies
+    - Modules/Scripts
+    - Application Builds
+    - Servers
+    * This rule however does exclude documentation(we are mainly focused on keeping version control for application components) such as:
+        - Guidelines
+        - Changelogs 
+        - Notes
+
+## environment variables
+* When introducing new variables, ALWAYS update the "/.env_example" to reflect what the ".env" would look like(obviously keep the variables empty, do NOT give them any values, they are there to serve as a reference and guide to setup the application), along with proper annotation on what the key/variable/secret does, and how to set it up.
+    - Do not be an idiot and expose the secret/api value through the fucking annotation

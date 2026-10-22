@@ -1,0 +1,2 @@
+Before doing anything in this repository, read and follow `AGENTS.md` and every file in `project-guidelines/`.
+Key rules: never edit without explicit permission (plan first), ask when uncertain, log changes in `project-changelog/YYYY-MM-DD/` (untracked/.gitignored items exempt), back up prior component versions in `version-control/`, document new env variables in `/.env_example` with empty values and annotations, keep a single root `/.gitignore`, and never expose secrets/keys/PII. This repo is PUBLIC.
