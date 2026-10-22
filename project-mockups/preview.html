@@ -20,7 +20,7 @@
 
   <section class="scene">
     <div class="scene-title">1. Preview (image)</div>
-    <div class="scene-note">Images, PDF, text and Markdown render directly. Audio and video use the same screen with player controls (the playback approach is decided in build phase 6).</div>
+    <div class="scene-note">Images, PDF, text and Markdown render directly. Audio and video play in the app with player controls (media_kit + libmpv, local files only, decided in phase 6).</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">countertop-after.jpg</h3><span class="icon-btn" title="Previous">‹</span><span class="icon-btn" title="Next">›</span><span class="icon-btn">⋯</span></header>
       <div class="preview-wrap">
@@ -112,6 +112,119 @@
           <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Encrypt and replace</button></div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">6. Preview (PDF)</div>
+    <div class="scene-note">Pages are rendered in memory with Poppler. Nothing readable is written to disk, and links in the PDF are never opened automatically.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">contractor-quote.pdf</h3><span class="icon-btn">‹</span><span class="icon-btn">›</span><span class="icon-btn">⋯</span></header>
+      <div class="preview-wrap">
+        <div class="preview-stage" style="background:#e5e7eb;color:#1b1f24;flex-direction:column;gap:10px">
+          <div style="background:#fff;width:60%;aspect-ratio:1/1.3;box-shadow:0 2px 8px rgba(0,0,0,.15);padding:18px;font-size:11px;text-align:left">ACME Renovations<br><br>Quote #2041<br>Countertops ........ $3,200<br>Labour ............. $1,450</div>
+          <div class="row" style="justify-content:center;gap:8px;font-size:12px"><button class="btn">‹ Prev</button><span>Page 1 of 3</span><button class="btn">Next ›</button><button class="btn">−</button><span>100%</span><button class="btn">＋</button></div>
+        </div>
+        <div class="card preview-side">
+          <div><span class="label">Tags</span><div class="chips"><span class="chip">Receipts</span><span class="chip">Plans</span></div></div>
+          <div><span class="label">Size</span>310 KB · 3 pages</div>
+          <div><span class="label">Added</span>Oct 19, 2026</div>
+          <button class="btn">✎ Edit in another app…</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">7. Preview (Markdown)</div>
+    <div class="scene-note">Formatted text. Images in a Markdown file are never fetched from the internet or read from disk; a placeholder shows instead.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">notes.md</h3><span class="icon-btn">‹</span><span class="icon-btn">›</span><span class="icon-btn">⋯</span></header>
+      <div class="preview-wrap">
+        <div class="preview-stage" style="background:var(--surface);color:var(--text);align-items:flex-start;justify-content:flex-start;text-align:left;padding:20px;flex-direction:column;gap:8px">
+          <h2 style="margin:0">Kitchen plan</h2>
+          <p style="margin:0">Order <strong>quartz</strong> by Nov 3. Measurements are in <em>measurements.txt</em>.</p>
+          <div class="summary-box small">🖼 Image not loaded: images in Markdown files are never fetched.</div>
+          <ul style="margin:0"><li>Tiles: 12 boxes</li><li>Grout: grey</li></ul>
+        </div>
+        <div class="card preview-side">
+          <div><span class="label">Size</span>2.4 KB</div>
+          <div><span class="label">Added</span>Oct 20, 2026</div>
+          <button class="btn">✎ Edit in another app…</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">8. Edit in another app inside a Flatpak</div>
+    <div class="scene-note">A sandboxed app can't list your installed apps, so your desktop's own app chooser appears after this confirmation. Outside a Flatpak, scene 3's list is shown.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <h2>Edit measurements.txt in another app?</h2>
+        <p class="small muted">Your desktop will ask which app to open it with.</p>
+        <div class="notice">While you edit, a readable copy of this file exists in a private memory-only folder. It's wiped when you save or discard your changes. The other app may keep its own history of the file.</div>
+        <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Decrypt and open</button></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">9. Discard changes: confirmation</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Discard your changes to measurements.txt?</h2></div>
+        <p>The edited copy is wiped. The version in <strong>Kitchen Remodel</strong> stays as it was.</p>
+        <div class="dialog-actions"><button class="btn">Keep editing</button><button class="btn btn-danger">Discard changes</button></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">10. Lock while editing</div>
+    <div class="scene-note">Locking must not leave a readable copy behind, so the edit is finished first.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <h2>Finish editing before locking</h2>
+        <p>measurements.txt is still open in Text Editor. Save or discard your changes, then lock.</p>
+        <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn">Discard…</button><button class="btn btn-primary">Save changes…</button></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">11. Unfinished edit found at unlock</div>
+    <div class="scene-note">After a crash or power cut, the next unlock finds the leftover copy and asks what to do with it.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <h2>An edit wasn't finished</h2>
+        <div class="summary-box"><div class="list-row"><span style="flex:1">measurements.txt in Kitchen Remodel</span><span class="muted small">edited Oct 22, 14:05</span></div></div>
+        <p class="small muted">Save it into the project, or discard it. Either way the readable copy is then wiped.</p>
+        <div class="dialog-actions"><button class="btn btn-danger">Discard</button><button class="btn btn-primary">Save into project…</button></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">12. No private memory-only folder</div>
+    <div class="scene-note">The app refuses rather than write a readable copy to disk.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <h2>Can't open measurements.txt</h2>
+        <div class="notice notice-danger">There's no private memory-only folder on this system (XDG_RUNTIME_DIR isn't set or isn't in memory), so a readable copy can't be made safely.</div>
+        <p class="small muted">This usually means the app was started outside a normal desktop login.</p>
+        <div class="dialog-actions"><button class="btn btn-primary">OK</button></div>
+      </div></div>
     </div>
   </section>
 </main>

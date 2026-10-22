@@ -41,7 +41,10 @@
         "dart.allowAnalytics": false,
         // Don't start the DevTools server (a local port) as soon as a Flutter
         // project opens. DevTools still opens on demand while debugging.
-        "dart.shareDevToolsWithFlutter": false
+        "dart.shareDevToolsWithFlutter": false,
+        // version-control/ holds backup copies of Dart files outside the app
+        // folder. They can't resolve their imports, so don't analyse them.
+        "dart.analysisExcludedFolders": ["version-control"]
       }
     }
   },
