@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:portfolio_jockey/app/app_controller.dart';
 import 'package:portfolio_jockey/app/edit_session.dart';
 import 'package:portfolio_jockey/app/theme.dart';
+import 'package:portfolio_jockey/services/export_service.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/ui/common.dart';
+import 'package:portfolio_jockey/ui/export/export_dialog.dart';
+import 'package:portfolio_jockey/ui/export/import_dialog.dart';
 import 'package:portfolio_jockey/ui/home/project_dialogs.dart';
 import 'package:portfolio_jockey/ui/preview/edit_dialogs.dart';
 import 'package:portfolio_jockey/ui/project/project_screen.dart';
+import 'package:portfolio_jockey/ui/settings/settings_screen.dart';
 
 /// The project grid.
 class HomeScreen extends StatefulWidget {
@@ -74,8 +78,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (controller.stage != AppStage.unlocked) {
       return; // Locked while a project was open: this screen is going away.
     }
+    final service = controller.projects;
     try {
-      final listing = await controller.projects.listProjects();
+      final listing = await service.listProjects();
       if (mounted) {
         setState(() {
           _listing = listing;
@@ -83,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } on Object catch (e) {
-      if (controller.stage != AppStage.unlocked) {
+      if (!controller.isCurrent(service)) {
         return; // Locked during the read, which then failed: nothing to show.
       }
       if (e is! Exception) {
@@ -133,9 +138,24 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          comingSoon(const IconButton(onPressed: null, icon: Icon(Icons.download_outlined))),
+          IconButton(
+            tooltip: 'Import a locked export',
+            onPressed: () async {
+              if (await importExport(context)) {
+                await _reload();
+              }
+            },
+            icon: const Icon(Icons.download_outlined),
+          ),
           IconButton(tooltip: 'Lock', onPressed: () => unawaited(requestLock(context)), icon: const Icon(Icons.lock_outline)),
-          comingSoon(const IconButton(onPressed: null, icon: Icon(Icons.settings_outlined))),
+          IconButton(
+            tooltip: 'Settings',
+            onPressed: () async {
+              await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+              await _reload();
+            },
+            icon: const Icon(Icons.settings_outlined),
+          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -278,8 +298,12 @@ class ProjectMenuButton extends StatelessWidget {
           child: const Text('Change cover art and description'),
         ),
         const Divider(height: 8),
-        comingSoon(const MenuItemButton(leadingIcon: Icon(Icons.archive_outlined), child: Text('Export as ZIP…'))),
-        comingSoon(const MenuItemButton(leadingIcon: Icon(Icons.archive_outlined), child: Text('Export as TAR…'))),
+        for (final format in ArchiveFormat.values)
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.archive_outlined),
+            onPressed: () => onAction(ExportDialog(projects: [project], format: format)),
+            child: Text('Export as ${format.name.toUpperCase()}…'),
+          ),
         const Divider(height: 8),
         MenuItemButton(
           leadingIcon: Icon(Icons.delete_outline, color: error),

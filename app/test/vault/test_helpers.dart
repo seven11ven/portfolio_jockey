@@ -33,7 +33,12 @@ class FakeTrash implements Trasher {
 /// A new empty folder, deleted after the test.
 Future<Directory> tempFolder() async {
   final folder = await Directory.systemTemp.createTemp('pj_vault_test_');
-  addTearDown(() => folder.delete(recursive: true));
+  // A test may have moved or removed it already (for example a storage move).
+  addTearDown(() async {
+    if (await folder.exists()) {
+      await folder.delete(recursive: true);
+    }
+  });
   return folder;
 }
 

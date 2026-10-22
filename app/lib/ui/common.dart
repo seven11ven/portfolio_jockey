@@ -14,11 +14,6 @@ class AppScope extends InheritedNotifier<AppController> {
   static AppController read(BuildContext context) => context.getInheritedWidgetOfExactType<AppScope>()!.notifier!;
 }
 
-const String comingLater = 'Coming in a later version';
-
-/// A greyed-out control for a feature a later plan phase adds.
-Widget comingSoon(Widget child) => Tooltip(message: comingLater, child: child);
-
 String formatBytes(int bytes) {
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   var value = bytes.toDouble();

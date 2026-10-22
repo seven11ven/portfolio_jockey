@@ -2,13 +2,17 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:portfolio_jockey/app/edit_session.dart';
 import 'package:portfolio_jockey/app/settings_store.dart';
+import 'package:portfolio_jockey/app/theme.dart';
+import 'package:portfolio_jockey/services/export_service.dart';
 import 'package:portfolio_jockey/services/file_picker.dart';
 import 'package:portfolio_jockey/services/native/gio_apps.dart';
 import 'package:portfolio_jockey/services/native/gio_trash.dart';
 import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
+import 'package:portfolio_jockey/services/storage_move.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
 import 'package:portfolio_jockey/vault/kdf.dart';
 import 'package:portfolio_jockey/vault/vault.dart';
@@ -46,15 +50,43 @@ class AppController extends ChangeNotifier {
   String? _storagePath;
   String? get storagePath => _storagePath;
 
+  AppSettings _settings = const AppSettings();
+
+  ThemeMode get themeMode => switch (_settings.themeMode) {
+    'light' => ThemeMode.light,
+    'dark' => ThemeMode.dark,
+    _ => ThemeMode.system,
+  };
+
+  PjAccent get accent => PjAccent.named(_settings.accent);
+
+  /// Saves the colour scheme. It's a preference, not project data, so it
+  /// applies at once without a confirmation.
+  Future<void> setAppearance({ThemeMode? mode, PjAccent? accent}) async {
+    _settings = _settings.copyWith(themeMode: mode?.name, accent: accent?.name);
+    notifyListeners();
+    await settingsStore.save(_settings);
+  }
+
   ProjectService? _projects;
 
   /// The unlocked vault's projects. Only valid while [stage] is unlocked.
   ProjectService get projects => _projects ?? (throw StateError('The vault is locked'));
 
+  /// Whether [service] can still read: false once its vault was locked, even
+  /// if the vault was unlocked again since. A read that fails then was cut off
+  /// by the lock and needs no error message.
+  bool isCurrent(ProjectService service) => _projects != null && !service.vault.isLocked;
+
+  /// Export and import for the unlocked vault. Uses the same Argon2id
+  /// settings as new vaults ([kdf]), so tests stay fast.
+  ExportService get exports => ExportService(projects, kdf: kdf);
+
   final UnlockBackoff backoff = UnlockBackoff();
 
   Future<void> start() async {
     final settings = await settingsStore.load();
+    _settings = settings;
     _storagePath = settings.storagePath;
     final path = _storagePath;
     _stage = path != null && await Vault.exists(Directory(path)) ? AppStage.locked : AppStage.setup;
@@ -67,9 +99,45 @@ class AppController extends ChangeNotifier {
     final root = Directory(path);
     await root.create(recursive: true);
     final vault = await Vault.create(root, passphrase, kdf: kdf);
-    await settingsStore.save(AppSettings(storagePath: path));
+    _settings = _settings.copyWith(storagePath: path);
+    await settingsStore.save(_settings);
     _storagePath = path;
     _open(vault);
+  }
+
+  /// Moves the vault to [move]'s target: copies and checks everything, saves
+  /// the new location, switches the open vault to it, then removes the old
+  /// folder. Refused while a file is being edited. If the copy fails, the old
+  /// location stays in use. Returns false if the old folder couldn't be
+  /// removed (the move itself still succeeded).
+  Future<bool> moveStorage(StorageMove move, {void Function(MoveProgress progress)? onProgress}) async {
+    final current = _projects;
+    if (current == null || edits.active != null) {
+      throw StateError('Finish editing before moving the storage location');
+    }
+    await move.copyAndVerify(onProgress: onProgress);
+    _settings = _settings.copyWith(storagePath: move.target.path);
+    await settingsStore.save(_settings);
+    _storagePath = move.target.path;
+    _projects = ProjectService(current.vault.relocatedTo(move.target), trasher: trasher);
+    notifyListeners();
+    try {
+      await move.removeSource();
+      return true;
+    } on FileSystemException {
+      return false;
+    }
+  }
+
+  /// Re-wraps the master key with [replacement]. Files aren't re-encrypted,
+  /// and the open vault stays open. Throws [WrongPassphrase] if [current] is
+  /// wrong.
+  Future<void> changePassphrase(String current, String replacement) async {
+    final path = _storagePath;
+    if (path == null) {
+      throw StateError('No vault location');
+    }
+    await Vault.changePassphrase(Directory(path), current, replacement, kdf: kdf);
   }
 
   /// Throws [WrongPassphrase] (and records the failure) if it doesn't unlock.

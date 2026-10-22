@@ -1,0 +1,38 @@
+name: portfolio_jockey
+description: "Local, encrypted project tracker"
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # The Flutter team's Linux file picker (GTK native dialog). Reviewed: docs/dependencies.md
+  file_selector_linux: ^0.9.4
+  file_selector_platform_interface: ^2.7.0
+  # Previews (plan phase 6), pinned to the reviewed versions. Reviewed: docs/dependencies.md
+  # Markdown; the app always passes its own imageBuilder, so no image is ever loaded.
+  flutter_markdown_plus: 1.0.12
+  # Audio/video through the system libmpv. Not media_kit_libs_linux: its build
+  # downloads mimalloc; linux/CMakeLists.txt sets MEDIA_KIT_LIBS_AVAILABLE instead.
+  media_kit: 1.2.6
+  media_kit_video: 2.0.1
+  # Only to register a no-op wakelock, so wakelock_plus never uses D-Bus.
+  wakelock_plus_platform_interface: 1.7.0
+
+# The file picker's interface lists `http` but never uses it. This empty stand-in
+# keeps all networking code out of the dependency tree. See tool/stubs/http/README.md.
+dependency_overrides:
+  http:
+    path: tool/stubs/http
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  archive: 4.5.2
+
+flutter:
+  uses-material-design: true

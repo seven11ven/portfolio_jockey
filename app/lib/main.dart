@@ -52,13 +52,17 @@ class _PortfolioJockeyAppState extends State<PortfolioJockeyApp> {
   @override
   Widget build(BuildContext context) => AppScope(
     controller: widget.controller,
-    child: MaterialApp(
-      title: 'Portfolio Jockey',
-      debugShowCheckedModeBanner: false,
-      navigatorKey: _navigator,
-      theme: buildTheme(Brightness.light),
-      darkTheme: buildTheme(Brightness.dark),
-      home: const _Root(),
+    child: ListenableBuilder(
+      listenable: widget.controller,
+      builder: (context, _) => MaterialApp(
+        title: 'Portfolio Jockey',
+        debugShowCheckedModeBanner: false,
+        navigatorKey: _navigator,
+        themeMode: widget.controller.themeMode,
+        theme: buildTheme(Brightness.light, accent: widget.controller.accent),
+        darkTheme: buildTheme(Brightness.dark, accent: widget.controller.accent),
+        home: const _Root(),
+      ),
     ),
   );
 }

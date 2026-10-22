@@ -67,7 +67,7 @@ The hosting service you use (GitHub Codespaces, DevPod, Coder) has its own polic
 
 Each package's code was reviewed on 2026-10-22, as the Open Source and Privacy guideline requires. That means its downloaded source, not its web page. The exact versions are in `app/tool/allowed-packages.txt`.
 
-The app's direct dependencies are `file_selector_linux` and `file_selector_platform_interface` (phase 5), `flutter_markdown_plus`, `media_kit`, `media_kit_video` and `wakelock_plus_platform_interface` (phase 6), and the dev-only `flutter_lints`. The packages in the first table come with the Flutter SDK, which pins their versions. `cupertino_icons`, an iOS icon font, isn't used; the `--empty` template leaves it out.
+The app's direct dependencies are `file_selector_linux` and `file_selector_platform_interface` (phase 5), `flutter_markdown_plus`, `media_kit`, `media_kit_video` and `wakelock_plus_platform_interface` (phase 6), and the dev-only `flutter_lints` and `archive` (phase 7, tests only). The packages in the first table come with the Flutter SDK, which pins their versions. `cupertino_icons`, an iOS icon font, isn't used; the `--empty` template leaves it out.
 
 | Package(s) | Version | Ships in the app? | License (from its LICENSE file) | Cost | Code review |
 |---|---|---|---|---|---|
@@ -126,7 +126,7 @@ Reviewed on 2026-10-22, including media_kit_video's C++ code (1,133 lines). Each
 | `dbus` | 0.8.0 | Yes (never connects) | MPL-2.0 (file-level copyleft, compatible with AGPL-3.0) | Free | Can reach a **TCP** bus if `DBUS_SESSION_BUS_ADDRESS` says `tcp:`, but `DBusClient` connects lazily on its first call, and the only caller is the wakelock above. Its server class is never created. |
 | `package_info_plus` (+ `_platform_interface`) | 10.2.2, 4.1.0 | Yes (never called) | BSD-3-Clause | Free | On Linux, `getAll()` resolves `/proc/self/exe` and runs `stat` as a process. Only wakelock_plus calls it, as above. Its `package:http` hit is web-only code. |
 | `posix`, `ffi` | 6.5.2, 2.2.0 | Yes | MIT, BSD-3-Clause | Free | libc bindings and `malloc` helpers (dbus uses `getuid`). |
-| `image`, `archive`, `xml`, `petitparser` | 4.12.0, 4.5.2, 7.0.1, 7.0.2 | Yes | MIT | Free | Only media_kit's `screenshot()` uses `image`, and the app never calls it. Their file APIs run only when called. `image`'s hits are a WebP field named `amplitude` and a `dart:html` error string. |
+| `image`, `archive`, `xml`, `petitparser` | 4.12.0, 4.5.2, 7.0.1, 7.0.2 | Yes | MIT | Free | Only media_kit's `screenshot()` uses `image`, and the app never calls it. Their file APIs run only when called. `image`'s hits are a WebP field named `amplitude` and a `dart:html` error string. Since phase 7, `archive` is also a direct **dev** dependency: the tests use its ZIP and TAR decoders as an independent check of the app's own archive writers. The app itself doesn't use it, because it only takes whole files (on disk or in memory), and exports must stream. |
 | `safe_local_storage`, `uri_parser`, `uuid`, `synchronized`, `universal_platform` | 2.0.6, 3.0.2, 4.6.0, 3.5.0, 1.1.0 | Yes | MIT | Free | Helpers for media_kit's temporary files (never created by the app's usage), path parsing, IDs, locks and platform checks. There's no network code. |
 | `crypto`, `typed_data`, `fixnum`, `flutter_web_plugins` | 3.0.7, 1.4.0, 1.1.1, SDK | Yes | BSD-3-Clause | Free | Pure Dart. `flutter_web_plugins` is only used by web builds. |
 | `win32`, `ffi_leak_tracker` | 6.4.0, 0.1.2 | No: Windows only | BSD-3-Clause | Free | Never compiled into the Linux app. The `telemetry` hit is a Windows IOCTL constant name. |
@@ -142,7 +142,7 @@ The vault calls these through Dart's built-in `dart:ffi`. That keeps the app fre
 | **GIO app info** (same libraries, `app/lib/services/native/gio_apps.dart`) | as above | LGPL-2.1+ | Free | as above | "Edit in another app" lists the apps for a file type (`g_content_type_guess` gets the file's **name only**, never its contents), then launches one with `g_app_info_launch`, or `g_app_info_launch_default_for_uri` when the desktop chooses. Reviewed in GLib 2.74.6's `gio/gappinfo.c` and `gio/gdesktopappinfo.c`: inside a Flatpak, the latter falls back to the **OpenURI portal**, which shows the desktop's app chooser. Each launch sends a local `org.gtk.gio.DesktopAppInfo.Launched` signal on the session D-Bus, with the app ID, its process ID and the file's URI. It never leaves the machine; desktops use it for "recent apps". 14 functions are allowed. |
 | **Poppler** (`libpoppler-glib.so.8`) and **cairo** (`libcairo.so.2`) | Debian 12: 22.12.0, cairo 1.16 | Poppler "GPL-2 or GPL-3" (Debian's copyright file). The GPL-3 option is compatible with the app's AGPL-3.0. cairo: LGPL-2.1 or MPL-1.1 | Free | Dev container: Debian's `libpoppler-glib8` (installed by `setup.sh`). Release: decided in phase 8 | PDF previews are rendered **from memory**: `poppler_document_new_from_bytes` with `g_bytes_new_static` over a C buffer the app owns and wipes on close, then each page is drawn into a cairo image surface. Opening from a path or `GFile` is never bound (gvfs could fetch remote files). Poppler links Mozilla's NSS, but only for checking signed PDFs, and no signature, link, form or attachment function is bound. 20 functions are allowed. |
 | **libmpv** (`libmpv.so.2`) and **epoxy** | Debian 12: mpv 0.35.1, epoxy 1.5.10 | mpv: LGPL-2.1+ for most files, with some GPL-2+ parts (Debian's copyright file), all compatible with AGPL-3.0. epoxy: MIT | Free | Dev container: `libmpv-dev`, `libepoxy-dev` (`setup.sh`). Release: decided in phase 8 | Loaded by media_kit (Dart FFI) and linked by media_kit_video's plugin. Reviewed in mpv 0.35.1's source (`etc/builtin.conf`, `options/path.c`, `player/scripting.c`, `demux/cache.c`). libmpv's built-in profile sets `config=no`, so the config folder is empty, and nothing from `~/.config/mpv` (config or scripts) is loaded. The built-in `ytdl_hook.lua` follows the `ytdl` option and unloads when it's set to `no`. Through FFmpeg, libmpv links gnutls, OpenSSL, libssh, SRT, libbluray, libcdio and libarchive. These are kept unreachable by the options under "Readable copies" below, by only ever opening plain file paths, and, in the Flatpak, by having no network permission. A test (`test/services/media_lockdown_test.dart`) checks that the real libmpv accepts every option and plays a local file. |
-| **libc** (`libc.so.6`) | The system's | LGPL-2.1+ (glibc) | Free | Part of every Linux system | The app may bind only `malloc`, `free`, `open`, `fsync`, `close` and `mkdir` (phase 6, for the private 0700 folders), so libc's network functions stay out of reach. |
+| **libc** (`libc.so.6`) | The system's | LGPL-2.1+ (glibc) | Free | Part of every Linux system | The app may bind only `malloc`, `free`, `open`, `fsync`, `close`, `mkdir` (phase 6, for the private 0700 folders) and `statvfs` (phase 7, for free space before exports and storage moves), so libc's network functions stay out of reach. `statvfs` is read with glibc's 64-bit `struct statvfs` layout (the same on x86-64 and arm64), and a test compares the result with `df`. |
 
 **libsodium review (2026-10-22):**
 1. **Signature verified.** The official `libsodium-1.0.18.tar.gz` (SHA-256 `6f504490b342a4f8a4c4a02fc9b866cbef8622d5df4e5452b46be121e46636c1`) passed its minisign check, using the key `RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3`. The key was read from two separately hosted official sources: doc.libsodium.org and the `jedisct1/libsodium-doc` repository on GitHub.
@@ -168,6 +168,39 @@ The vault calls these through Dart's built-in `dart:ffi`. That keeps the app fre
   - A Dart `String` can't be wiped, so the typed passphrase exists briefly as a string.
   - While a project is open, its decrypted names and per-file keys are in Dart's normal memory. The master key never is.
   - Decrypting a file streams it, so if a file turns out to be damaged, the earlier chunks have already been delivered. Callers must discard everything from a stream that ends in an error.
+
+## Exports (plan phase 7)
+
+Every export, of one project or several, offers exactly two options (PM decision, 2026-10-22). The vault passphrase is never used for exports.
+
+- **Unlocked: ZIP or TAR.** This is readable by anyone, and the dialog says so.
+  - **Layout:** `<Project>/project.json` (name, description, tags, and each file's tags, size and date), `<Project>/cover.<ext>` and `<Project>/files/<real name>`. Clashing names become "name (2).ext".
+  - **Not included:** original device paths and keys.
+  - **Writers:** the app's own streaming writers in `app/lib/services/archive/`.
+    - **ZIP:** data descriptors, ZIP64, UTF-8 names, deflate through `dart:io`, and already-compressed formats stored as they are.
+    - **TAR:** ustar, with PAX for long or non-ASCII names and files of 8 GiB or more.
+- **Locked with a custom passphrase: `.pjx`.** Only Portfolio Jockey can open it, with "Import".
+
+  | Bytes | Holds |
+  |---|---|
+  | 0–3 | `PJEX` |
+  | 4 | format version (1) |
+  | 5–7 | reserved, zero |
+  | 8–15 | Argon2id opslimit (little-endian) |
+  | 16–23 | Argon2id memlimit in bytes |
+  | 24–39 | salt |
+  | 40… | the content, encrypted exactly like a vault file (`PJBL` prefix, then secretstream in 64 KiB chunks) under a key derived from the export passphrase |
+
+  - **Header checks:** the header has no separate tag. Changing the settings or salt changes the key, so the first chunk fails. The magic, version and reserved bytes are checked exactly, and settings beyond 10 passes or 2 GiB are refused before any work.
+  - **Passphrase rules:** none for strength (PM decision). It must only be non-empty and confirmed.
+  - **Inside the encryption:** a tar holding `manifest.json` (projects, file names, sizes, dates, tags), then `covers/<p>` and `files/<p>/<f>`. Real names exist only in the encrypted manifest.
+  - **Reading it:** the reader accepts only regular files with safe ASCII paths, verifies every header checksum, and reads to the end, so a cut-off export is detected.
+  - **Import:** imported files get **new keys**, and a project whose name is taken becomes "Name (2)". Import is all or nothing: on any error, a wrong size or Cancel, every project it created is deleted.
+- **Writing:** exports go to a temporary file next to the target and are renamed into place. On failure or Cancel the temporary file is deleted, and an unlocked one is overwritten with zeros first.
+- **Known limits:**
+  - **A forgotten export passphrase** can't be recovered.
+  - **Cancelled unlocked exports:** the zeroing happens before deletion, but a filesystem (copy-on-write, SSD wear levelling) may keep old blocks.
+  - **The passphrase as text:** the dialog holds the typed passphrase as a Dart string, which can't be wiped, the same limit as for the vault passphrase.
 
 ## Readable copies (plan phase 6)
 
@@ -215,7 +248,7 @@ The vault calls these through Dart's built-in `dart:ffi`. That keeps the app fre
   4. the Linux runner (`app/linux`) uses network libraries (curl, libsoup, sockets)
   5. any package's code (its Dart `lib/`, build `hook/` and, for plugins, the C/C++ in `linux/`) has a network, telemetry or build-time download (`FetchContent`) hit that isn't in `app/tool/reviewed-hits.txt` **for that exact version**, so upgrading a package forces a fresh review
   6. native code loads a library or function that isn't in `app/tool/allowed-native-libs.txt`, uses a name that isn't a plain string (so it can't be checked), or looks up symbols without naming a library
-- Tested against deliberately broken copies: an injected and allowlisted `http` package, `HttpClient` in `lib/`, an unlisted version, an allowlisted package containing a Google Analytics URL, an upgraded `vm_service`, retaining paths turned on in a test, curl and libsoup in the runner, and a package from another server. Each one failed the check. For check 6, these also failed: opening libcurl from a new file or from the libsodium bindings, binding libc's `socket`, a library or function name that isn't a plain string, and `DynamicLibrary.process()`. For phase 5: curl in the plugin's C++, code or a dependency added to the `http` stand-in, a path dependency outside `tool/stubs/`, and `FetchContent` in the app's Linux build. For phase 6: binding `poppler_document_new_from_file` in the Poppler bindings, and binding `g_socket_client_new` in the GIO app-info bindings.
+- Tested against deliberately broken copies: an injected and allowlisted `http` package, `HttpClient` in `lib/`, an unlisted version, an allowlisted package containing a Google Analytics URL, an upgraded `vm_service`, retaining paths turned on in a test, curl and libsoup in the runner, and a package from another server. Each one failed the check. For check 6, these also failed: opening libcurl from a new file or from the libsodium bindings, binding libc's `socket`, a library or function name that isn't a plain string, and `DynamicLibrary.process()`. For phase 5: curl in the plugin's C++, code or a dependency added to the `http` stand-in, a path dependency outside `tool/stubs/`, and `FetchContent` in the app's Linux build. For phase 6: binding `poppler_document_new_from_file` in the Poppler bindings, and binding `g_socket_client_new` in the GIO app-info bindings. For phase 7: binding libc's `socket` next to `statvfs`.
 - **Limits:** it scans source that pub downloaded and verified by checksum into `~/.pub-cache`. It can't see inside the precompiled Flutter engine (see above). Renamed or obfuscated network calls would need a human review, which is why every new package also gets one.
 - **The Linux release** will be a Flatpak with no network permission (phase 8).
 

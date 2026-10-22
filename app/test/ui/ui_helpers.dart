@@ -25,6 +25,18 @@ class FakeFilePicker implements FilePicker {
 
   @override
   Future<String?> pickFolder({String? initialDirectory}) async => folder;
+
+  /// The answer to the save dialog; null means cancelled.
+  String? saveLocation;
+
+  /// The answer to "pick an export to import"; null means cancelled.
+  String? exportFile;
+
+  @override
+  Future<String?> pickSaveLocation({required String suggestedName, String? initialDirectory}) async => saveLocation;
+
+  @override
+  Future<String?> pickExport() async => exportFile;
 }
 
 /// A running app with its own config and storage folders.

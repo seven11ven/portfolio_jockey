@@ -51,6 +51,18 @@ class PjColors extends ThemeExtension<PjColors> {
   @override
   PjColors copyWith() => this;
 
+  /// The same colours with a different [accentSoft], for the chosen accent.
+  PjColors withAccentSoft(Color soft) => PjColors(
+    muted: muted,
+    border: border,
+    surface2: surface2,
+    accentSoft: soft,
+    dangerSoft: dangerSoft,
+    warn: warn,
+    warnSoft: warnSoft,
+    ok: ok,
+  );
+
   @override
   PjColors lerp(PjColors? other, double t) => t < 0.5 || other == null ? this : other;
 }
@@ -66,18 +78,38 @@ const List<List<Color>> coverGradients = [
 
 const double _radius = 12;
 
-ThemeData buildTheme(Brightness brightness) {
+/// The accent colours offered in Settings (mockup `settings.html`), each with
+/// a lighter shade for the dark theme.
+enum PjAccent {
+  indigo(Color(0xFF4F46E5), Color(0xFF8B83FF)),
+  teal(Color(0xFF0D9488), Color(0xFF2DD4BF)),
+  rose(Color(0xFFE11D48), Color(0xFFFB7185)),
+  amber(Color(0xFFB45309), Color(0xFFFBBF24)),
+  slate(Color(0xFF475569), Color(0xFF94A3B8));
+
+  const PjAccent(this.light, this.dark);
+
+  final Color light;
+  final Color dark;
+
+  static PjAccent named(String name) => values.firstWhere((a) => a.name == name, orElse: () => indigo);
+}
+
+ThemeData buildTheme(Brightness brightness, {PjAccent accent = PjAccent.indigo}) {
   final dark = brightness == Brightness.dark;
-  final extra = dark ? PjColors.dark : PjColors.light;
+  final base = dark ? PjColors.dark : PjColors.light;
+  final primary = dark ? accent.dark : accent.light;
+  final surface = dark ? const Color(0xFF171B21) : Colors.white;
+  final extra = base.withAccentSoft(Color.alphaBlend(primary.withValues(alpha: dark ? 0.22 : 0.10), surface));
   final scheme = ColorScheme(
     brightness: brightness,
-    primary: dark ? const Color(0xFF8B83FF) : const Color(0xFF4F46E5),
+    primary: primary,
     onPrimary: dark ? const Color(0xFF0F1216) : Colors.white,
-    secondary: dark ? const Color(0xFF8B83FF) : const Color(0xFF4F46E5),
+    secondary: primary,
     onSecondary: dark ? const Color(0xFF0F1216) : Colors.white,
     error: dark ? const Color(0xFFFF7B6E) : const Color(0xFFC2362B),
     onError: Colors.white,
-    surface: dark ? const Color(0xFF171B21) : Colors.white,
+    surface: surface,
     onSurface: dark ? const Color(0xFFE8ECF1) : const Color(0xFF1B1F24),
     surfaceContainerHighest: extra.surface2,
     outline: extra.border,

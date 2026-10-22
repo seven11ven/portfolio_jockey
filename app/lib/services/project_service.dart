@@ -317,6 +317,51 @@ final class ProjectService {
     }
   }
 
+  /// Decrypts [file] chunk by chunk, for exports. The file's key is wiped
+  /// when the stream ends, fails or is cancelled. As with every decryption
+  /// stream, if it ends in an error, everything received must be discarded.
+  Stream<Uint8List> openFile(String id, FileEntry file) async* {
+    final key = file.openKey();
+    try {
+      yield* vault.readBlob(id, file.id, key);
+    } finally {
+      key.dispose();
+    }
+  }
+
+  /// Encrypts [content] into project [id] as a new file with a fresh key, for
+  /// imports. [tags] missing from the project are added to it. Throws
+  /// [FormatException] if [content] isn't [size] bytes, and nothing is added.
+  Future<void> importFile(
+    String id, {
+    required String name,
+    required int size,
+    required List<String> tags,
+    required DateTime addedAt,
+    required Stream<List<int>> content,
+  }) async {
+    final index = await vault.readIndex(id);
+    final entry = FileEntry.create(name: name, size: size, tags: [...tags], addedAt: addedAt);
+    var received = 0;
+    final counted = content.map((chunk) {
+      received += chunk.length;
+      return chunk;
+    });
+    final key = entry.openKey();
+    try {
+      await vault.writeBlob(id, entry.id, counted, key);
+    } finally {
+      key.dispose();
+    }
+    if (received != size) {
+      await vault.deleteBlob(id, entry.id);
+      throw FormatException('$name: expected $size bytes, got $received');
+    }
+    _addProjectTags(index, tags);
+    index.files.add(entry);
+    await _save(id, index);
+  }
+
   /// Decrypts file [fileId] into [target], which must be in a private
   /// memory-only folder (see PrivateFolders). If decryption fails part-way,
   /// [target] is overwritten with zeros and deleted.

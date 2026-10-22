@@ -15,25 +15,22 @@
 <main class="mock-page">
   <header>
     <h1>Export and import</h1>
-    <p class="muted">Exports ask each time: readable files, or kept encrypted. Encrypted exports can only be opened by importing them back into Portfolio Jockey.</p>
+    <p class="muted">Every export, one project or many, offers two options: lock it with a passphrase you choose, or leave it unlocked as a regular ZIP or TAR. A locked export is a single .pjx file that only Portfolio Jockey can open, with "Import". The vault passphrase is never used for exports.</p>
   </header>
 
   <section class="scene">
-    <div class="scene-title">1. Export a project</div>
-    <div class="scene-note">From the project "…" menu. The format is pre-selected from the menu choice (ZIP or TAR) and can be changed here.</div>
+    <div class="scene-title">1. Export a project: unlocked</div>
+    <div class="scene-note">From the project "…" menu. With the box unchecked, the export is a regular ZIP or TAR that opens anywhere.</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
       <div class="overlay">
         <div class="card dialog">
           <div class="sheet-handle"></div>
           <h2>Export “Kitchen Remodel”</h2>
+          <label class="check"><input type="checkbox"> <span><strong>Lock with a custom passphrase</strong><br><span class="small muted">Only Portfolio Jockey can open a locked export, with that passphrase.</span></span></label>
           <div><span class="label">Format</span><div class="seg-app"><span class="on">ZIP</span><span>TAR</span></div></div>
-          <div class="stack" style="gap:8px">
-            <span class="label">Contents</span>
-            <label class="radio-card on"><input type="radio" checked><span><strong>Readable files</strong><br><span class="small muted">Opens anywhere. Each file once, with its real name, plus project.json listing the description and tags.</span></span></label>
-            <label class="radio-card"><input type="radio"><span><strong>Keep encrypted</strong><br><span class="small muted">For backups. Only Portfolio Jockey can open it, with your passphrase.</span></span></label>
-          </div>
-          <div class="notice">Readable exports are <strong>not protected</strong>. Anyone who gets the archive can open every file in it.</div>
+          <p class="small muted">Each file once, with its real name, plus project.json listing the description and tags.</p>
+          <div class="notice">This export is <strong>not protected</strong>. Anyone who gets the archive can open every file in it.</div>
           <div><span class="label">Save to</span><div class="row" style="flex-wrap:nowrap"><div class="path" style="flex:1">~/Documents/Kitchen Remodel.zip</div><button class="btn">Change…</button></div></div>
           <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Export 24 files (412 MB)</button></div>
         </div>
@@ -42,7 +39,28 @@
   </section>
 
   <section class="scene">
+    <div class="scene-title">1b. Export a project: locked with a custom passphrase</div>
+    <div class="scene-note">Checking the box hides the format (a locked export is always one .pjx file) and shows the passphrase fields. There are no strength rules; Export is enabled once both fields are filled in and match.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Export “Kitchen Remodel”</h2>
+          <label class="check"><input type="checkbox" checked> <span><strong>Lock with a custom passphrase</strong><br><span class="small muted">Only Portfolio Jockey can open a locked export, with that passphrase.</span></span></label>
+          <div><label class="label">Passphrase</label><input class="input" type="password" value="garage-sale-2026"></div>
+          <div><label class="label">Confirm passphrase</label><input class="input" type="password" value="garage-sale-2026"></div>
+          <div class="notice">Write it down. A forgotten export passphrase can't be recovered, and the export can't be opened without it.</div>
+          <div><span class="label">Save to</span><div class="row" style="flex-wrap:nowrap"><div class="path" style="flex:1">~/Documents/Kitchen Remodel.pjx</div><button class="btn">Change…</button></div></div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Export 24 files (412 MB)</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
     <div class="scene-title">2. Bulk export (from Settings)</div>
+    <div class="scene-note">The same two options. Here the box is checked but the passphrase isn't confirmed yet, so Export stays disabled.</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Settings</h3></header>
       <div class="overlay">
@@ -59,9 +77,12 @@
               <label class="check"><input type="checkbox" checked> Bike Restoration · 95 MB</label>
             </div>
           </div>
-          <div class="row"><span class="label" style="margin:0">Format</span><div class="seg-app"><span>ZIP</span><span class="on">TAR</span></div><span class="label" style="margin:0 0 0 12px">Contents</span><div class="seg-app"><span>Readable</span><span class="on">Encrypted</span></div></div>
-          <p class="small muted">One archive with a folder per project. Needs about 2.6 GB of free space at the destination.</p>
-          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Export 5 projects</button></div>
+          <label class="check"><input type="checkbox" checked> <span><strong>Lock with a custom passphrase</strong><br><span class="small muted">Only Portfolio Jockey can open a locked export, with that passphrase.</span></span></label>
+          <div><label class="label">Passphrase</label><input class="input" type="password" value="garage-sale-2026"></div>
+          <div><label class="label">Confirm passphrase</label><input class="input" type="password" value=""><p class="small muted" style="margin-top:4px">Type the same passphrase again.</p></div>
+          <div class="notice">Write it down. A forgotten export passphrase can't be recovered, and the export can't be opened without it.</div>
+          <p class="small muted">One .pjx file with every selected project. Needs about 2.6 GB of free space at the destination.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary" disabled>Export 5 projects</button></div>
         </div>
       </div>
     </div>
@@ -84,21 +105,77 @@
   </section>
 
   <section class="scene">
-    <div class="scene-title">4. Import an encrypted export</div>
-    <div class="scene-note">From the ⤓ button on Home. If the export was made with a different passphrase, that passphrase is asked for once.</div>
+    <div class="scene-title">4. Import a locked export: passphrase</div>
+    <div class="scene-note">From the ⤓ button on Home, after picking a .pjx file. Its contents are locked, so the passphrase comes first.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Open this export</h2>
+          <div class="path">~/Backups/portfolio-jockey-2026-10-01.pjx</div>
+          <div><label class="label">Passphrase for this export</label><input class="input" type="password" value="garage-sale-2026"><p class="small muted" style="margin-top:4px">The passphrase chosen when the export was made.</p></div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Open</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5. Import a locked export: confirmation</div>
+    <div class="scene-note">Nothing is written until Import is pressed. Imported files are re-encrypted into the vault with new keys.</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
       <div class="overlay">
         <div class="card dialog">
           <div class="sheet-handle"></div>
           <h2>Import projects?</h2>
-          <div class="path">~/Backups/portfolio-jockey-2026-10-01.tar</div>
+          <div class="path">~/Backups/portfolio-jockey-2026-10-01.pjx</div>
           <div class="summary-box">
             <div class="list-row"><span style="flex:1">Garden Planner</span><span class="muted small">9 files</span></div>
             <div class="list-row"><span style="flex:1">Bike Restoration</span><span class="muted small">31 files · already exists, imported as “Bike Restoration (2)”</span></div>
           </div>
-          <div><label class="label">Passphrase used for this export</label><input class="input" type="password" value="old passphrase"><p class="small muted" style="margin-top:4px">It was made with a different passphrase. Files are re-protected with your current one.</p></div>
           <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Import 2 projects</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="scene">
+    <div class="scene-title">6. Export a readable copy of one file</div>
+    <div class="scene-note">From a file's menu ("Export a readable copy…") or the preview's "…" menu. The file is decrypted straight into the chosen location. Unlike project exports there's no lock option: the point is a normal, readable file to use elsewhere.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Save a readable copy of contractor-quote.pdf?</h2>
+          <div class="summary-box">
+            <div class="list-row"><span style="flex:1">contractor-quote.pdf</span><span class="muted small">310 KB</span></div>
+          </div>
+          <div class="notice">The copy is <strong>not protected</strong>. Anyone who can open the folder you save it to can read it. The encrypted file in Kitchen Remodel stays as it is.</div>
+          <div><span class="label">Save to</span><div class="row" style="flex-wrap:nowrap"><div class="path" style="flex:1">~/Documents/contractor-quote.pdf</div><button class="btn">Change…</button></div></div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Save readable copy</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">6b. A file with that name already exists</div>
+    <div class="scene-note">The desktop's save dialog doesn't ask before replacing, so this dialog says it. After saving, a short notice reads "Saved a readable copy to ~/Documents/contractor-quote.pdf".</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">contractor-quote.pdf</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Save a readable copy of contractor-quote.pdf?</h2>
+          <div class="summary-box">
+            <div class="list-row"><span style="flex:1">contractor-quote.pdf</span><span class="muted small">310 KB</span></div>
+          </div>
+          <div class="notice">The copy is <strong>not protected</strong>. Anyone who can open the folder you save it to can read it. The encrypted file in Kitchen Remodel stays as it is.</div>
+          <div><span class="label">Save to</span><div class="row" style="flex-wrap:nowrap"><div class="path" style="flex:1">~/Documents/contractor-quote.pdf</div><button class="btn">Change…</button></div></div>
+          <div class="notice">A file named contractor-quote.pdf already exists there. Saving replaces it.</div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Save readable copy</button></div>
         </div>
       </div>
     </div>

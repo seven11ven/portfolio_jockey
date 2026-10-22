@@ -6,11 +6,13 @@ import 'package:portfolio_jockey/app/app_controller.dart';
 import 'package:portfolio_jockey/app/theme.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/ui/common.dart';
+import 'package:portfolio_jockey/ui/export/readable_copy_dialog.dart';
 import 'package:portfolio_jockey/ui/home/home_screen.dart';
 import 'package:portfolio_jockey/ui/home/project_dialogs.dart';
 import 'package:portfolio_jockey/ui/preview/edit_dialogs.dart';
 import 'package:portfolio_jockey/ui/preview/preview_screen.dart';
 import 'package:portfolio_jockey/ui/project/file_dialogs.dart';
+import 'package:portfolio_jockey/ui/settings/settings_screen.dart';
 import 'package:portfolio_jockey/ui/tags/tag_dialogs.dart';
 import 'package:portfolio_jockey/vault/project_index.dart';
 
@@ -70,9 +72,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
     if (controller.stage != AppStage.unlocked) {
       return; // Locked while a preview was open: this screen is going away.
     }
+    final service = controller.projects;
     try {
-      final index = await _service.readProject(widget.projectId);
-      final cover = await _service.readCover(widget.projectId, index);
+      final index = await service.readProject(widget.projectId);
+      final cover = await service.readCover(widget.projectId, index);
       if (mounted) {
         setState(() {
           _index = index;
@@ -85,7 +88,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
         });
       }
     } on Object catch (e) {
-      if (controller.stage != AppStage.unlocked) {
+      if (!controller.isCurrent(service)) {
         return; // Locked during the read, which then failed: nothing to show.
       }
       if (e is! Exception) {
@@ -198,18 +201,6 @@ class _ProjectScreenState extends State<ProjectScreen> {
         ],
       ),
     );
-    PopupMenuItem<VoidCallback> later(IconData icon, String label) => PopupMenuItem(
-      enabled: false,
-      child: comingSoon(
-        Row(
-          spacing: 10,
-          children: [
-            Icon(icon, size: 20),
-            Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis)),
-          ],
-        ),
-      ),
-    );
 
     Future<void> delete(DeleteTarget target) async {
       final done = await _show(DeleteFileDialog(projectId: widget.projectId, projectName: index.name, file: file, target: target));
@@ -229,7 +220,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
         item(Icons.open_in_new, 'Edit in another app…', () => editInAnotherApp(context, projectId: widget.projectId, projectName: index.name, file: file)),
         item(Icons.sell_outlined, 'Edit tags…', () => _show(EditFileTagsDialog(projectId: widget.projectId, index: index, files: [file]))),
         item(Icons.edit_outlined, 'Rename…', () => _show(RenameFileDialog(projectId: widget.projectId, file: file))),
-        later(Icons.ios_share, 'Export a readable copy…'),
+        item(Icons.ios_share, 'Export a readable copy…', () => showDialog<bool>(context: context, builder: (_) => ReadableCopyDialog(projectId: widget.projectId, projectName: index.name, file: file))),
         const PopupMenuDivider(),
         item(Icons.delete_outline, 'Move to Trash', originalThere ? () => delete(DeleteTarget.device) : null, danger: true, hint: 'the original'),
         item(Icons.delete_outline, 'Delete from project', () => delete(DeleteTarget.project), danger: true, hint: 'the encrypted copy'),
@@ -271,7 +262,14 @@ class _ProjectScreenState extends State<ProjectScreen> {
             project: ProjectSummary(id: widget.projectId, index: index, cover: _cover),
             onAction: (dialog) => unawaited(_show(dialog)),
           ),
-          comingSoon(const IconButton(onPressed: null, icon: Icon(Icons.settings_outlined))),
+          IconButton(
+            tooltip: 'Settings',
+            onPressed: () async {
+              await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+              await _reload();
+            },
+            icon: const Icon(Icons.settings_outlined),
+          ),
           const SizedBox(width: 8),
         ],
       ),

@@ -11,6 +11,13 @@ abstract interface class FilePicker {
 
   /// Path of a folder for storing projects, or null if cancelled.
   Future<String?> pickFolder({String? initialDirectory});
+
+  /// Where to save an export, or null if cancelled. The dialog doesn't ask
+  /// before replacing a file; the export dialog warns about that itself.
+  Future<String?> pickSaveLocation({required String suggestedName, String? initialDirectory});
+
+  /// Path of a locked export (`.pjx`) to import, or null if cancelled.
+  Future<String?> pickExport();
 }
 
 /// The desktop's own file dialog, through the Flutter team's
@@ -34,6 +41,22 @@ final class SystemFilePicker implements FilePicker {
   @override
   Future<String?> pickImage() async {
     final file = await FileSelectorPlatform.instance.openFile(acceptedTypeGroups: [_images], confirmButtonText: 'Choose');
+    return file?.path;
+  }
+
+  static const XTypeGroup _exports = XTypeGroup(label: 'Portfolio Jockey exports', extensions: ['pjx']);
+
+  @override
+  Future<String?> pickSaveLocation({required String suggestedName, String? initialDirectory}) async {
+    final location = await FileSelectorPlatform.instance.getSaveLocation(
+      options: SaveDialogOptions(suggestedName: suggestedName, initialDirectory: initialDirectory, confirmButtonText: 'Choose'),
+    );
+    return location?.path;
+  }
+
+  @override
+  Future<String?> pickExport() async {
+    final file = await FileSelectorPlatform.instance.openFile(acceptedTypeGroups: [_exports], confirmButtonText: 'Open');
     return file?.path;
   }
 

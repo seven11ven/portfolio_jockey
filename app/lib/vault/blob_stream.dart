@@ -34,7 +34,13 @@ const int _prefixLength = 12;
 
 /// Encrypts [plaintext] into [target] with [key], streaming, so a large file
 /// is never held in memory whole. [target] is written atomically.
-Future<void> encryptToFile(Stream<List<int>> plaintext, File target, SecureBuffer key, {int chunkSize = defaultChunkSize}) {
+Future<void> encryptToFile(Stream<List<int>> plaintext, File target, SecureBuffer key, {int chunkSize = defaultChunkSize}) =>
+    writeAtomically(target, (out) => encryptTo(out, plaintext, key, chunkSize: chunkSize));
+
+/// Writes [plaintext], encrypted with [key], to [out] from its current
+/// position: the 12-byte prefix, the secretstream header, then the chunks.
+/// Used by [encryptToFile], and by locked exports after their own header.
+Future<void> encryptTo(RandomAccessFile out, Stream<List<int>> plaintext, SecureBuffer key, {int chunkSize = defaultChunkSize}) async {
   if (chunkSize <= 0 || chunkSize > maxChunkSize) {
     throw ArgumentError.value(chunkSize, 'chunkSize');
   }
@@ -42,51 +48,49 @@ Future<void> encryptToFile(Stream<List<int>> plaintext, File target, SecureBuffe
   if (key.length != sodium.streamKeyBytes) {
     throw ArgumentError.value(key.length, 'key', 'must be ${sodium.streamKeyBytes} bytes');
   }
-  return writeAtomically(target, (out) async {
-    final prefix = _prefix(chunkSize);
-    final state = SecureBuffer.allocate(sodium.streamStateBytes);
-    final streamHeader = ScratchBuffer(sodium.streamHeaderBytes);
-    final ad = ScratchBuffer.from(prefix);
-    final input = ScratchBuffer(chunkSize);
-    final output = ScratchBuffer(chunkSize + sodium.streamTagBytes);
-    final chunk = Uint8List(chunkSize);
-    try {
-      state.use((s) => key.use((k) => sodium.streamInitPush(s, streamHeader.pointer, k)));
-      await out.writeFrom(prefix);
-      await out.writeFrom(streamHeader.copy());
+  final prefix = _prefix(chunkSize);
+  final state = SecureBuffer.allocate(sodium.streamStateBytes);
+  final streamHeader = ScratchBuffer(sodium.streamHeaderBytes);
+  final ad = ScratchBuffer.from(prefix);
+  final input = ScratchBuffer(chunkSize);
+  final output = ScratchBuffer(chunkSize + sodium.streamTagBytes);
+  final chunk = Uint8List(chunkSize);
+  try {
+    state.use((s) => key.use((k) => sodium.streamInitPush(s, streamHeader.pointer, k)));
+    await out.writeFrom(prefix);
+    await out.writeFrom(streamHeader.copy());
 
-      Future<void> push(int length, int tag) async {
-        input.view.setRange(0, length, chunk);
-        state.use((s) => sodium.streamPush(s, output.pointer, input.pointer, length, ad.pointer, ad.length, tag));
-        await out.writeFrom(output.copy(length + sodium.streamTagBytes));
-      }
-
-      // A full chunk is only pushed once more data arrives, so the last chunk
-      // (even an empty one) is always the one tagged FINAL.
-      var filled = 0;
-      await for (final data in plaintext) {
-        var offset = 0;
-        while (offset < data.length) {
-          if (filled == chunkSize) {
-            await push(filled, sodium.streamTagMessage);
-            filled = 0;
-          }
-          final count = min(chunkSize - filled, data.length - offset);
-          chunk.setRange(filled, filled + count, data, offset);
-          filled += count;
-          offset += count;
-        }
-      }
-      await push(filled, sodium.streamTagFinal);
-    } finally {
-      chunk.fillRange(0, chunk.length, 0);
-      state.dispose();
-      streamHeader.free();
-      ad.free();
-      input.free();
-      output.free();
+    Future<void> push(int length, int tag) async {
+      input.view.setRange(0, length, chunk);
+      state.use((s) => sodium.streamPush(s, output.pointer, input.pointer, length, ad.pointer, ad.length, tag));
+      await out.writeFrom(output.copy(length + sodium.streamTagBytes));
     }
-  });
+
+    // A full chunk is only pushed once more data arrives, so the last chunk
+    // (even an empty one) is always the one tagged FINAL.
+    var filled = 0;
+    await for (final data in plaintext) {
+      var offset = 0;
+      while (offset < data.length) {
+        if (filled == chunkSize) {
+          await push(filled, sodium.streamTagMessage);
+          filled = 0;
+        }
+        final count = min(chunkSize - filled, data.length - offset);
+        chunk.setRange(filled, filled + count, data, offset);
+        filled += count;
+        offset += count;
+      }
+    }
+    await push(filled, sodium.streamTagFinal);
+  } finally {
+    chunk.fillRange(0, chunk.length, 0);
+    state.dispose();
+    streamHeader.free();
+    ad.free();
+    input.free();
+    output.free();
+  }
 }
 
 /// Decrypts [source] with [key], one chunk at a time.
@@ -96,8 +100,18 @@ Future<void> encryptToFile(Stream<List<int>> plaintext, File target, SecureBuffe
 /// Chunks before the failure have already been delivered by then, so a caller
 /// must throw away everything it received from a stream that ends in an error.
 Stream<Uint8List> decryptFile(File source, SecureBuffer key) async* {
-  final sodium = Sodium.instance;
   final file = await source.open();
+  try {
+    yield* decryptFrom(file, key);
+  } finally {
+    await file.close();
+  }
+}
+
+/// Decrypts what [encryptTo] wrote, reading [file] from its current position
+/// to its end. [file] stays open. Errors are reported as for [decryptFile].
+Stream<Uint8List> decryptFrom(RandomAccessFile file, SecureBuffer key) async* {
+  final sodium = Sodium.instance;
   final state = SecureBuffer.allocate(sodium.streamStateBytes);
   final buffers = <ScratchBuffer>[];
   ScratchBuffer scratch(ScratchBuffer buffer) {
@@ -142,7 +156,6 @@ Stream<Uint8List> decryptFile(File source, SecureBuffer key) async* {
       throw const TamperedData('Encrypted file is incomplete');
     }
   } finally {
-    await file.close();
     state.dispose();
     for (final buffer in buffers) {
       buffer.free();

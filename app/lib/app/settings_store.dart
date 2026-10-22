@@ -3,16 +3,33 @@ import 'dart:io';
 
 import 'package:portfolio_jockey/vault/atomic_write.dart';
 
-/// App settings that aren't secret. For now, only where projects are stored.
+/// App settings that aren't secret: where projects are stored, and how the
+/// app looks.
 final class AppSettings {
-  const AppSettings({this.storagePath});
+  const AppSettings({this.storagePath, this.themeMode = 'system', this.accent = 'indigo'});
 
-  factory AppSettings.fromJson(Map<String, Object?> json) =>
-      AppSettings(storagePath: json['storagePath'] is String ? json['storagePath']! as String : null);
+  factory AppSettings.fromJson(Map<String, Object?> json) => AppSettings(
+    storagePath: json['storagePath'] is String ? json['storagePath']! as String : null,
+    themeMode: switch (json['themeMode']) {
+      'light' => 'light',
+      'dark' => 'dark',
+      _ => 'system',
+    },
+    accent: json['accent'] is String ? json['accent']! as String : 'indigo',
+  );
 
   final String? storagePath;
 
-  Map<String, Object?> toJson() => {'storagePath': storagePath};
+  /// "system", "light" or "dark".
+  final String themeMode;
+
+  /// The accent colour's name (see `PjAccent`).
+  final String accent;
+
+  AppSettings copyWith({String? storagePath, String? themeMode, String? accent}) =>
+      AppSettings(storagePath: storagePath ?? this.storagePath, themeMode: themeMode ?? this.themeMode, accent: accent ?? this.accent);
+
+  Map<String, Object?> toJson() => {'storagePath': storagePath, 'themeMode': themeMode, 'accent': accent};
 }
 
 /// Reads and writes `settings.json` in the app's config folder

@@ -26,7 +26,7 @@ The options for audio/video, PDF and Markdown were researched and reported. The 
 The research came from reading the packages' code. It is checked again in the code before each package is added (step 3).
 
 ### Research claims checked in the code
-**Time:** 2026-10-22 18:00–18:20 UTC
+**Time:** 2026-10-22 17:58–18:01 UTC
 
 - **media_kit 1.2.6** (`lib/src/player/native/player/real.dart`):
   - **On-disk cache:** it sets `cache-on-disk=yes` on every platform. We must set it to `no` ourselves after the player starts.
@@ -64,7 +64,7 @@ The research came from reading the packages' code. It is checked again in the co
 - **Impact:** mockup only. No application code changed.
 
 ## Step 3a: backups and system libraries
-**Time:** 2026-10-22 18:25–18:35 UTC
+**Time:** 2026-10-22 18:01–18:03 UTC
 
 - **Backup:** `version-control/local-app/2026-10-22_before-phase6/` holds 20 files that phase 6 changes, each at its repo path, with a README on how to restore. They include `setup.sh`, the pubspec files, the Linux CMake and plugin files, the privacy-check lists and script, `main.dart`, the controller, `ProjectService`, the screens that get the banner or menu items, `libc.dart` and `vault.dart`.
 - **`.devcontainer/setup.sh`:** now also installs the following from Debian 12:
@@ -80,7 +80,7 @@ The research came from reading the packages' code. It is checked again in the co
 - **Impact:** a bigger dev container. Phase 8 must decide whether the Flatpak bundles mpv and Poppler or takes them from its runtime. This is noted in `public-notes/phase8-packaging.md` in step 4.
 
 ## Step 3b: preview packages added and reviewed
-**Time:** 2026-10-22 18:35–19:05 UTC
+**Time:** 2026-10-22 18:03–18:08 UTC
 
 - **`app/pubspec.yaml`:** added `flutter_markdown_plus 1.0.12`, `media_kit 1.2.6` and `media_kit_video 2.0.1`. That brings in 27 new packages in total, all listed in `app/tool/allowed-packages.txt` with their licence and what they do. The licences are MIT, BSD-3-Clause and MPL-2.0 (`dbus`), all compatible with AGPL-3.0. `path` is now used by the app itself, not only by the tests.
 - **Code review**, done by reading each package's `lib/` code plus media_kit_video's C++ code. It looked for file, process, socket, HTTP and native-library code:
@@ -106,7 +106,7 @@ The research came from reading the packages' code. It is checked again in the co
   - 85 tests pass.
 
 ## Step 3c: the build
-**Time:** 2026-10-22 19:05–21:10 UTC
+**Time:** 2026-10-22 18:08–18:40 UTC
 
 ### New files
 - **`app/lib/services/native/poppler.dart`:** PDF previews.
@@ -167,7 +167,7 @@ Pressing Lock while the home or project screen was still reading from the vault 
 - **Screenshots** of scenes 1 and 3–12, in light and dark, were shared with the PM as a private page. Video can't be drawn by the headless renderer.
 
 ## Step 4: docs and final checks
-**Time:** 2026-10-22 21:25–21:50 UTC
+**Time:** 2026-10-22 18:41–18:47 UTC (committed as `83e4fbb` at 18:48)
 
 - **The PM reviewed the screenshots** and approved them ("the screens look fine").
 - **`docs/dependencies.md`:**
@@ -197,3 +197,6 @@ Pressing Lock while the home or project screen was still reading from the vault 
   - secret and personal-data scan of every change: clean
   - **No new ports.** The only local listeners are VS Code's own processes and the Dart extension's tooling daemon (127.0.0.1).
 - **Not committed:** waiting for the PM.
+
+## Correction (2026-10-22 19:05 UTC)
+The times for steps 1 ("claims checked"), 3a, 3b, 3c and 4 were first written as estimates (18:00–21:50), and they were wrong. They're now corrected from the files' modification times and the commit times (`f63f86c` at 17:58, `83e4fbb` at 18:48). From now on, each time comes from the system clock (`date -u`) when the entry is written.

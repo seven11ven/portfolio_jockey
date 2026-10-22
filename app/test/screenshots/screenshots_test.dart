@@ -331,6 +331,16 @@ void main() {
       await tester.tap(find.byTooltip('Next file'));
       await settleUntil(tester, find.textContaining('Island'));
       await _shot(tester, '20-preview-text-$theme');
+      await tester.tap(find.byTooltip('More'));
+      await settle(tester);
+      await tester.tap(find.text('Export a readable copy…'));
+      await settleUntil(tester, find.text('Save readable copy'));
+      app.picker.saveLocation = '${(await tester.runAsync(() async => (await tempFolder()).path))!}/measurements.txt';
+      await tester.tap(find.text('Change…'));
+      await settle(tester);
+      await _shot(tester, '37-readable-copy-$theme');
+      await tester.tap(find.text('Cancel'));
+      await settle(tester);
 
       await tester.tap(find.text('Edit in another app…').last);
       await settleUntil(tester, find.text('LibreOffice Writer'));
@@ -435,6 +445,91 @@ void main() {
       await tester.tap(find.text('Decrypt and open'));
       await settleUntil(tester, find.text("Can't open measurements.txt"));
       await _shot(tester, '28-no-private-folder-$theme');
+    }, skip: _outDir == null);
+
+    testWidgets('export, import and settings ($theme)', (tester) async {
+      tester.platformDispatcher.platformBrightnessTestValue = brightness;
+      addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+      final app = await startApp(tester, unlocked: true, wrap: _wrap);
+      final service = app.controller.projects;
+      late Directory out;
+      await tester.runAsync(() async {
+        out = await tempFolder();
+        final originals = await tempFolder();
+        Future<String> make(String name, int size) async {
+          final file = File('${originals.path}/$name');
+          await file.writeAsBytes(List.filled(size, 7));
+          return file.path;
+        }
+
+        for (final (name, files) in [('Kitchen Remodel', 6), ('Album Artwork', 4), ('Garden Planner', 2)]) {
+          final id = await service.createProject(name: name, description: 'Example project.');
+          await service.addFiles(id, [for (var i = 0; i < files; i++) await make('$name-$i.jpg', 300000 + i * 41000)]);
+        }
+      });
+      app.controller.lock();
+      await settle(tester);
+      await tester.enterText(find.byKey(const Key('unlock-passphrase')), 'test passphrase');
+      await tester.pump();
+      await tester.tap(find.text('Unlock'));
+      await settleUntil(tester, find.text('Kitchen Remodel'));
+
+      final kitchenCard = find.ancestor(of: find.text('Kitchen Remodel'), matching: find.byWidgetPredicate((w) => w.runtimeType.toString() == '_ProjectCard'));
+      await tester.tap(find.descendant(of: kitchenCard, matching: find.byTooltip('Project actions')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Export as ZIP…'));
+      await settleUntil(tester, find.byKey(const Key('export-lock')));
+      app.picker.saveLocation = '${out.path}/Kitchen Remodel.zip';
+      await tester.tap(find.text('Change…'));
+      await settle(tester);
+      await _shot(tester, '29-export-unlocked-$theme');
+      await tester.tap(find.byKey(const Key('export-lock')));
+      await tester.pump();
+      await tester.enterText(find.byKey(const Key('export-passphrase')), 'garage-sale-2026');
+      await tester.enterText(find.byKey(const Key('export-confirm')), 'garage-sale-2026');
+      await tester.pump();
+      await _shot(tester, '30-export-locked-$theme');
+      await tester.tap(find.byKey(const Key('export-confirm-button')));
+      for (var i = 0; i < 6 && find.textContaining('Exported to').evaluate().isEmpty; i++) {
+        await settleUntil(tester, find.textContaining('Exported to')); // a few MB through Argon2id and encryption
+      }
+      await tester.pumpAndSettle();
+
+      app.picker.exportFile = '${out.path}/Kitchen Remodel.pjx';
+      await tester.tap(find.byTooltip('Import a locked export'));
+      await settleUntil(tester, find.text('Open this export'));
+      await tester.enterText(find.byKey(const Key('import-passphrase')), 'garage-sale-2026');
+      await _shot(tester, '31-import-passphrase-$theme');
+      await tester.tap(find.text('Open'));
+      await settleUntil(tester, find.text('Import projects?'));
+      await _shot(tester, '32-import-confirm-$theme');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Settings'));
+      await settleUntil(tester, find.textContaining('3 projects ·'));
+      await _shot(tester, '33-settings-$theme');
+      await tester.tap(find.text('Export projects…'));
+      await settleUntil(tester, find.text('Export projects'));
+      await tester.tap(find.byKey(const Key('export-lock')));
+      await tester.pump();
+      await tester.enterText(find.byKey(const Key('export-passphrase')), 'garage-sale-2026');
+      await tester.pump();
+      await _shot(tester, '34-bulk-export-$theme');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      app.picker.folder = (await tester.runAsync(() async => (await tempFolder()).path))!;
+      await tester.tap(find.text('Move…'));
+      await settleUntil(tester, find.text('Move all projects?'));
+      await _shot(tester, '35-move-storage-$theme');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Change…'));
+      await settleUntil(tester, find.text('Change passphrase'));
+      await tester.enterText(find.byKey(const Key('current-passphrase')), 'test passphrase');
+      await tester.enterText(find.byKey(const Key('new-passphrase')), 'correct horse battery');
+      await tester.pump();
+      await _shot(tester, '36-change-passphrase-$theme');
     }, skip: _outDir == null);
   }
 }

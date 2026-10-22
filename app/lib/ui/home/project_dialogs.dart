@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:portfolio_jockey/app/theme.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/ui/common.dart';
+import 'package:portfolio_jockey/ui/export/export_dialog.dart';
 import 'package:portfolio_jockey/vault/project_index.dart';
 
 /// The largest cover image accepted, to keep the home screen quick to load.
@@ -375,7 +376,15 @@ class _DeleteProjectDialogState extends WriteDialogState<DeleteProjectDialog> {
       ],
       actions: [
         cancelButton(),
-        comingSoon(const OutlinedButton(onPressed: null, child: Text('Export first…'))),
+        OutlinedButton(
+          onPressed: busy
+              ? null
+              : () => showDialog<bool>(
+                  context: context,
+                  builder: (_) => ExportDialog(projects: [ProjectSummary(id: widget.projectId, index: widget.index)]),
+                ),
+          child: const Text('Export first…'),
+        ),
         confirmButton(
           'Delete project',
           danger: true,

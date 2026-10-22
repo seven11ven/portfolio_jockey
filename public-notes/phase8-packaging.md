@@ -41,6 +41,12 @@ Flatpak can't run in this Codespace, because the sandbox it needs isn't allowed 
 9. **Bundle or reuse libmpv and Poppler.** The app loads `libmpv.so.2` and `libpoppler-glib.so.8`, and the video plugin links `mpv` and `epoxy`. Decide between building them as Flatpak modules (checksum-verified sources, with the mpv build options chosen to leave out network protocols where possible) and an extension. The freedesktop/GNOME runtimes ship cairo and GLib, but not mpv or poppler-glib.
 10. **Media inside the sandbox:** audio output through PipeWire/PulseAudio (`--socket=pulseaudio`), and video through the GPU (`--device=dri`). Both are local and add no network access.
 
+11. **Exports and imports through the portals** (phase 7).
+    - The export dialog suggests `~/Documents/<name>.<ext>`. A sandboxed app can't write there without a filesystem permission, so either hide that default inside a Flatpak and require "Change…" (GTK's save dialog goes through the FileChooser portal, which grants write access to the chosen file), or add `--filesystem=xdg-documents`. The first keeps the sandbox tighter.
+    - Writing through a portal path: the export writes a temporary file next to the target, then renames it. Check that the document portal allows creating the temporary file and renaming it. If not, write the target directly and delete it on failure.
+    - Import reads a `.pjx` picked through the portal (read-only is enough).
+12. **Moving the storage location** to a folder picked through the portal: it must stay writable across restarts, like the first-run folder (item 5). Check free space (`statvfs`) on a portal path, too.
+
 ## Still open
 - **arm64:** it needs an arm64 build machine (Flutter can't build for one processor from the other). Decide whether to offer it.
 - **Flathub:** whether to publish there or only offer a `.flatpak` file (e.g. on GitHub Releases). Flathub needs a reachable `github.com/seven11ven/portfolio_jockey` repo.

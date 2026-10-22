@@ -131,6 +131,11 @@ final class UnlockedVault {
   /// Wipes the master key. The vault must be unlocked again to use it.
   void lock() => _masterKey.dispose();
 
+  /// The same unlocked vault, read from [root] instead, after its files were
+  /// copied there (see `StorageMove`). The master key moves to the returned
+  /// object; this one must not be used or locked afterwards.
+  UnlockedVault relocatedTo(Directory root) => UnlockedVault._(VaultLayout(root), _masterKey);
+
   /// The IDs of every project folder that has an index.
   Future<List<String>> projectIds() async {
     final ids = <String>[];

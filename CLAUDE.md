@@ -24,20 +24,22 @@ Before doing anything in this repository, read and follow all project guidelines
 
 ## Project state
 Portfolio Jockey v2 is a fully local, offline, encrypted project tracker built with Flutter for **Linux desktop**.
-- The Flutter app lives in `app/`, with app ID `io.github.seven11ven.portfolio_jockey`. Plan phases 0–6 (guidelines, mockups, toolchain, scaffold, vault core, projects/tags/files UI, preview and "Edit in another app") are done, and phase 7 (export) is next.
+- The Flutter app lives in `app/`, with app ID `io.github.seven11ven.portfolio_jockey`. Plan phases 0–7 (guidelines, mockups, toolchain, scaffold, vault core, projects/tags/files UI, preview and "Edit in another app", export/import/settings) are done, and phase 8 (Flatpak packaging) is next.
 - The vault core is in `app/lib/vault/`: libsodium through our own `dart:ffi` bindings (`vault/native/`), Argon2id MODERATE, an XChaCha20-Poly1305 index and secretstream files. Its file formats and known limits are in `docs/dependencies.md` ("Vault format"). It never asks for confirmation itself: the UI shows the confirm/cancel step before calling anything that writes.
 - App layout under `app/lib/`:
   - `app/`: controller, settings and theme
   - `services/`: `ProjectService`, which holds every disk operation the screens make, and the file picker
   - `ui/`: the screens and dialogs built to `project-mockups/`
   - `ui/preview/`: the preview screen, its content views, and the edit dialogs and banner. `app/edit_session.dart` holds the one active edit.
-  - Phase 7 (export) menu items are shown greyed out with "Coming in a later version" (`comingSoon()` in `ui/common.dart`).
+  - `ui/export/` (export and import dialogs) and `ui/settings/` (settings, storage move, change passphrase). `services/export_service.dart` and `services/archive/` (our own streaming ZIP/TAR writers and the strict tar reader) do the work; `vault/export_format.dart` is the locked `.pjx` format.
+  - Every menu item is built; the phase 3–6 "Coming in a later version" placeholder was removed in phase 7. "Export a readable copy…" of one file is `ui/export/readable_copy_dialog.dart` (no lock option, PM decision).
 - **Readable copies** (audio/video and "Edit in another app") go only in `services/private_folder.dart`'s memory-only folder: `$XDG_RUNTIME_DIR/portfolio_jockey/`, mode 0700, on tmpfs. If that isn't available the app refuses; it never falls back to a disk folder. Images, text, Markdown and PDF are decrypted into memory only. Details and known limits are in `docs/dependencies.md` ("Readable copies").
 - **media_kit rules** (see `docs/dependencies.md`):
   - Load media with `NativePlayer.command(['loadfile', path])`. Never use `Player.open()`, `Media.memory()` or subtitle data tracks: they write temporary files to `/tmp`.
   - Always apply `lockedDownMpvOptions`, and call `ensureMediaReady()` first.
   - Never add `media_kit_libs_linux`: its build downloads mimalloc.
 - **Markdown:** always pass an `imageBuilder` to flutter_markdown_plus. Without one, it loads images from the network or disk.
+- **Exports** (PM decision, 2026-10-22): exactly two options, everywhere. Either a **custom passphrase** (a checkbox; it must be filled in and confirmed before Export is enabled; no strength rules), making a Portfolio Jockey-only `.pjx`, or **unlocked** ZIP/TAR. The vault passphrase is never used for exports. Files stream chunk by chunk into the archive: never buffer a whole file or write a readable temp copy. Imports get new file keys and are all or nothing.
 - "Delete from device" **moves the original to the Trash** (GLib's `g_file_trash`, through the Trash portal inside a Flatpak). The encrypted project copy is still deleted permanently. This was the PM's decision on 2026-10-22.
 - Phase 8 (Flatpak) to-dos and open questions go in `public-notes/phase8-packaging.md`. Add to it whenever a later phase finds something.
 - Supported Linux systems are listed in `public-notes/linux-support.md` (any 64-bit desktop with Flatpak; x64 now, arm64 to be decided in phase 8).

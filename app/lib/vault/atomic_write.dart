@@ -8,8 +8,9 @@ import 'package:portfolio_jockey/vault/native/libc.dart';
 /// [write] fills a temporary file in the same folder. That file is flushed to
 /// disk and renamed over [target] (a rename within one folder is atomic), and
 /// then the folder is synced so the rename itself survives a power cut. If
-/// [write] fails, the temporary file is removed and [target] is unchanged.
-Future<void> writeAtomically(File target, Future<void> Function(RandomAccessFile file) write) async {
+/// [write] fails, the temporary file is removed and [target] is unchanged;
+/// [beforeDelete] runs first, for example to overwrite readable content.
+Future<void> writeAtomically(File target, Future<void> Function(RandomAccessFile file) write, {Future<void> Function(File temp)? beforeDelete}) async {
   final folder = target.parent;
   final name = target.uri.pathSegments.last;
   final temp = File('${folder.path}/.$name.tmp-${newId()}');
@@ -26,6 +27,7 @@ Future<void> writeAtomically(File target, Future<void> Function(RandomAccessFile
     renamed = true;
   } finally {
     if (!renamed && await temp.exists()) {
+      await beforeDelete?.call(temp);
       await temp.delete();
     }
   }

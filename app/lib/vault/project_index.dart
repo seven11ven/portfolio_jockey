@@ -64,12 +64,13 @@ final class FileEntry {
     checkId(id);
   }
 
-  /// A new entry with a fresh ID and a fresh random key.
-  factory FileEntry.create({required String name, required int size, List<String>? tags, String? originalPath}) => FileEntry(
+  /// A new entry with a fresh ID and a fresh random key. [addedAt] defaults
+  /// to now; imports keep the original date.
+  factory FileEntry.create({required String name, required int size, List<String>? tags, String? originalPath, DateTime? addedAt}) => FileEntry(
     id: newId(),
     name: name,
     size: size,
-    addedAt: DateTime.now().toUtc(),
+    addedAt: (addedAt ?? DateTime.now()).toUtc(),
     key: base64.encode(Sodium.instance.randomBytes(Sodium.instance.streamKeyBytes)),
     tags: tags,
     originalPath: originalPath,
