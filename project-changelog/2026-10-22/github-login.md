@@ -46,3 +46,26 @@
 - The owner must create a GitHub OAuth App and fill in the login variables in `.env`. See `docs/setup/02-github-login.md`.
 - The app now refuses to start without valid login variables, including on Vercel.
 - Two new mockups need the project manager's approval. The login error is already built, and the account menu is planned for step 6.
+
+---
+
+# GitHub login guide fixes
+
+**Time:** 2026-10-22 02:12 UTC
+**Requested by:** project manager
+
+## Change
+- `docs/setup/02-github-login.md`:
+  - The callback URL step notes that GitHub may label the field **Redirect URL**.
+  - Step 4 starts with `cd "$(git rev-parse --show-toplevel)"`, so the secret lands in the repo-root `.env` from any folder. Running it from `project-mockups/` had created a stray `.env` there. Git ignored it, and it was removed.
+  - Step 4 now says to close `.env` in the editor first, so an unsaved editor copy can't overwrite the secret.
+  - Adding the missing `BETTER_AUTH_SECRET=` line now uses `printf` with a leading line break. Before, it could join the last line when `.env` didn't end with one.
+  - Added a check that prints the secret's length (64) without showing the secret, plus a troubleshooting entry for a stray `.env`.
+- `.env_example`: the `BETTER_AUTH_SECRET` setup comment includes the same repo-root `cd` line.
+
+## Verification
+- Ran the new step 4 sequence in a throwaway Git repo, starting from a subfolder, with a `.env` that had no final line break. The secret landed on its own line in the root `.env`, and no stray file was created.
+- The owner's `.env` was fixed with a fresh secret, and the stray `project-mockups/.env` was deleted. Searched every commit on every branch: no `.env` file has ever been committed.
+
+## Impacts
+- Documentation only; no `version-control/` backup required.

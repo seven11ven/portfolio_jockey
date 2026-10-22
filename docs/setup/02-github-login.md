@@ -16,7 +16,7 @@ This guide calls that address `APP_URL`.
 2. Fill it in:
    - **Application name:** `Portfolio Jockey (dev)`
    - **Homepage URL:** `APP_URL`
-   - **Authorization callback URL:** `APP_URL/api/auth/callback/github`
+   - **Authorization callback URL:** `APP_URL/api/auth/callback/github`. GitHub may label this field **Redirect URL**. It's the same field.
 3. Click **Register application**.
 4. Copy the **Client ID**.
 5. Click **Generate a new client secret** and copy it right away. GitHub shows it only once.
@@ -34,11 +34,19 @@ ALLOWED_EMAILS=the primary email on your GitHub account
 `ALLOWED_EMAILS` can hold several emails separated by commas. Use the **primary** email from **github.com > Settings > Emails**. It must be verified.
 
 ## 4. Generate the login secret
-This writes a random secret into `.env` without printing it. Run it from the repo root:
-```
-grep -q '^BETTER_AUTH_SECRET=' .env || echo 'BETTER_AUTH_SECRET=' >> .env
-sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$(openssl rand -hex 32)|" .env
-```
+This writes a random secret into `.env` without printing it.
+
+1. If `.env` is open in your editor, close it first. Otherwise saving the editor's copy later would erase the secret.
+2. Run these commands. The first line moves you to the repo root from any folder, so the secret lands in the right `.env`:
+   ```
+   cd "$(git rev-parse --show-toplevel)"
+   grep -q '^BETTER_AUTH_SECRET=' .env || printf '\nBETTER_AUTH_SECRET=\n' >> .env
+   sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$(openssl rand -hex 32)|" .env
+   ```
+3. Check it worked without showing the secret. This should print `64`:
+   ```
+   grep '^BETTER_AUTH_SECRET=' .env | cut -d= -f2 | tr -d '\n' | wc -c
+   ```
 
 ## 5. Try it
 1. Run `npm run dev` and open `APP_URL`. You should land on the login page.
@@ -48,6 +56,7 @@ sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$(openssl rand -hex 32)|" .e
 
 ## Troubleshooting
 - **"This GitHub account isn't approved":** the email in `ALLOWED_EMAILS` doesn't match your GitHub primary email, or that email isn't verified.
+- **The secret check prints `0`, or the app says `BETTER_AUTH_SECRET` is required:** the commands probably ran in a different folder and created a second `.env` there. Delete that stray `.env`, then rerun step 4. The first command now moves you to the repo root.
 - **GitHub says the redirect URI isn't associated with this application:** `BETTER_AUTH_URL` and the OAuth App's callback URL don't match exactly. Check `http` versus `https`, the port, and trailing slashes.
 - **The app won't start and lists invalid environment variables:** fix the variables it names. The error names them but never prints their values.
 
