@@ -20,7 +20,7 @@
 
   <section class="scene">
     <div class="scene-title">1. First run: choose a storage location and set a passphrase</div>
-    <div class="scene-note">Shown once. The checkbox must be ticked before "Create vault" is enabled. Creating the vault writes to disk, and this screen is the confirmation.</div>
+    <div class="scene-note">Shown once. Here the passphrase is shown with the eye button, so it can be checked and written down; every passphrase field starts hidden and has its own eye button. A shown passphrase can be copied; "Allow copying passphrases" in Settings turns that off (it's on by default, the user's choice). The checkbox must be ticked before "Create vault" is enabled. Creating the vault writes to disk, and this screen is the confirmation.</div>
     <div class="screen" hidden>
       <div class="center-wrap">
         <div class="card lock-card">
@@ -36,13 +36,78 @@
           </div>
           <div>
             <label class="label">Passphrase</label>
-            <input class="input" type="password" value="correct horse battery">
+            <div class="pw"><input class="input" type="text" value="correct horse battery"><button class="eye" title="Hide passphrase" aria-label="Hide passphrase">🙈</button></div>
             <div class="strength" style="margin-top:6px"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
             <p class="small muted" style="margin-top:4px">Strong. Use at least 12 characters, or several words.</p>
           </div>
           <div>
             <label class="label">Confirm passphrase</label>
-            <input class="input" type="password" value="correct horse battery">
+            <div class="pw"><input class="input" type="password" value="correct horse battery"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div>
+          </div>
+          <div class="notice">There is no way to recover a forgotten passphrase. If you lose it, your projects can't be opened by anyone, including you.</div>
+          <label class="check"><input type="checkbox" checked> I understand that a forgotten passphrase means my files are lost.</label>
+          <button class="btn btn-primary">Create vault</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">1a. Before the passphrase is strong enough</div>
+    <div class="scene-note">"Confirm passphrase" appears only once the strength bar reaches Fair or better, so people finish the first field first. Until then "Create vault" stays disabled.</div>
+    <div class="screen" hidden>
+      <div class="center-wrap">
+        <div class="card lock-card">
+          <div class="lock-icon">🔐</div>
+          <h2 style="text-align:center">Welcome to Portfolio Jockey</h2>
+          <p class="muted small" style="text-align:center">Everything stays on this device. Your files are encrypted with a passphrase only you know.</p>
+          <div>
+            <span class="label">Where should projects be stored?</span>
+            <div class="row" style="flex-wrap:nowrap">
+              <div class="path" style="flex:1">~/Documents/Portfolio Jockey</div>
+              <button class="btn">Change…</button>
+            </div>
+          </div>
+          <div>
+            <label class="label">Passphrase</label>
+            <div class="pw"><input class="input" type="password" value="kitchen"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div>
+            <div class="strength" style="margin-top:6px"><span></span><span></span><span></span><span></span></div>
+            <p class="small muted" style="margin-top:4px">Too short. Use at least 12 characters, or several words.</p>
+          </div>
+          <div class="notice">There is no way to recover a forgotten passphrase. If you lose it, your projects can't be opened by anyone, including you.</div>
+          <label class="check"><input type="checkbox"> I understand that a forgotten passphrase means my files are lost.</label>
+          <button class="btn btn-primary" disabled>Create vault</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">1b. First run inside the Flatpak</div>
+    <div class="scene-note">The installed app runs in a sandbox that can't write to ~/Documents. So the suggested folder is the app's own data folder, which the sandbox may always use. "Change…" opens your desktop's folder picker, which gives the app access to the folder you choose. Everything else is as in scene 1.</div>
+    <div class="screen" hidden>
+      <div class="center-wrap">
+        <div class="card lock-card">
+          <div class="lock-icon">🔐</div>
+          <h2 style="text-align:center">Welcome to Portfolio Jockey</h2>
+          <p class="muted small" style="text-align:center">Everything stays on this device. Your files are encrypted with a passphrase only you know.</p>
+          <div>
+            <span class="label">Where should projects be stored?</span>
+            <div class="row" style="flex-wrap:nowrap">
+              <div class="path" style="flex:1">~/.var/app/io.github.seven11ven.portfolio_jockey/data/Portfolio Jockey</div>
+              <button class="btn">Change…</button>
+            </div>
+            <p class="small muted" style="margin-top:4px">The app's own folder. It stays when the app is updated. Choose another folder (for example on a backup drive) with Change….</p>
+          </div>
+          <div>
+            <label class="label">Passphrase</label>
+            <div class="pw"><input class="input" type="password" value="correct horse battery"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div>
+            <div class="strength" style="margin-top:6px"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+            <p class="small muted" style="margin-top:4px">Strong. Use at least 12 characters, or several words.</p>
+          </div>
+          <div>
+            <label class="label">Confirm passphrase</label>
+            <div class="pw"><input class="input" type="password" value="correct horse battery"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div>
           </div>
           <div class="notice">There is no way to recover a forgotten passphrase. If you lose it, your projects can't be opened by anyone, including you.</div>
           <label class="check"><input type="checkbox" checked> I understand that a forgotten passphrase means my files are lost.</label>
@@ -62,7 +127,7 @@
           <h2 style="text-align:center">Portfolio Jockey is locked</h2>
           <div>
             <label class="label">Passphrase</label>
-            <input class="input" type="password" placeholder="Enter your passphrase">
+            <div class="pw"><input class="input" type="password" placeholder="Enter your passphrase"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div>
           </div>
           <button class="btn btn-primary">Unlock</button>
           <p class="small muted" style="text-align:center">Vault: ~/Documents/Portfolio Jockey</p>
@@ -81,7 +146,7 @@
           <h2 style="text-align:center">Portfolio Jockey is locked</h2>
           <div>
             <label class="label">Passphrase</label>
-            <input class="input" type="password" value="wrong guess" style="border-color:var(--danger)">
+            <div class="pw"><input class="input" type="password" value="wrong guess" style="border-color:var(--danger)"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div>
           </div>
           <div class="notice notice-danger">That passphrase didn't unlock the vault. Check it and try again.</div>
           <button class="btn btn-primary">Unlock</button>

@@ -30,7 +30,9 @@ class _ExportDialogState extends State<ExportDialog> {
   bool _locked = false;
   final _passphrase = TextEditingController();
   final _confirm = TextEditingController();
-  late String _target = _defaultTarget();
+  /// Where to save. Inside a Flatpak nothing is suggested (the sandbox can't
+  /// write to ~/Documents): the user chooses through the desktop's dialog.
+  late String? _target = AppScope.read(context).sandboxed ? null : _defaultTarget();
   int? _free;
   bool _exists = false;
   String? _error;
@@ -55,7 +57,7 @@ class _ExportDialogState extends State<ExportDialog> {
 
   bool get _enoughSpace => _free == null || _free! >= _needed;
 
-  bool get _canExport => _chosen.isNotEmpty && _enoughSpace && (!_locked || _passphraseOk);
+  bool get _canExport => _target != null && _chosen.isNotEmpty && _enoughSpace && (!_locked || _passphraseOk);
 
   @override
   void initState() {
@@ -72,28 +74,39 @@ class _ExportDialogState extends State<ExportDialog> {
     super.dispose();
   }
 
+  String get _baseName {
+    final now = DateTime.now();
+    final date = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    return widget.bulk ? 'Portfolio Jockey projects $date' : safeName(widget.projects.single.index.name, fallback: 'Project');
+  }
+
   String _defaultTarget() {
     final home = Platform.environment['HOME'] ?? '/';
     final documents = Directory('$home/Documents');
     final folder = documents.existsSync() ? documents.path : home;
-    final now = DateTime.now();
-    final date = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final name = widget.bulk ? 'Portfolio Jockey projects $date' : safeName(widget.projects.single.index.name, fallback: 'Project');
-    return '$folder/$name.${widget.format.extension}';
+    return '$folder/$_baseName.${widget.format.extension}';
   }
 
   /// Gives the target the extension the current choice needs.
   void _fixExtension() {
+    final target = _target;
+    if (target == null) {
+      return;
+    }
     const known = ['zip', 'tar', lockedExtension];
-    final dot = _target.lastIndexOf('.');
-    final slash = _target.lastIndexOf('/');
-    final hasKnown = dot > slash && known.contains(_target.substring(dot + 1).toLowerCase());
-    _target = '${hasKnown ? _target.substring(0, dot) : _target}.$_extension';
+    final dot = target.lastIndexOf('.');
+    final slash = target.lastIndexOf('/');
+    final hasKnown = dot > slash && known.contains(target.substring(dot + 1).toLowerCase());
+    _target = '${hasKnown ? target.substring(0, dot) : target}.$_extension';
     unawaited(_checkTarget());
   }
 
   Future<void> _checkTarget() async {
-    final file = File(_target);
+    final target = _target;
+    if (target == null) {
+      return;
+    }
+    final file = File(target);
     final exists = await file.exists();
     final free = Libc.instance.freeBytes(file.parent.path);
     if (mounted) {
@@ -105,10 +118,10 @@ class _ExportDialogState extends State<ExportDialog> {
   }
 
   Future<void> _changeTarget() async {
-    final file = File(_target);
+    final target = _target;
     final chosen = await AppScope.read(context).filePicker.pickSaveLocation(
-      suggestedName: file.uri.pathSegments.last,
-      initialDirectory: file.parent.path,
+      suggestedName: target == null ? '$_baseName.$_extension' : File(target).uri.pathSegments.last,
+      initialDirectory: target == null ? null : File(target).parent.path,
     );
     if (chosen != null && mounted) {
       setState(() {
@@ -122,7 +135,7 @@ class _ExportDialogState extends State<ExportDialog> {
     final controller = AppScope.read(context);
     final cancel = CancelToken();
     final lock = _locked ? LockedWith(_passphrase.text) : Unlocked(_format);
-    final target = File(_target);
+    final target = File(_target!);
     setState(() {
       _cancel = cancel;
       _error = null;
@@ -205,16 +218,14 @@ class _ExportDialogState extends State<ExportDialog> {
           }),
         ),
         if (_locked) ...[
-          TextField(
+          PassphraseField(
             key: const Key('export-passphrase'),
             controller: _passphrase,
-            obscureText: true,
             decoration: const InputDecoration(labelText: 'Passphrase'),
           ),
-          TextField(
+          PassphraseField(
             key: const Key('export-confirm'),
             controller: _confirm,
-            obscureText: true,
             decoration: InputDecoration(
               labelText: 'Confirm passphrase',
               helperText: _confirm.text.isEmpty ? 'Type the same passphrase again.' : null,
@@ -253,8 +264,8 @@ class _ExportDialogState extends State<ExportDialog> {
             Row(
               spacing: 8,
               children: [
-                Expanded(child: Text(_target, style: pathStyle)),
-                OutlinedButton(onPressed: _changeTarget, child: const Text('Change…')),
+                Expanded(child: _target == null ? const Muted('No location chosen yet', small: false) : Text(_target!, style: pathStyle)),
+                OutlinedButton(onPressed: _changeTarget, child: Text(_target == null ? 'Choose…' : 'Change…')),
               ],
             ),
             Muted(
@@ -264,7 +275,7 @@ class _ExportDialogState extends State<ExportDialog> {
             ),
           ],
         ),
-        if (_exists) Notice('A file named ${File(_target).uri.pathSegments.last} already exists there. Exporting replaces it.'),
+        if (_exists && _target != null) Notice('A file named ${File(_target!).uri.pathSegments.last} already exists there. Exporting replaces it.'),
         if (!_enoughSpace) Notice('Not enough free space at the destination: about ${formatBytes(_needed)} is needed. Choose another location.', danger: true),
         if (_error case final error?) Notice(error, danger: true),
         if (widget.bulk && _chosen.isEmpty) Text('Choose at least one project.', style: TextStyle(color: colors.muted)),

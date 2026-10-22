@@ -319,3 +319,15 @@ textarea.input { min-height: 80px; resize: none; }
   .edit-banner { top: 57px; }
   .settings section { padding: 14px; }
 }
+
+/* Passphrase field with a show/hide (eye) button */
+.pw { position: relative; }
+.pw .input { padding-right: 44px; }
+.pw .eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 16px; cursor: pointer; }
+.pw .eye:hover { background: var(--surface-2, rgba(127,127,127,.12)); }
+
+/* On/off switch (settings) */
+.switch { position: relative; width: 44px; height: 26px; border-radius: 999px; background: var(--border); flex: none; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left .15s; }
+.switch.on { background: var(--accent); }
+.switch.on::after { left: 21px; }

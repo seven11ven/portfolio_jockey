@@ -91,10 +91,9 @@ class _UnlockScreenState extends State<UnlockScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const FieldLabel('Passphrase'),
-            TextField(
+            PassphraseField(
               key: const Key('unlock-passphrase'),
               controller: _passphrase,
-              obscureText: true,
               autofocus: true,
               enabled: !_busy,
               onSubmitted: (_) => canUnlock ? _unlock() : null,

@@ -12,6 +12,7 @@ import 'package:portfolio_jockey/services/native/gio_apps.dart';
 import 'package:portfolio_jockey/services/native/gio_trash.dart';
 import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
+import 'package:portfolio_jockey/services/sandbox.dart';
 import 'package:portfolio_jockey/services/storage_move.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
 import 'package:portfolio_jockey/vault/kdf.dart';
@@ -28,14 +29,21 @@ class AppController extends ChangeNotifier {
     this.trasher = const GioTrash(),
     AppLauncher launcher = const GioAppLauncher(),
     PrivateFolders? privateFolders,
+    bool? sandboxed,
     this.kdf,
-  }) : edits = EditSessions(folders: privateFolders ?? PrivateFolders.standard(), launcher: launcher);
+  }) : sandboxed = sandboxed ?? runningInFlatpak(),
+       edits = EditSessions(folders: privateFolders ?? PrivateFolders.standard(), launcher: launcher);
 
   final SettingsStore settingsStore;
   final FilePicker filePicker;
 
   /// Where originals go when the user moves them to the Trash.
   final Trasher trasher;
+
+  /// Whether the app runs inside a Flatpak. Then no `~/Documents` paths are
+  /// suggested: storage defaults to the app's own data folder, and exports
+  /// need a location chosen through the desktop's save dialog first.
+  final bool sandboxed;
 
   /// "Edit in another app", and the memory-only copies media plays from.
   final EditSessions edits;
@@ -59,6 +67,15 @@ class AppController extends ChangeNotifier {
   };
 
   PjAccent get accent => PjAccent.named(_settings.accent);
+
+  /// Whether a passphrase shown with the eye button may be copied (Settings).
+  bool get allowPassphraseCopy => _settings.allowPassphraseCopy;
+
+  Future<void> setAllowPassphraseCopy(bool allow) async {
+    _settings = _settings.copyWith(allowPassphraseCopy: allow);
+    notifyListeners();
+    await settingsStore.save(_settings);
+  }
 
   /// Saves the colour scheme. It's a preference, not project data, so it
   /// applies at once without a confirmation.

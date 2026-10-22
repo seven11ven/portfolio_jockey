@@ -13,6 +13,13 @@ Flatpak can't run in this Codespace, because the sandbox it needs isn't allowed 
 - **No network permission** in the Flatpak manifest (`--share=network` must not appear).
 - **libsodium is bundled,** built from the official release after its minisign signature is checked (key `RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3`, confirmed on two official sources). The app loads `libsodium.so.26` (1.0.19+) or `libsodium.so.23`.
 - **App ID:** `io.github.seven11ven.portfolio_jockey`.
+- **Processors (2026-10-22):** the first release is **x64 only**. arm64 comes later, because it needs an arm64 build machine (Flutter can't build for one processor from the other).
+- **How it's offered (2026-10-22):** first as a single **`.flatpak` file**, for example on GitHub Releases once the repo is pushed. Flathub may come later. It would need the public `github.com/seven11ven/portfolio_jockey` repo, a Flathub review, and building Flutter from source without network during the build.
+- **Runtime (2026-10-22):** `org.freedesktop.Platform//26.08` (GTK 3, GLib, cairo, epoxy and glibc 2.44 are included, and it's supported until about 08/2028).
+- **Video codecs (2026-10-22):** mpv uses the runtime's FFmpeg. H.264/HEVC come from Flathub's `org.freedesktop.Platform.codecs-extra` extension, which is installed automatically, so the app never ships patent-restricted decoders itself. The runtime's FFmpeg has network code, but it's unreachable: the sandbox has no network, and the app whitelists only `file`.
+- **Built as modules:** mpv 0.41.0 (libmpv only, with Lua, JavaScript, Blu-ray, DVD, CD audio and libarchive off), libplacebo, libass, Poppler 26.10.0 (GLib binding only, with NSS, GPGME and libcurl off), and libsodium 1.0.22 (minisign signature checked).
+- **App icon (2026-10-22):** the locked card stack (option C).
+- **Where it's built and tested (2026-10-22):** on the PM's own Ubuntu-family PC. This Codespace blocks the user namespaces Flatpak needs. Everything is prepared here (manifest, app bundle, `build.sh`, test checklist), and the PM runs the build and tests.
 - **Readable copies only in memory** (phase 6): audio/video copies and "Edit in another app" copies go only in `$XDG_RUNTIME_DIR/portfolio_jockey/`, which must be on tmpfs. Otherwise the app refuses. The Flatpak must not change that rule.
 
 ## To test inside the Flatpak
@@ -48,6 +55,4 @@ Flatpak can't run in this Codespace, because the sandbox it needs isn't allowed 
 12. **Moving the storage location** to a folder picked through the portal: it must stay writable across restarts, like the first-run folder (item 5). Check free space (`statvfs`) on a portal path, too.
 
 ## Still open
-- **arm64:** it needs an arm64 build machine (Flutter can't build for one processor from the other). Decide whether to offer it.
-- **Flathub:** whether to publish there or only offer a `.flatpak` file (e.g. on GitHub Releases). Flathub needs a reachable `github.com/seven11ven/portfolio_jockey` repo.
 - **Distribution testing:** check the distributions listed in `linux-support.md`.

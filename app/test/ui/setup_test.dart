@@ -19,15 +19,20 @@ void main() {
     bool canCreate() => filledButton(tester, 'Create vault').onPressed != null;
     expect(canCreate(), isFalse);
 
-    // 11 characters, matching, box ticked: too short.
+    // 11 characters, box ticked: too short, so the confirm field isn't shown
+    // yet (it appears at Fair or better, PM decision 2026-10-22).
+    expect(find.byKey(const Key('confirm')), findsNothing);
     await tester.enterText(find.byKey(const Key('passphrase')), 'elevenchars');
-    await tester.enterText(find.byKey(const Key('confirm')), 'elevenchars');
     await tester.tap(find.byKey(const Key('understood')));
     await tester.pump();
+    expect(find.byKey(const Key('confirm')), findsNothing);
     expect(canCreate(), isFalse);
 
-    // Long enough but not matching.
+    // Long enough: the confirm field appears; not matching yet.
     await tester.enterText(find.byKey(const Key('passphrase')), 'correct horse battery');
+    await tester.pump();
+    expect(find.byKey(const Key('confirm')), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('confirm')), 'elevenchars');
     await tester.pump();
     expect(canCreate(), isFalse);
     expect(find.text("The passphrases don't match."), findsOneWidget);

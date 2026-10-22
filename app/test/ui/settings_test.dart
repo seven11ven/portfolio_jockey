@@ -54,7 +54,9 @@ void main() {
     await tester.tap(find.text('Change…'));
     await settleUntil(tester, find.text('Change passphrase'));
     await tester.enterText(find.byKey(const Key('current-passphrase')), 'not it');
+    expect(find.byKey(const Key('confirm-new-passphrase')), findsNothing, reason: 'shown once the new passphrase is Fair');
     await tester.enterText(find.byKey(const Key('new-passphrase')), 'a much longer new passphrase');
+    await tester.pump();
     await tester.enterText(find.byKey(const Key('confirm-new-passphrase')), 'a much longer new passphrase');
     await tester.pump();
     final before = await snapshot(tester, app.storage);
@@ -67,6 +69,8 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Confirm new passphrase'));
     await settleUntil(tester, find.text('Passphrase changed'));
 
+    await tester.ensureVisible(find.widgetWithText(OutlinedButton, 'Lock'));
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(OutlinedButton, 'Lock'));
     await settleUntil(tester, find.byKey(const Key('unlock-passphrase')));
     await unlock(tester, 'test passphrase');

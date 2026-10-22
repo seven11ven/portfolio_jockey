@@ -38,7 +38,7 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
 
   void _changed() => setState(() {});
 
-  String get _storagePath => _path ?? AppScope.read(context).storagePath ?? defaultStoragePath();
+  String get _storagePath => _path ?? AppScope.read(context).storagePath ?? defaultStoragePath(sandboxed: AppScope.read(context).sandboxed);
 
   bool get _canCreate =>
       !_busy &&
@@ -99,32 +99,38 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
                 OutlinedButton(onPressed: _busy ? null : _chooseFolder, child: const Text('Change…')),
               ],
             ),
+            if (AppScope.read(context).sandboxed && _path == null)
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Muted("The app's own folder. It stays when the app is updated. Choose another folder (for example on a backup drive) with Change…."),
+              ),
           ],
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const FieldLabel('Passphrase'),
-            TextField(controller: _passphrase, obscureText: true, enabled: !_busy, key: const Key('passphrase')),
+            PassphraseField(controller: _passphrase, enabled: !_busy, key: const Key('passphrase')),
             const SizedBox(height: 8),
             StrengthBar(strength, active: _passphrase.text.isNotEmpty),
             const SizedBox(height: 4),
             Muted(strengthLabel(strength)),
           ],
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const FieldLabel('Confirm passphrase'),
-            TextField(
-              controller: _confirm,
-              obscureText: true,
-              enabled: !_busy,
-              key: const Key('confirm'),
-              decoration: InputDecoration(errorText: mismatch ? "The passphrases don't match." : null),
-            ),
-          ],
-        ),
+        // Shown once the passphrase is at least Fair (PM decision, 2026-10-22).
+        if (strength > 0)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const FieldLabel('Confirm passphrase'),
+              PassphraseField(
+                controller: _confirm,
+                enabled: !_busy,
+                key: const Key('confirm'),
+                decoration: InputDecoration(errorText: mismatch ? "The passphrases don't match." : null),
+              ),
+            ],
+          ),
         const Notice(
           "There is no way to recover a forgotten passphrase. If you lose it, your projects can't be opened by anyone, including you.",
         ),

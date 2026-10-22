@@ -24,7 +24,8 @@ class ReadableCopyDialog extends StatefulWidget {
 }
 
 class _ReadableCopyDialogState extends WriteDialogState<ReadableCopyDialog> {
-  late String _target = _defaultTarget();
+  /// Inside a Flatpak nothing is suggested; the user chooses first.
+  late String? _target = AppScope.read(context).sandboxed ? null : _defaultTarget();
   bool _exists = false;
   int? _free;
 
@@ -46,7 +47,11 @@ class _ReadableCopyDialogState extends WriteDialogState<ReadableCopyDialog> {
   }
 
   Future<void> _checkTarget() async {
-    final file = File(_target);
+    final target = _target;
+    if (target == null) {
+      return;
+    }
+    final file = File(target);
     final exists = await file.exists();
     final free = Libc.instance.freeBytes(file.parent.path);
     if (mounted) {
@@ -58,8 +63,11 @@ class _ReadableCopyDialogState extends WriteDialogState<ReadableCopyDialog> {
   }
 
   Future<void> _changeTarget() async {
-    final file = File(_target);
-    final chosen = await AppScope.read(context).filePicker.pickSaveLocation(suggestedName: file.uri.pathSegments.last, initialDirectory: file.parent.path);
+    final target = _target;
+    final chosen = await AppScope.read(context).filePicker.pickSaveLocation(
+      suggestedName: target == null ? safeName(widget.file.name, fallback: 'file') : File(target).uri.pathSegments.last,
+      initialDirectory: target == null ? null : File(target).parent.path,
+    );
     if (chosen != null && mounted) {
       setState(() => _target = chosen);
       unawaited(_checkTarget());
@@ -70,7 +78,7 @@ class _ReadableCopyDialogState extends WriteDialogState<ReadableCopyDialog> {
   Future<void> _save() async {
     final controller = AppScope.read(context);
     final messenger = ScaffoldMessenger.of(context);
-    final target = File(_target);
+    final target = File(_target!);
     await controller.exports.exportReadableCopy(widget.projectId, widget.file, target);
     messenger.showSnackBar(SnackBar(content: Text('Saved a readable copy to ${target.path}')));
   }
@@ -100,19 +108,19 @@ class _ReadableCopyDialogState extends WriteDialogState<ReadableCopyDialog> {
               Row(
                 spacing: 8,
                 children: [
-                  Expanded(child: Text(_target, style: pathStyle)),
-                  OutlinedButton(onPressed: busy ? null : _changeTarget, child: const Text('Change…')),
+                  Expanded(child: _target == null ? const Muted('No location chosen yet', small: false) : Text(_target!, style: pathStyle)),
+                  OutlinedButton(onPressed: busy ? null : _changeTarget, child: Text(_target == null ? 'Choose…' : 'Change…')),
                 ],
               ),
             ],
           ),
-          if (_exists) Notice('A file named ${File(_target).uri.pathSegments.last} already exists there. Saving replaces it.'),
+          if (_exists && _target != null) Notice('A file named ${File(_target!).uri.pathSegments.last} already exists there. Saving replaces it.'),
           if (!_enoughSpace) const Notice('Not enough free space at the destination. Choose another location.', danger: true),
           ?errorNotice(),
         ],
         actions: [
           cancelButton(),
-          confirmButton('Save readable copy', enabled: _enoughSpace, onConfirm: _save),
+          confirmButton('Save readable copy', enabled: _target != null && _enoughSpace, onConfirm: _save),
         ],
       ),
     );

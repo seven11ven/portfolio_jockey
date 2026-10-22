@@ -348,3 +348,67 @@ class FieldLabel extends StatelessWidget {
 void showError(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
+
+/// A passphrase field: hidden by default, with an eye button to show it so
+/// it can be checked or written down. When Settings → "Allow copying
+/// passphrases" is off, copying and cutting are blocked (menu and keyboard),
+/// so a passphrase never reaches the clipboard and its history. Spelling
+/// suggestions are off either way.
+class PassphraseField extends StatefulWidget {
+  const PassphraseField({
+    required this.controller,
+    this.enabled = true,
+    this.autofocus = false,
+    this.decoration = const InputDecoration(),
+    this.onSubmitted,
+    super.key,
+  });
+
+  final TextEditingController controller;
+  final bool enabled;
+  final bool autofocus;
+  final InputDecoration decoration;
+  final ValueChanged<String>? onSubmitted;
+
+  @override
+  State<PassphraseField> createState() => _PassphraseFieldState();
+}
+
+class _PassphraseFieldState extends State<PassphraseField> {
+  bool _shown = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final allowCopy = AppScope.of(context).allowPassphraseCopy;
+    final field = TextField(
+      controller: widget.controller,
+      obscureText: !_shown,
+      enabled: widget.enabled,
+      autofocus: widget.autofocus,
+      autocorrect: false,
+      enableSuggestions: false,
+      onSubmitted: widget.onSubmitted,
+      contextMenuBuilder: allowCopy
+          ? null
+          : (context, state) => AdaptiveTextSelectionToolbar.buttonItems(
+              anchors: state.contextMenuAnchors,
+              buttonItems: [
+                for (final item in state.contextMenuButtonItems)
+                  if (item.type != ContextMenuButtonType.copy && item.type != ContextMenuButtonType.cut) item,
+              ],
+            ),
+      decoration: widget.decoration.copyWith(
+        suffixIcon: IconButton(
+          tooltip: _shown ? 'Hide passphrase' : 'Show passphrase',
+          icon: Icon(_shown ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+          onPressed: () => setState(() => _shown = !_shown),
+        ),
+      ),
+    );
+    if (allowCopy) {
+      return field;
+    }
+    // Ctrl+C and Ctrl+X are both CopySelectionTextIntent.
+    return Actions(actions: {CopySelectionTextIntent: DoNothingAction(consumesKey: true)}, child: field);
+  }
+}

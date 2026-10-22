@@ -48,8 +48,8 @@
           <div class="sheet-handle"></div>
           <h2>Export “Kitchen Remodel”</h2>
           <label class="check"><input type="checkbox" checked> <span><strong>Lock with a custom passphrase</strong><br><span class="small muted">Only Portfolio Jockey can open a locked export, with that passphrase.</span></span></label>
-          <div><label class="label">Passphrase</label><input class="input" type="password" value="garage-sale-2026"></div>
-          <div><label class="label">Confirm passphrase</label><input class="input" type="password" value="garage-sale-2026"></div>
+          <div><label class="label">Passphrase</label><div class="pw"><input class="input" type="password" value="garage-sale-2026"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div></div>
+          <div><label class="label">Confirm passphrase</label><div class="pw"><input class="input" type="password" value="garage-sale-2026"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div></div>
           <div class="notice">Write it down. A forgotten export passphrase can't be recovered, and the export can't be opened without it.</div>
           <div><span class="label">Save to</span><div class="row" style="flex-wrap:nowrap"><div class="path" style="flex:1">~/Documents/Kitchen Remodel.pjx</div><button class="btn">Change…</button></div></div>
           <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Export 24 files (412 MB)</button></div>
@@ -78,8 +78,8 @@
             </div>
           </div>
           <label class="check"><input type="checkbox" checked> <span><strong>Lock with a custom passphrase</strong><br><span class="small muted">Only Portfolio Jockey can open a locked export, with that passphrase.</span></span></label>
-          <div><label class="label">Passphrase</label><input class="input" type="password" value="garage-sale-2026"></div>
-          <div><label class="label">Confirm passphrase</label><input class="input" type="password" value=""><p class="small muted" style="margin-top:4px">Type the same passphrase again.</p></div>
+          <div><label class="label">Passphrase</label><div class="pw"><input class="input" type="password" value="garage-sale-2026"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div></div>
+          <div><label class="label">Confirm passphrase</label><div class="pw"><input class="input" type="password" value=""><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div><p class="small muted" style="margin-top:4px">Type the same passphrase again.</p></div>
           <div class="notice">Write it down. A forgotten export passphrase can't be recovered, and the export can't be opened without it.</div>
           <p class="small muted">One .pjx file with every selected project. Needs about 2.6 GB of free space at the destination.</p>
           <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary" disabled>Export 5 projects</button></div>
@@ -114,7 +114,7 @@
           <div class="sheet-handle"></div>
           <h2>Open this export</h2>
           <div class="path">~/Backups/portfolio-jockey-2026-10-01.pjx</div>
-          <div><label class="label">Passphrase for this export</label><input class="input" type="password" value="garage-sale-2026"><p class="small muted" style="margin-top:4px">The passphrase chosen when the export was made.</p></div>
+          <div><label class="label">Passphrase for this export</label><div class="pw"><input class="input" type="password" value="garage-sale-2026"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div><p class="small muted" style="margin-top:4px">The passphrase chosen when the export was made.</p></div>
           <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Open</button></div>
         </div>
       </div>
@@ -176,6 +176,24 @@
           <div><span class="label">Save to</span><div class="row" style="flex-wrap:nowrap"><div class="path" style="flex:1">~/Documents/contractor-quote.pdf</div><button class="btn">Change…</button></div></div>
           <div class="notice">A file named contractor-quote.pdf already exists there. Saving replaces it.</div>
           <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Save readable copy</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="scene">
+    <div class="scene-title">7. Inside the Flatpak: choose where to save first</div>
+    <div class="scene-note">The sandboxed app can't write to a folder until you pick it, so no location is suggested. "Choose…" opens your desktop's save dialog; Export (or "Save readable copy") is enabled once a location is chosen. The same applies to the bulk export and the readable copy.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Export “Kitchen Remodel”</h2>
+          <label class="check"><input type="checkbox"> <span><strong>Lock with a custom passphrase</strong><br><span class="small muted">Only Portfolio Jockey can open a locked export, with that passphrase.</span></span></label>
+          <div><span class="label">Format</span><div class="seg-app"><span class="on">ZIP</span><span>TAR</span></div></div>
+          <div class="notice">This export is <strong>not protected</strong>. Anyone who gets the archive can open every file in it.</div>
+          <div><span class="label">Save to</span><div class="row" style="flex-wrap:nowrap"><div class="path muted" style="flex:1">No location chosen yet</div><button class="btn">Choose…</button></div></div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary" disabled>Export 24 files (412 MB)</button></div>
         </div>
       </div>
     </div>

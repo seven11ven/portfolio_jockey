@@ -22,12 +22,14 @@ Flutter, the framework the app is built with, officially supports and tests **De
 **Other distributions** with official Flatpak setup instructions on [flathub.org/setup](https://flathub.org/setup/) should also work. They include openSUSE, Manjaro, elementary OS, Zorin OS, Kubuntu, KDE neon, EndeavourOS, MX Linux, Rocky Linux, AlmaLinux, Red Hat Enterprise Linux, CentOS Stream, Solus, Void Linux, NixOS, Gentoo, Vanilla OS and Endless OS.
 
 ## Requirements
-- **A 64-bit processor.** **x64** (Intel/AMD) will be supported. **arm64** (e.g. ARM laptops, Raspberry Pi 4/5 with a 64-bit OS) is supported by Flutter. It needs its own build, decided in phase 8.
+- **An x64 (64-bit Intel or AMD) processor.** The first release is **x64 only** (decided 2026-10-22). Almost every Linux desktop and laptop is x64.
+  - **arm64** (ARM laptops, Raspberry Pi 4/5 with a 64-bit OS) is planned for a later release. Flutter supports it, but it needs its own build on an arm64 machine. Until then, the app doesn't run on ARM.
 - **A graphical desktop** (Wayland or X11) with OpenGL. Software rendering works on machines without a graphics card.
 - **Flatpak** installed (see the table).
 - **No internet connection is needed** to use the app. It never connects to the network.
 
 ## Not supported
+- arm64 (ARM laptops, Raspberry Pi) in the first release. It's planned for later (see Requirements).
 - 32-bit processors, RISC-V and other processor types (Flutter doesn't support them).
 - Servers or systems with no graphical desktop.
 - Distributions that can't run Flatpak.

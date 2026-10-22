@@ -201,6 +201,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                       row(
+                        'Allow copying passphrases',
+                        Switch(
+                          key: const Key('allow-copy'),
+                          value: controller.allowPassphraseCopy,
+                          onChanged: (allow) => unawaited(controller.setAllowPassphraseCopy(allow)),
+                        ),
+                        detail:
+                            "When a passphrase is shown with the eye button, it can be copied. Some desktops keep copied text in a clipboard history, so turn this off if you'd rather a passphrase never reaches the clipboard.",
+                      ),
+                      row(
                         'Lock now',
                         OutlinedButton.icon(onPressed: () => unawaited(requestLock(context)), icon: const Icon(Icons.lock_outline), label: const Text('Lock')),
                       ),
@@ -392,17 +402,18 @@ class _ChangePassphraseDialogState extends WriteDialogState<ChangePassphraseDial
     return PjDialog(
       title: 'Change passphrase',
       content: [
-        TextField(key: const Key('current-passphrase'), controller: _current, obscureText: true, enabled: !busy, decoration: const InputDecoration(labelText: 'Current passphrase')),
-        TextField(key: const Key('new-passphrase'), controller: _new, obscureText: true, enabled: !busy, decoration: const InputDecoration(labelText: 'New passphrase')),
+        PassphraseField(key: const Key('current-passphrase'), controller: _current, enabled: !busy, decoration: const InputDecoration(labelText: 'Current passphrase')),
+        PassphraseField(key: const Key('new-passphrase'), controller: _new, enabled: !busy, decoration: const InputDecoration(labelText: 'New passphrase')),
         StrengthBar(strength, active: _new.text.isNotEmpty),
         Muted(strengthLabel(strength)),
-        TextField(
-          key: const Key('confirm-new-passphrase'),
-          controller: _confirm,
-          obscureText: true,
-          enabled: !busy,
-          decoration: InputDecoration(labelText: 'Confirm new passphrase', errorText: mismatch ? "The passphrases don't match." : null),
-        ),
+        // Shown once the new passphrase is at least Fair, as on first run.
+        if (strength > 0)
+          PassphraseField(
+            key: const Key('confirm-new-passphrase'),
+            controller: _confirm,
+            enabled: !busy,
+            decoration: InputDecoration(labelText: 'Confirm new passphrase', errorText: mismatch ? "The passphrases don't match." : null),
+          ),
         const Muted("Fast: only the key that protects your files is re-wrapped. Files aren't re-encrypted. Exports aren't affected: a locked export keeps the passphrase chosen when it was made."),
         ?errorNotice(),
       ],

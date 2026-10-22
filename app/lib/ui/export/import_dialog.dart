@@ -140,10 +140,9 @@ class _ImportDialogState extends State<ImportDialog> {
     title: 'Open this export',
     content: [
       Text(widget.file.path, style: pathStyle),
-      TextField(
+      PassphraseField(
         key: const Key('import-passphrase'),
         controller: _passphrase,
-        obscureText: true,
         autofocus: true,
         enabled: !_busy,
         decoration: const InputDecoration(labelText: 'Passphrase for this export', helperText: 'The passphrase chosen when the export was made.'),

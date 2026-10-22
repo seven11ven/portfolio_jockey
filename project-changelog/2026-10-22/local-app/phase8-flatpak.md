@@ -1,0 +1,98 @@
+# Phase 8: Linux Flatpak packaging
+
+**Date:** 2026-10-22
+**Performed by:** Claude Code
+**Decided by:** project manager
+
+## Decisions (PM, 2026-10-22)
+- **Build and test** on the PM's own Ubuntu-family PC. This Codespace can't run Flatpak: `unshare -Ur` is refused, so there are no user namespaces for flatpak-builder or bubblewrap.
+- **Distribution:** a single `.flatpak` file first. Flathub may come later.
+- **Processors:** x64 only for the first release. arm64 comes later.
+
+## Step 0: support notes
+**Time:** 2026-10-22 20:11–20:11 UTC
+
+- **`public-notes/linux-support.md`:**
+  - **Requirements:** an x64 processor. The first release is x64 only, and arm64 is planned for later because it needs its own build on an arm64 machine.
+  - **"Not supported":** lists arm64 in the first release.
+- **`public-notes/phase8-packaging.md`:** "arm64" and "Flathub vs `.flatpak`" move from "Still open" to "Decided", along with where the Flatpak is built and tested.
+- **Impact:** docs only.
+
+## App icon choice
+**Time:** 2026-10-22 20:16 UTC
+
+- **Options shown to the PM** on a private page: A (monogram), B (locked folder), C (locked card stack), then two the PM asked for:
+  - D: a blue monkey facing forward, holding a clipboard
+  - E: the same monkey in side profile
+- **Chosen:** at first the PM preferred the front-facing monkey (D) over the profile version (E). The PM then chose **option C, the locked card stack** (stacked project cards with a keyhole), as the app icon.
+- **Next:** the SVG and its PNG sizes are added to `packaging/flatpak/` in step 3.
+
+## Step 1: research
+**Time:** 2026-10-22 20:13–20:16 UTC
+
+A research agent read the primary sources (freedesktop-sdk and gnome-build-meta at pinned tags, Flathub manifests, mpv, FFmpeg, Poppler and libsodium sources and docs). I checked the key runtime claims myself at tag `freedesktop-sdk-26.08.3`:
+- `elements/platform.bst` lists gtk3, glib, cairo and libepoxy.
+- glibc is 2.44, so a bundle built on Debian 12 (glibc 2.36) runs.
+- `components/ffmpeg.bst` is "no patented codecs" (`--disable-decoder="h264,hevc,vc1,vvc"`).
+- `include/ffmpeg.yml` builds with `--enable-gnutls`, so its network protocols exist.
+
+### Findings
+- **Runtime:** `org.freedesktop.Platform//26.08` has everything Flutter needs, including GTK 3. Flathub supports it for about 2 years (to around 08/2028). GNOME 51 also works, but only until around GNOME 52. Both are free.
+- **Not in any runtime:** libmpv, libplacebo, libass, poppler and libsodium. They must be built as modules.
+- **libmpv:** Flathub's Lotti (a Flutter app using media_kit) uses freedesktop 26.08 with mpv 0.41.0 (`-Dlua=disabled`) linked to the runtime's FFmpeg. mpv 0.39–0.41 all give `libmpv.so.2`.
+- **H.264/HEVC:** Flathub's `org.freedesktop.Platform.codecs-extra` extension adds them, and Flatpak installs it automatically with the runtime. FFmpeg's own legal page says patents are a question for lawyers.
+- **FFmpeg `--disable-network`** exists and removes tcp/udp, and with them http/https/tls/rtmp and the rest.
+- **Poppler 26.10.0:** `ENABLE_NSS3=OFF` removes signature support entirely and still gives `libpoppler-glib.so.8`. Licence: GPL-2 or GPL-3.
+- **libsodium:** the latest is **1.0.22** (2026-04-09), soname `libsodium.so.26`, SHA-256 `adbdd8f1…be3349` (computed by the agent). The minisign signature still has to be checked.
+
+### Decisions (PM, 20:18 UTC)
+- **Runtime:** `org.freedesktop.Platform//26.08`.
+- **Video:** the runtime's FFmpeg plus Flathub's `codecs-extra` extension for H.264/HEVC. We don't ship patented decoders ourselves.
+  - That FFmpeg includes network code. It's unreachable because the sandbox has no network and the app only lets mpv open local files. To check: is `codecs-extra` really installed automatically for our self-hosted `.flatpak`? Test on the PM's PC with `flatpak list --runtime`.
+- **Modules we build:** mpv 0.41.0 (`libmpv` only, no Lua, JavaScript, Blu-ray, DVD, CD audio or libarchive) with libplacebo and libass; Poppler 26.10.0 (GLib binding only, NSS, GPGME and libcurl off); libsodium 1.0.22 (minisign signature checked).
+
+## Step 2a: mockups for the sandbox (Floor Planning)
+**Time:** 2026-10-22 20:19 UTC
+
+- **`project-mockups/first-run.html`, new scene 1b:** inside the Flatpak, the suggested storage folder is the app's own data folder (`~/.var/app/io.github.seven11ven.portfolio_jockey/data/Portfolio Jockey`), which the sandbox may always use. "Change…" uses the desktop's folder picker.
+- **`project-mockups/export.html`, new scene 7:** inside the Flatpak no save location is suggested. The field shows "No location chosen yet" with "Choose…", and Export (or "Save readable copy") stays disabled until a location is chosen. This applies to every export dialog.
+- **Backup:** `version-control/local-app/2026-10-22_before-phase8/`.
+- **Shown to the PM** as private pages. Waiting for approval.
+
+## Step 2b: show/hide passphrase and the confirm field (PM request)
+**Time:** 2026-10-22 20:23 UTC
+
+- **Eye button:** every passphrase field gets a show/hide button. That covers first run, unlock, a wrong unlock, change passphrase, export and import. Each field starts hidden and has its own toggle.
+  - **Copying stays blocked:** desktop clipboard histories would otherwise keep the passphrase in plain text. This was recommended to the PM; the PM can still choose otherwise.
+  - **First-run scene 1:** shows the passphrase revealed (🙈 to hide).
+- **Confirm field (PM chose option 2):** "Confirm passphrase" appears only once the strength bar reaches Fair or better. This applies to first run and the new passphrase in Settings. Export passphrases have no strength rules, so their confirm field stays visible as soon as the lock box is ticked, as approved.
+  - **New first-run scene 1a:** a too-short passphrase, with no confirm field and "Create vault" disabled.
+- **Mockup files:** `first-run.html`, `settings.html`, `export.html` and `styles.css` (the `.pw` and `.eye` styles).
+- **Backup:** `version-control/local-app/2026-10-22_before-phase8/`.
+- **Shown to the PM** together with the step 2a Flatpak scenes. Waiting for approval.
+- **Update (20:24 UTC), PM decision:** copying is **the user's choice**. Settings → Security gets an "Allow copying passphrases" switch, **on by default**. It comes with a note that some desktops keep copied text in a clipboard history. `settings.html` scene 1 shows the switch, the first-run note mentions it, and `styles.css` has a `.switch` style.
+
+## Step 2c: built (show/hide, copy setting, Flatpak defaults)
+**Time:** 2026-10-22 20:25–20:37 UTC
+
+- **`PassphraseField`** (`ui/common.dart`) replaces all 9 passphrase fields (first run, unlock, change passphrase, export, import).
+  - It starts hidden, and an eye button shows or hides it.
+  - Autocorrect and suggestions are off.
+  - When the setting is off, copy and cut are removed from the menu, and Ctrl+C / Ctrl+X do nothing.
+- **"Allow copying passphrases"** in Settings → Security is on by default (`AppSettings.allowPassphraseCopy`).
+- **Confirm field:** on first run and for the new passphrase in Settings, it appears once the strength is Fair or better.
+- **`services/sandbox.dart`:** `runningInFlatpak()`, now also used by `GioAppLauncher`. `AppController.sandboxed` can be set by tests.
+- **Inside a Flatpak:**
+  - **Storage default:** `$XDG_DATA_HOME/Portfolio Jockey`, with a note on first run.
+  - **Export and readable copy:** "No location chosen yet" with "Choose…", and the button disabled until a location is chosen.
+- **Tests:**
+  - New: the eye toggle, Ctrl+C with copying allowed and with it blocked (clipboard checked), the switch, and both Flatpak defaults.
+  - Updated: the setup and settings tests, for the confirm rule and for scrolling to Lock.
+  - Full run: 160 pass, 13 skipped. The privacy check passes and the build works.
+- **Not done yet (step 2 continues):** showing the original's real location (`getxattr`, test item 3). Steps 3–5 (packaging files, test checklist, install docs) are still to do. **Not committed.**
+
+## Guideline sync
+**Time:** 2026-10-22 20:44 UTC
+- The PM added two rules to `project-guidelines/`: keep token usage low without bending the other rules (`implementation.md`, Budgeting), and give webhooks and API keys only the permissions they need (`security.md`).
+- Synced both into `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` and `.cursorrules`, as `CLAUDE.md` requires. `AGENTS.md` and `CLAUDE.md` already had the least-privilege rule.
+- **Impact:** documentation only.

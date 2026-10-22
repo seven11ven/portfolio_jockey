@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:portfolio_jockey/services/sandbox.dart';
 import 'package:portfolio_jockey/vault/native/libc.dart';
 
 /// An app installed on the device that can open a file type.
@@ -47,7 +48,7 @@ final class GioAppLauncher implements AppLauncher {
   const GioAppLauncher();
 
   @override
-  bool get usesDesktopChooser => File('/.flatpak-info').existsSync();
+  bool get usesDesktopChooser => runningInFlatpak();
 
   @override
   Future<List<InstalledApp>> appsFor(String fileName) async {

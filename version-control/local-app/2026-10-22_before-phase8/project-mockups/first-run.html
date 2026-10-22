@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>First run and unlock · Portfolio Jockey mockup</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="mock-bar">
+  <span>Design mockup · fake data</span><a href="index.html">All mockups</a>
+  <span class="seg"><button data-set-theme="light">Light</button><button data-set-theme="dark">Dark</button></span>
+  <span class="seg"><button data-set-view="both">Both</button><button data-set-view="desktop">Desktop</button><button data-set-view="phone">Phone</button></span>
+</div>
+<main class="mock-page">
+  <header>
+    <h1>First run and unlock</h1>
+    <p class="muted">No account and no login. The passphrase only unlocks the encryption on this device.</p>
+  </header>
+
+  <section class="scene">
+    <div class="scene-title">1. First run: choose a storage location and set a passphrase</div>
+    <div class="scene-note">Shown once. The checkbox must be ticked before "Create vault" is enabled. Creating the vault writes to disk, and this screen is the confirmation.</div>
+    <div class="screen" hidden>
+      <div class="center-wrap">
+        <div class="card lock-card">
+          <div class="lock-icon">🔐</div>
+          <h2 style="text-align:center">Welcome to Portfolio Jockey</h2>
+          <p class="muted small" style="text-align:center">Everything stays on this device. Your files are encrypted with a passphrase only you know.</p>
+          <div>
+            <span class="label">Where should projects be stored?</span>
+            <div class="row" style="flex-wrap:nowrap">
+              <div class="path" style="flex:1">~/Documents/Portfolio Jockey</div>
+              <button class="btn">Change…</button>
+            </div>
+          </div>
+          <div>
+            <label class="label">Passphrase</label>
+            <input class="input" type="password" value="correct horse battery">
+            <div class="strength" style="margin-top:6px"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+            <p class="small muted" style="margin-top:4px">Strong. Use at least 12 characters, or several words.</p>
+          </div>
+          <div>
+            <label class="label">Confirm passphrase</label>
+            <input class="input" type="password" value="correct horse battery">
+          </div>
+          <div class="notice">There is no way to recover a forgotten passphrase. If you lose it, your projects can't be opened by anyone, including you.</div>
+          <label class="check"><input type="checkbox" checked> I understand that a forgotten passphrase means my files are lost.</label>
+          <button class="btn btn-primary">Create vault</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">2. Unlock</div>
+    <div class="scene-note">Shown every time the app opens, and after "Lock" (the 🔒 button in the top bar).</div>
+    <div class="screen" hidden>
+      <div class="center-wrap">
+        <div class="card lock-card">
+          <div class="lock-icon">🔒</div>
+          <h2 style="text-align:center">Portfolio Jockey is locked</h2>
+          <div>
+            <label class="label">Passphrase</label>
+            <input class="input" type="password" placeholder="Enter your passphrase">
+          </div>
+          <button class="btn btn-primary">Unlock</button>
+          <p class="small muted" style="text-align:center">Vault: ~/Documents/Portfolio Jockey</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">3. Unlock: wrong passphrase</div>
+    <div class="scene-note">Nothing in the message reveals anything about the vault. Each failed try adds a short delay.</div>
+    <div class="screen" hidden>
+      <div class="center-wrap">
+        <div class="card lock-card">
+          <div class="lock-icon">🔒</div>
+          <h2 style="text-align:center">Portfolio Jockey is locked</h2>
+          <div>
+            <label class="label">Passphrase</label>
+            <input class="input" type="password" value="wrong guess" style="border-color:var(--danger)">
+          </div>
+          <div class="notice notice-danger">That passphrase didn't unlock the vault. Check it and try again.</div>
+          <button class="btn btn-primary">Unlock</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="mockup.js"></script>
+</body>
+</html>

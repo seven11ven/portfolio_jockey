@@ -38,6 +38,7 @@
 ## Budgeting
 * Whenever choosing from dependencies or third party services. AI-Agent(s) and users should always remain price conscious. Unless explicitly stated otherwise, the resources you use SHOULD NEVER require upfront card details nor payment. Prioritize a secure, cost-efficient resource for the application's stack composition.
     - ALWAYS check the resource's website/documentation, search the pages in their ENTIRETY. Somewhere will usually indicate if the service is paid-only or free to use in it's entirety. Do not just take first glances and assume a verdict.
+* Regarding token usage, Users and AI-Agent(s) should make efforts to keep token usage low to respect any budget/session limits said User/Agent may have. However, this should not come at a cost of the rules set in place for this project. The Security and Implementation still remain core parts of a smooth, concised, and professional workflow.
 
 ## Open Source and Privacy
 * Whenever the User or AI-Agent(s) choose their resources, dependencies and or third party services. ALWAYS look into the telemetry behind it. Look for an application that respects the privacy of the consumer(s), whilst still being structurally sound and firm in it's Security.

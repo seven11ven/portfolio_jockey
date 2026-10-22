@@ -58,6 +58,7 @@ Future<TestApp> startApp(
   Size size = const Size(1280, 900),
   AppLauncher? launcher,
   PrivateFolders? privateFolders,
+  bool sandboxed = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -74,6 +75,7 @@ Future<TestApp> startApp(
       trasher: FakeTrash(await tempFolder()),
       launcher: launcher ?? FakeLauncher(),
       privateFolders: privateFolders ?? await fakePrivateFolders(),
+      sandboxed: sandboxed,
       kdf: fastKdf,
     );
     if (unlocked) {
