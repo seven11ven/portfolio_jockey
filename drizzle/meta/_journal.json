@@ -15,6 +15,20 @@
       "when": 1792635798719,
       "tag": "0001_deleted_objects",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792648736309,
+      "tag": "0002_rename_storage_key",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792649506747,
+      "tag": "0003_blob_usage_events",
+      "breakpoints": true
     }
   ]
 }

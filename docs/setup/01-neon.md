@@ -1,6 +1,6 @@
 # Setup 1: Neon database
 
-Portfolio Jockey stores projects, notes and file records in a free Neon Postgres database. Uploaded files themselves go to Cloudflare R2, which is covered in a later guide.
+Portfolio Jockey stores projects, notes and file records in a free Neon Postgres database. Uploaded files themselves go to a private Vercel Blob store, which is covered in Setup 3.
 
 **You'll need:** about 10 minutes and a GitHub account.
 

@@ -13,6 +13,7 @@ import {
   bigint,
   boolean,
   index,
+  integer,
   pgEnum,
   pgTable,
   text,
@@ -145,15 +146,15 @@ export const entries = pgTable(
 /**
  * Upload status:
  * - pending: an upload link was issued, but the browser hasn't confirmed it finished.
- * - ready:   the file is in R2 and shows on the timeline.
+ * - ready:   the file is in the store and shows on the timeline.
  * Pending files still count toward the storage quota, so starting many
  * uploads at once can't sneak past the free-tier limit.
  */
 export const fileStatus = pgEnum("file_status", ["pending", "ready"]);
 
 /**
- * Metadata for a file stored in the private Cloudflare R2 bucket.
- * The file itself lives in R2, never in the database or the repo.
+ * Metadata for a file stored in the private Vercel Blob store.
+ * The file itself lives in the store, never in the database or the repo.
  */
 export const files = pgTable(
   "files",
@@ -170,9 +171,10 @@ export const files = pgTable(
     userId: text()
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    // Random object key in R2, shaped like userId/projectId/uuid.
-    // The original file name is never used as the key.
-    r2Key: text().notNull().unique(),
+    // The file's pathname in the Blob store: userId/projectId/uuid/name.
+    // The random uuid folder keeps it unguessable and unique. The name is a
+    // cleaned, URL-safe copy of the original, so downloads get a sensible name.
+    storageKey: text().notNull().unique(),
     originalName: text().notNull(),
     mimeType: text().notNull(),
     sizeBytes: bigint({ mode: "number" }).notNull(),
@@ -187,13 +189,13 @@ export const files = pgTable(
 );
 
 /**
- * Files that were deleted in the app but are still kept in R2 for a while.
+ * Files that were deleted in the app but are still kept in storage for a while.
  *
  * Deleting an entry or project removes its rows from `files` right away and
- * records each R2 object here. The object itself is only removed from R2
- * after the retention period (7 days), so a mistake can still be recovered
- * from the Cloudflare dashboard. Until then it still counts toward the
- * storage quota, because R2 still stores it.
+ * records each stored file here. The file itself is only removed from the
+ * Blob store after the retention period (7 days), so a mistake can still be
+ * recovered from the Vercel dashboard. Until then it still counts toward
+ * the storage quota, because the store still holds it.
  *
  * There's deliberately no foreign key to `user`: if a user is deleted,
  * these rows must survive so their objects still get cleaned up.
@@ -201,9 +203,9 @@ export const files = pgTable(
 export const deletedObjects = pgTable(
   "deleted_objects",
   {
-    r2Key: text().primaryKey(),
+    storageKey: text().primaryKey(),
     userId: text().notNull(),
-    // Kept so the owner can find a file in the Cloudflare dashboard to recover it.
+    // Kept so the owner can find a file in the Vercel dashboard to recover it.
     originalName: text().notNull(),
     mimeType: text().notNull(),
     sizeBytes: bigint({ mode: "number" }).notNull(),
@@ -213,4 +215,21 @@ export const deletedObjects = pgTable(
     index("deleted_objects_user_idx").on(t.userId),
     index("deleted_objects_deleted_at_idx").on(t.deletedAt),
   ],
+);
+
+/**
+ * The app's own record of estimated Vercel Blob usage, used to stay inside
+ * the free Hobby allowance. See src/lib/blob-usage.ts.
+ * Not tied to a user, because Vercel's limits apply to the whole account.
+ */
+export const blobUsageEvents = pgTable(
+  "blob_usage_events",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    at: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    advancedOps: integer().notNull().default(0),
+    simpleOps: integer().notNull().default(0),
+    transferBytes: bigint({ mode: "number" }).notNull().default(0),
+  },
+  (t) => [index("blob_usage_events_at_idx").on(t.at)],
 );

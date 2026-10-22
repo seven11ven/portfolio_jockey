@@ -96,3 +96,28 @@ The version-control rule in `project-guidelines/implementation.md` now says back
 
 ## Impacts
 - Documentation only; no `version-control/` backup required.
+
+---
+
+# Agent files synced with the "Budgeting" rule
+
+**Time:** 2026-10-22 06:03 UTC
+
+The project manager added a "Budgeting" section to `project-guidelines/implementation.md`. Dependencies and third-party services must be price conscious, and, unless explicitly stated otherwise, must never require upfront card details or payment. Secure, cost-efficient options come first.
+- Added it as implementation rule 7 in `AGENTS.md`, a reminder in `CLAUDE.md`, and the one-line summaries in `.github/copilot-instructions.md` and `.cursorrules`.
+- `GEMINI.md` needed no change because it imports the guideline files directly.
+- The switch from Cloudflare R2 (card required) to Backblaze B2 (no card) already follows this rule. See `backblaze-switch.md`.
+
+## Impacts
+- Documentation only; no `version-control/` backup required.
+
+---
+
+# Agent files synced with the Budgeting "check the website" line
+
+**Time:** 2026-10-22 06:14 UTC
+
+The Budgeting rule gained a sub-point: always check the resource's own website or documentation to confirm whether it's paid-only or free. It was added to `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` and `.cursorrules`. `GEMINI.md` imports the guidelines directly.
+
+## Impacts
+- Documentation only; no `version-control/` backup required.

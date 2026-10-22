@@ -12,9 +12,14 @@ const UploadRequest = z.object({
 
 /**
  * POST /api/uploads
- * Starts an upload. Returns { fileId, uploadUrl }. The browser then PUTs
- * the file to uploadUrl with the same Content-Type, and calls
- * POST /api/uploads/{fileId}/complete.
+ * Step 1 of an upload. Returns { fileId, pathname, multipart }.
+ *
+ * The browser then uploads with the Blob SDK:
+ *   uploadPresigned(pathname, file, {
+ *     access: "private", multipart, contentType,
+ *     handleUploadUrl: "/api/uploads/permission", clientPayload: fileId,
+ *   })
+ * and finally calls POST /api/uploads/{fileId}/complete.
  */
 export async function POST(request: Request) {
   const { user, response } = await authorize(request, { checkOrigin: true });
@@ -30,7 +35,7 @@ export async function POST(request: Request) {
   after(() => cleanUpStorage().catch((error) => console.error("Storage cleanup failed:", error)));
 
   return NextResponse.json(
-    { fileId: result.fileId, uploadUrl: result.uploadUrl },
+    { fileId: result.fileId, pathname: result.pathname, multipart: result.multipart },
     { status: 201, headers: { "Cache-Control": "no-store" } },
   );
 }

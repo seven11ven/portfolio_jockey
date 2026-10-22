@@ -4,8 +4,8 @@ import { completeUpload } from "@/lib/storage";
 
 /**
  * POST /api/uploads/{fileId}/complete
- * Called after the browser finishes uploading to R2. The server checks the
- * file in R2 before it appears in the app.
+ * Step 3 of an upload, called after the browser finishes uploading to the
+ * Blob store. The server checks the file in the store before it appears in the app.
  */
 export async function POST(request: Request, ctx: RouteContext<"/api/uploads/[fileId]/complete">) {
   const { user, response } = await authorize(request, { checkOrigin: true });

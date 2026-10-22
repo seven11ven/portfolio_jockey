@@ -34,3 +34,7 @@
 ## Floor Planning
 * Whenever the user or AI-Agent is modifying/constructing any UI Elements, it is best and preferred practice to present the project manager with clear mockups instead of "winging it"(acting without input).
     - Ask the project manager in what form/manner would they like the mockups presented to them
+
+## Budgeting
+* Whenever choosing from dependencies or third party services. AI-Agent(s) and users should always remain price conscious. Unless explicitly stated otherwise, the resources you use SHOULD NEVER require upfront card details nor payment. Prioritize a secure, cost-efficient resource for the application's stack composition.
+    - ALWAYS check the resource's website/documentation, search the pages in their ENTIRETY. Somewhere will usually indicate if the service is paid-only or free to use in it's entirety. Do not just take first glances and assume a verdict.

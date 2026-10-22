@@ -3,12 +3,22 @@ import { randomUUID } from "node:crypto";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { deletedObjects, entries, files } from "@/db/schema";
+import { pruneBlobUsage, reserveBlobUsage } from "@/lib/blob-usage";
 import { env } from "@/lib/env";
 import { cleanFileName, isAllowedMimeType, MAX_FILE_BYTES } from "@/lib/file-types";
-import { createDownloadUrl, createUploadUrl, deleteObjects, getObjectInfo } from "@/lib/r2";
+import {
+  createViewUrl,
+  deleteObjects,
+  getObjectInfo,
+  issueUploadPermission,
+  MULTIPART_PART_BYTES,
+  MULTIPART_THRESHOLD_BYTES,
+  readTokenNeedsRenewal,
+} from "@/lib/object-storage";
 
 /**
- * File storage rules: uploads, downloads, deletes and the storage quota.
+ * File storage rules: uploads, downloads, deletes, the storage quota, and
+ * the Vercel Blob free-allowance guard.
  *
  * Every function takes the signed-in user's id and only touches that
  * user's rows, so one account can never reach another account's files.
@@ -16,27 +26,55 @@ import { createDownloadUrl, createUploadUrl, deleteObjects, getObjectInfo } from
  * from the request body.
  */
 
-/** Deleted files stay in R2 this long before they're removed for good. */
+/** Deleted files stay in the store this long before they're removed for good. */
 export const RETENTION_DAYS = 7;
 /** Uploads never confirmed after this long are treated as abandoned. */
 const ABANDONED_UPLOAD_HOURS = 24;
+/** An upload must start within this long of being approved. */
+const UPLOAD_WINDOW_MINUTES = 15;
 
-export type StorageError = {
-  ok: false;
-  status: 400 | 404 | 409 | 413;
-  code: string;
-  message: string;
-};
 /** Ids are UUIDs. Checking first means a malformed id is a clean "not found". */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isUuid = (value: string) => UUID.test(value);
 
+export type StorageError = {
+  ok: false;
+  status: 400 | 404 | 409 | 413 | 429;
+  code: string;
+  message: string;
+};
 const fail = (status: StorageError["status"], code: string, message: string): StorageError => ({
   ok: false,
   status,
   code,
   message,
 });
+const ALLOWANCE_USED_UP = () =>
+  fail(
+    429,
+    "free_allowance_used",
+    "This month's free file storage allowance is almost used up. Try again in a few days.",
+  );
+
+/** Whether a file of this size is uploaded in parts. */
+export const usesMultipart = (sizeBytes: number) => sizeBytes > MULTIPART_THRESHOLD_BYTES;
+
+/** Vercel Blob operations an upload of this size uses: one per part, plus start and finish. */
+function uploadOperations(sizeBytes: number) {
+  return usesMultipart(sizeBytes) ? Math.ceil(sizeBytes / MULTIPART_PART_BYTES) + 2 : 1;
+}
+
+/**
+ * Makes the last part of a pathname from the original file name: only
+ * letters, numbers, dots, dashes and underscores, never starting with a dot.
+ */
+function pathnameSafeName(fileName: string) {
+  const safe = fileName
+    .replace(/[^A-Za-z0-9._-]+/g, "_")
+    .replace(/^[._]+/, "")
+    .slice(0, 100);
+  return safe || "file";
+}
 
 /* ------------------------------------------------------------------ */
 /* Quota                                                               */
@@ -44,8 +82,8 @@ const fail = (status: StorageError["status"], code: string, message: string): St
 
 /**
  * Bytes this user is using. It counts live files, pending uploads, and
- * deleted files still waiting out the retention period, because R2
- * stores all of them.
+ * deleted files still waiting out the retention period, because the
+ * store holds all of them.
  */
 export async function getStorageUsage(userId: string) {
   const result = await db.execute<{ used: string }>(sql`
@@ -69,10 +107,9 @@ export type UploadRequest = {
 };
 
 /**
- * Step 1 of an upload: checks the rules, reserves quota, and returns a
- * short-lived link the browser uploads the file to directly.
- * The file row starts as "pending" and counts toward the quota at once,
- * so many uploads started together can't slip past the limit.
+ * Step 1 of an upload: checks the rules, reserves quota and free allowance,
+ * and records a "pending" file. Returns the pathname the browser must
+ * upload to, and whether to upload in parts.
  */
 export async function createUpload(userId: string, request: UploadRequest) {
   if (!isAllowedMimeType(request.contentType)) {
@@ -94,40 +131,72 @@ export async function createUpload(userId: string, request: UploadRequest) {
     .limit(1);
   if (!entry) return fail(404, "entry_not_found", "That entry doesn't exist.");
 
-  // Random key. The original file name is never part of it.
-  const key = `${userId}/${entry.projectId}/${randomUUID()}`;
   const fileName = cleanFileName(request.fileName);
+  const pathname = `${userId}/${entry.projectId}/${randomUUID()}/${pathnameSafeName(fileName)}`;
   const quota = env().STORAGE_QUOTA_BYTES;
 
   // Checking the quota and reserving the space happen in one transaction,
-  // behind a lock that's unique to this user. A second upload started at
-  // the same moment waits for the first to finish, then sees its size, so
-  // two uploads can't both squeeze past the limit.
+  // behind a lock that's unique to this user, so two uploads started at the
+  // same moment can't both squeeze past the limit.
   const [, inserted] = await db.batch([
     db.execute(sql`select pg_advisory_xact_lock(hashtext(${"quota:" + userId}))`),
     db.execute<{ id: string }>(sql`
-    insert into files (entry_id, project_id, user_id, r2_key, original_name, mime_type, size_bytes)
-    select ${request.entryId}::uuid, ${entry.projectId}::uuid, ${userId}, ${key},
-           ${fileName}, ${request.contentType}, ${request.sizeBytes}::bigint
-    where (select coalesce(sum(size_bytes), 0) from files where user_id = ${userId})
-        + (select coalesce(sum(size_bytes), 0) from deleted_objects where user_id = ${userId})
-        + ${request.sizeBytes}::bigint <= ${quota}::bigint
-    returning id
-  `),
+      insert into files (entry_id, project_id, user_id, storage_key, original_name, mime_type, size_bytes)
+      select ${request.entryId}::uuid, ${entry.projectId}::uuid, ${userId}, ${pathname},
+             ${fileName}, ${request.contentType}, ${request.sizeBytes}::bigint
+      where (select coalesce(sum(size_bytes), 0) from files where user_id = ${userId})
+          + (select coalesce(sum(size_bytes), 0) from deleted_objects where user_id = ${userId})
+          + ${request.sizeBytes}::bigint <= ${quota}::bigint
+      returning id
+    `),
   ]);
   const fileId = inserted.rows[0]?.id;
-  if (!fileId) {
-    return fail(413, "quota_exceeded", "This upload would go over your storage limit.");
+  if (!fileId) return fail(413, "quota_exceeded", "This upload would go over your storage limit.");
+
+  // Upload operations, plus one for the upload permission request.
+  const allowed = await reserveBlobUsage({ advancedOps: uploadOperations(request.sizeBytes) + 1 });
+  if (!allowed) {
+    await db.delete(files).where(and(eq(files.id, fileId), eq(files.userId, userId)));
+    return ALLOWANCE_USED_UP();
   }
 
-  const uploadUrl = await createUploadUrl(key, request.contentType, request.sizeBytes);
-  return { ok: true as const, fileId, uploadUrl };
+  return { ok: true as const, fileId, pathname, multipart: usesMultipart(request.sizeBytes) };
 }
 
 /**
- * Step 2 of an upload: the browser says it finished. The server checks
- * that R2 really has the file, with the approved size and type, before
- * showing it. A mismatch deletes the upload.
+ * Step 2 of an upload: the browser asks for permission to upload one
+ * approved file. Only works for this user's own pending file, at the exact
+ * pathname from step 1, within 15 minutes. Throws if not allowed.
+ */
+export async function authorizeUpload(userId: string, fileId: string, pathname: string, multipart: boolean) {
+  if (!isUuid(fileId)) throw new UploadNotAllowedError();
+  const [file] = await db
+    .select()
+    .from(files)
+    .where(
+      and(
+        eq(files.id, fileId),
+        eq(files.userId, userId),
+        eq(files.status, "pending"),
+        eq(files.storageKey, pathname),
+        sql`${files.createdAt} > now() - make_interval(mins => ${UPLOAD_WINDOW_MINUTES})`,
+      ),
+    )
+    .limit(1);
+  if (!file || multipart !== usesMultipart(file.sizeBytes)) throw new UploadNotAllowedError();
+  return issueUploadPermission(file.storageKey, file.mimeType, file.sizeBytes);
+}
+
+export class UploadNotAllowedError extends Error {
+  constructor() {
+    super("Upload not allowed.");
+  }
+}
+
+/**
+ * Step 3 of an upload: the browser says it finished. The server checks
+ * that the store really has the file, with the approved size and type,
+ * before showing it. A mismatch deletes the upload.
  */
 export async function completeUpload(userId: string, fileId: string) {
   if (!isUuid(fileId)) return fail(404, "file_not_found", "That file doesn't exist.");
@@ -139,11 +208,12 @@ export async function completeUpload(userId: string, fileId: string) {
   if (!file) return fail(404, "file_not_found", "That file doesn't exist.");
   if (file.status === "ready") return { ok: true as const, fileId };
 
-  const info = await getObjectInfo(file.r2Key);
+  if (!(await reserveBlobUsage({ simpleOps: 1 }))) return ALLOWANCE_USED_UP();
+  const info = await getObjectInfo(file.storageKey);
   if (!info) return fail(409, "not_uploaded", "The file hasn't finished uploading.");
 
   if (info.sizeBytes !== file.sizeBytes || info.contentType !== file.mimeType) {
-    await deleteObjects([file.r2Key]);
+    await deleteObjects([file.storageKey]);
     await db.delete(files).where(and(eq(files.id, file.id), eq(files.userId, userId)));
     return fail(400, "upload_mismatch", "The uploaded file didn't match what was approved, so it was removed.");
   }
@@ -159,20 +229,29 @@ export async function completeUpload(userId: string, fileId: string) {
 /* Downloads                                                           */
 /* ------------------------------------------------------------------ */
 
-/** A short-lived link to view or download a finished file, or null. */
+/**
+ * A 10-minute link to view or download a finished file.
+ * Returns a StorageError if the file isn't found or the free allowance is
+ * used up.
+ */
 export async function getDownloadUrl(userId: string, fileId: string, asAttachment: boolean) {
-  if (!isUuid(fileId)) return null;
+  if (!isUuid(fileId)) return fail(404, "file_not_found", "That file doesn't exist.");
   const [file] = await db
     .select()
     .from(files)
     .where(and(eq(files.id, fileId), eq(files.userId, userId), eq(files.status, "ready")))
     .limit(1);
-  if (!file) return null;
-  return createDownloadUrl(file.r2Key, {
-    contentType: file.mimeType,
-    fileName: file.originalName,
-    asAttachment,
+  if (!file) return fail(404, "file_not_found", "That file doesn't exist.");
+
+  // Counted as a full, uncached download (the worst case).
+  const allowed = await reserveBlobUsage({
+    simpleOps: 1,
+    transferBytes: file.sizeBytes,
+    advancedOps: readTokenNeedsRenewal() ? 1 : 0,
   });
+  if (!allowed) return ALLOWANCE_USED_UP();
+
+  return { ok: true as const, url: await createViewUrl(file.storageKey, asAttachment) };
 }
 
 /* ------------------------------------------------------------------ */
@@ -181,20 +260,20 @@ export async function getDownloadUrl(userId: string, fileId: string, asAttachmen
 
 /**
  * Deletes an entry and its files. The files move to deleted_objects and
- * stay in R2 for RETENTION_DAYS. Both statements run as one transaction,
- * so a file is never lost track of halfway.
+ * stay in the store for RETENTION_DAYS. Both statements run as one
+ * transaction, so a file is never lost track of halfway.
  * Returns false if the entry doesn't exist or isn't this user's.
  */
 export async function deleteEntry(userId: string, entryId: string) {
   if (!isUuid(entryId)) return false;
   const [, deleted] = await db.batch([
     db.execute(sql`
-      insert into deleted_objects (r2_key, user_id, original_name, mime_type, size_bytes)
-      select f.r2_key, f.user_id, f.original_name, f.mime_type, f.size_bytes
+      insert into deleted_objects (storage_key, user_id, original_name, mime_type, size_bytes)
+      select f.storage_key, f.user_id, f.original_name, f.mime_type, f.size_bytes
       from files f
       join entries e on e.id = f.entry_id
       where e.id = ${entryId}::uuid and e.user_id = ${userId}
-      on conflict (r2_key) do nothing
+      on conflict (storage_key) do nothing
     `),
     db
       .delete(entries)
@@ -209,12 +288,12 @@ export async function deleteProject(userId: string, projectId: string) {
   if (!isUuid(projectId)) return false;
   const [, deleted] = await db.batch([
     db.execute(sql`
-      insert into deleted_objects (r2_key, user_id, original_name, mime_type, size_bytes)
-      select f.r2_key, f.user_id, f.original_name, f.mime_type, f.size_bytes
+      insert into deleted_objects (storage_key, user_id, original_name, mime_type, size_bytes)
+      select f.storage_key, f.user_id, f.original_name, f.mime_type, f.size_bytes
       from files f
       join projects p on p.id = f.project_id
       where p.id = ${projectId}::uuid and p.user_id = ${userId}
-      on conflict (r2_key) do nothing
+      on conflict (storage_key) do nothing
     `),
     db.execute<{ id: string }>(sql`
       delete from projects where id = ${projectId}::uuid and user_id = ${userId} returning id
@@ -228,22 +307,23 @@ export async function deleteProject(userId: string, projectId: string) {
 /* ------------------------------------------------------------------ */
 
 /**
- * Housekeeping, run in the background after uploads and deletes:
+ * Housekeeping, run in the background after uploads:
  * 1. Uploads never confirmed within a day are abandoned. They're queued
  *    for immediate removal, since there's nothing worth recovering.
- * 2. Deleted files older than the retention period are removed from R2
- *    for good.
+ * 2. Deleted files older than the retention period are removed from the
+ *    store for good. Deleting is free on Vercel Blob.
+ * 3. Old allowance records are pruned.
  */
 export async function cleanUpStorage() {
   await db.batch([
     db.execute(sql`
-      insert into deleted_objects (r2_key, user_id, original_name, mime_type, size_bytes, deleted_at)
-      select r2_key, user_id, original_name, mime_type, size_bytes,
+      insert into deleted_objects (storage_key, user_id, original_name, mime_type, size_bytes, deleted_at)
+      select storage_key, user_id, original_name, mime_type, size_bytes,
              now() - make_interval(days => ${RETENTION_DAYS})
       from files
       where status = 'pending'
         and created_at < now() - make_interval(hours => ${ABANDONED_UPLOAD_HOURS})
-      on conflict (r2_key) do nothing
+      on conflict (storage_key) do nothing
     `),
     db.execute(sql`
       delete from files
@@ -252,16 +332,16 @@ export async function cleanUpStorage() {
     `),
   ]);
 
-  const expired = await db.execute<{ r2_key: string }>(sql`
-    select r2_key from deleted_objects
+  const expired = await db.execute<{ storage_key: string }>(sql`
+    select storage_key from deleted_objects
     where deleted_at <= now() - make_interval(days => ${RETENTION_DAYS})
     order by deleted_at
     limit 1000
   `);
-  const keys = expired.rows.map((row) => row.r2_key);
-  const removed = await deleteObjects(keys);
+  const removed = await deleteObjects(expired.rows.map((row) => row.storage_key));
   if (removed.length > 0) {
-    await db.delete(deletedObjects).where(inArray(deletedObjects.r2Key, removed));
+    await db.delete(deletedObjects).where(inArray(deletedObjects.storageKey, removed));
   }
+  await pruneBlobUsage();
   return { removed: removed.length };
 }

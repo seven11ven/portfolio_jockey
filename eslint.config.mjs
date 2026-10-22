@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Backups of earlier versions. They're kept for reference and restoring,
+    // not compiled or linted, since they won't match the current code.
+    "version-control/**",
   ]),
 ]);
 
