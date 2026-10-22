@@ -55,11 +55,14 @@ const envSchema = z.object({
       ),
     ),
 
-  // File storage. Used in a later step, so optional for now.
-  R2_ACCOUNT_ID: z.string().optional(),
-  R2_ACCESS_KEY_ID: z.string().optional(),
-  R2_SECRET_ACCESS_KEY: z.string().optional(),
-  R2_BUCKET: z.string().optional(),
+  // File storage (Cloudflare R2, private bucket)
+  R2_ACCOUNT_ID: required.regex(/^[a-f0-9]{32}$/, "must be the 32-character Cloudflare account ID"),
+  R2_ACCESS_KEY_ID: required,
+  R2_SECRET_ACCESS_KEY: required,
+  R2_BUCKET: required.regex(/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/, "must be a valid R2 bucket name"),
+  // Optional: a different S3-compatible server, such as a local test server.
+  // Leave empty to use Cloudflare R2.
+  R2_ENDPOINT: z.url("must be a full URL").optional(),
   // 9 GB by default, below Cloudflare R2's 10 GB free tier.
   STORAGE_QUOTA_BYTES: z.coerce.number().int().positive().default(9 * 1024 ** 3),
 });

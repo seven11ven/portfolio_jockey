@@ -79,3 +79,20 @@ The logging rule in `project-guidelines/implementation.md` now requires the time
 ## Impacts
 - Documentation only; no `version-control/` backup required.
 - All future changelog entries include a time.
+
+---
+
+# Agent files synced with the version-control secrets rule
+
+**Time:** 2026-10-22 05:50 UTC
+**Requested by:** project manager
+
+The version-control rule in `project-guidelines/implementation.md` now says backups must never include critical components that could expose API keys, webhooks or secrets, and that hard-coded or plain-text secrets must never exist at all. This rule was added earlier and committed with plan step 4, but the agent files hadn't been synced with it.
+- Added it to `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` and `.cursorrules`.
+- The project manager also removed the "This Guideline also extends to implementations" line from `project-guidelines/security.md`. The agent files never included it, so nothing needed removing.
+- Checked existing backups: no `version-control/` folder contains a secret. The two backed-up `.env_example` copies only hold empty placeholders.
+
+`GEMINI.md` needed no change because it imports the guideline files directly.
+
+## Impacts
+- Documentation only; no `version-control/` backup required.

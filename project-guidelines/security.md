@@ -1,5 +1,4 @@
 # Security Guidelines for this Project and Repo overall
-    This Guideline also extends to implementations
 
 ## Double check before a commit
 * Ensure there are no slips in security regarding keys, private mentions, or any critical infrastructure when adding a commit. Committing anything meant to be hidden is DANGEROUS and cannot be overriden. Risks the entire security of the project.

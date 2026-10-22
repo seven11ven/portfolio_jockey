@@ -17,7 +17,8 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Run on everything except the login page, the login API, Next.js
-  // internal files, and static files like the favicon.
-  matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon.ico).*)"],
+  // Run on pages only. Skipped: the login page, every /api route (each one
+  // checks the login itself and answers with a JSON error, not a redirect),
+  // Next.js internal files, and static files like the favicon.
+  matcher: ["/((?!login|api/|_next/static|_next/image|favicon.ico).*)"],
 };

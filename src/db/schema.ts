@@ -185,3 +185,32 @@ export const files = pgTable(
     index("files_user_idx").on(t.userId),
   ],
 );
+
+/**
+ * Files that were deleted in the app but are still kept in R2 for a while.
+ *
+ * Deleting an entry or project removes its rows from `files` right away and
+ * records each R2 object here. The object itself is only removed from R2
+ * after the retention period (7 days), so a mistake can still be recovered
+ * from the Cloudflare dashboard. Until then it still counts toward the
+ * storage quota, because R2 still stores it.
+ *
+ * There's deliberately no foreign key to `user`: if a user is deleted,
+ * these rows must survive so their objects still get cleaned up.
+ */
+export const deletedObjects = pgTable(
+  "deleted_objects",
+  {
+    r2Key: text().primaryKey(),
+    userId: text().notNull(),
+    // Kept so the owner can find a file in the Cloudflare dashboard to recover it.
+    originalName: text().notNull(),
+    mimeType: text().notNull(),
+    sizeBytes: bigint({ mode: "number" }).notNull(),
+    deletedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("deleted_objects_user_idx").on(t.userId),
+    index("deleted_objects_deleted_at_idx").on(t.deletedAt),
+  ],
+);

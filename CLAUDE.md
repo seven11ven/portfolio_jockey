@@ -9,7 +9,7 @@ Before doing anything in this repository, read and follow all project guidelines
 - Never edit without explicit user permission; plan changes first (plan mode).
 - Ask the user/project manager when uncertain.
 - Log every change in `project-changelog/YYYY-MM-DD/<change>.md` with details, impacts and the time it was done (`**Time:** YYYY-MM-DD HH:MM UTC`) (untracked/.gitignored components are exempt).
-- Back up prior versions of changed application components to `version-control/` (docs exempt).
+- Back up prior versions of changed application components to `version-control/` (docs exempt). Never back up anything holding or exposing API keys, webhooks or secrets, such as `.env`. Hard-coded or plain-text secrets must never exist at all.
 - New env variables go in `/.env_example` with EMPTY values and annotations on purpose and setup. Never put real values in annotations.
 - Floor Planning: show UI mockups before building or changing any UI. Agreed format is static HTML with fake data in `/project-mockups/`.
 - Clean up loose ends: close ports, dev servers, and other connections as soon as they're no longer needed.
