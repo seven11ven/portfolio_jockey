@@ -87,7 +87,7 @@ final class FileEntry {
 
   final String id;
   String name;
-  final int size;
+  int size;
   final DateTime addedAt;
   final String key;
   final List<String> tags;

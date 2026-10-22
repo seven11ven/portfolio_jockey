@@ -1,0 +1,41 @@
+# Reviewed network/telemetry pattern hits in dependency code, used by tool/check-privacy.sh.
+# Format (tab-separated): package@version  file  matched-token  reason
+# Each line was checked by reading the code. A hit is only accepted for the exact
+# package version named here, so upgrading a package forces a fresh review.
+# Reviewed 2026-10-22 for Flutter 3.47.7. Details: docs/dependencies.md.
+async@2.13.1	lib/src/async_cache.dart	fetch(	AsyncCache.fetch(): an in-memory cache method, no network
+flutter@flutter-3.47.7	lib/src/material/icons.dart	analytics	Material icon names (Icons.analytics*), not analytics code
+flutter@flutter-3.47.7	lib/src/painting/_network_image_io.dart	HttpClient	NetworkImage/Image.network: opt-in API, only runs if app code calls it; check 3 blocks that
+flutter@flutter-3.47.7	lib/src/painting/_network_image_io.dart	NetworkImage	NetworkImage/Image.network: opt-in API, only runs if app code calls it; check 3 blocks that
+flutter@flutter-3.47.7	lib/src/painting/_network_image_web.dart	NetworkImage	web-only code, never compiled into the Linux app
+flutter@flutter-3.47.7	lib/src/painting/_network_image_web.dart	XMLHttpRequest	web-only code, never compiled into the Linux app
+flutter@flutter-3.47.7	lib/src/painting/debug.dart	HttpClient	debug hook type for NetworkImage's HttpClient; inert unless NetworkImage is used
+flutter@flutter-3.47.7	lib/src/painting/image_provider.dart	NetworkImage	NetworkImage/Image.network: opt-in API, only runs if app code calls it; check 3 blocks that
+flutter@flutter-3.47.7	lib/src/services/asset_bundle.dart	HttpClient	NetworkAssetBundle: opt-in API, only runs if app code calls it; check 3 blocks that
+flutter@flutter-3.47.7	lib/src/services/asset_bundle.dart	NetworkAssetBundle	NetworkAssetBundle: opt-in API, only runs if app code calls it; check 3 blocks that
+flutter@flutter-3.47.7	lib/src/web.dart	XMLHttpRequest	web-only code, never compiled into the Linux app
+flutter@flutter-3.47.7	lib/src/widgets/fade_in_image.dart	NetworkImage	NetworkImage/Image.network: opt-in API, only runs if app code calls it; check 3 blocks that
+flutter@flutter-3.47.7	lib/src/widgets/image.dart	Image.network	NetworkImage/Image.network: opt-in API, only runs if app code calls it; check 3 blocks that
+flutter@flutter-3.47.7	lib/src/widgets/image.dart	NetworkImage	NetworkImage/Image.network: opt-in API, only runs if app code calls it; check 3 blocks that
+flutter_test@flutter-3.47.7	lib/src/_binding_io.dart	HttpClient	test binding replaces HttpClient with a mock that refuses all network calls in tests
+flutter_test@flutter-3.47.7	lib/src/_binding_io.dart	Socket	test binding replaces HttpClient with a mock that refuses all network calls in tests
+flutter_test@flutter-3.47.7	lib/src/_goldens_web.dart	fetch(	web-only golden-file loading, never used in Linux tests
+flutter_test@flutter-3.47.7	lib/src/web.dart	fetch(	web-only golden-file loading, never used in Linux tests
+leak_tracker@11.0.2	lib/src/leak_tracking/primitives/_retaining_path/_connection.dart	controlWebServer	dev-only: starts the local Dart VM debug server, only if retaining-path collection is turned on (off by default; check 3 blocks turning it on)
+leak_tracker@11.0.2	lib/src/leak_tracking/primitives/_retaining_path/_connection.dart	vmServiceConnectUri	dev-only: starts the local Dart VM debug server, only if retaining-path collection is turned on (off by default; check 3 blocks turning it on)
+vm_service@15.4.0	lib/vm_service_io.dart	WebSocket	dev-only: client for the local Dart VM debug protocol, used only via leak_tracker as above
+vm_service@15.4.0	lib/vm_service_io.dart	vmServiceConnectUri	dev-only: client for the local Dart VM debug protocol, used only via leak_tracker as above
+cross_file@0.3.5+5	lib/src/types/html.dart	XMLHttpRequest	web-only variant (html.dart), chosen only for browser builds; Linux uses io.dart
+file_selector_linux@0.9.4+1	linux/CMakeLists.txt	fetchcontent	downloads googletest only when the plugin's own tests are switched on (include_file_selector_linux_tests), which our build never does; the package doesn't even ship those tests
+file_selector_linux@0.9.4+1	linux/CMakeLists.txt	https://	downloads googletest only when the plugin's own tests are switched on (include_file_selector_linux_tests), which our build never does; the package doesn't even ship those tests
+file_selector_platform_interface@2.7.0	lib/src/web_helpers/web_helpers.dart	dart:html	web_helpers.dart is never imported by anything (dead file), and is web-only
+web@1.1.1	lib/src/dom/filter_effects.dart	amplitude	the SVG filter attribute 'amplitude', not the Amplitude analytics service
+web@1.1.1	lib/src/dom/html.dart	fetch(	browser API declarations (web builds only); never compiled into the Linux app
+web@1.1.1	lib/src/dom/html.dart	sendBeacon	browser API declarations (web builds only); never compiled into the Linux app
+web@1.1.1	lib/src/dom/websockets.dart	WebSocket	browser API declarations (web builds only); never compiled into the Linux app
+web@1.1.1	lib/src/dom/xhr.dart	XMLHttpRequest	browser API declarations (web builds only); never compiled into the Linux app
+web@1.1.1	lib/src/helpers/events/events.dart	WebSocket	browser API declarations (web builds only); never compiled into the Linux app
+web@1.1.1	lib/src/helpers/events/events.dart	XMLHttpRequest	browser API declarations (web builds only); never compiled into the Linux app
+web@1.1.1	lib/src/helpers/extensions.dart	XMLHttpRequest	browser API declarations (web builds only); never compiled into the Linux app
+web@1.1.1	lib/src/helpers/http.dart	HttpRequest	browser API declarations (web builds only); never compiled into the Linux app
+web@1.1.1	lib/src/helpers/http.dart	XMLHttpRequest	browser API declarations (web builds only); never compiled into the Linux app

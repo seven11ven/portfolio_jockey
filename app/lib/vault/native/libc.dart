@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 
-/// The few C library functions the vault needs: plain memory for buffers that
-/// hold no keys, and syncing a folder after a rename.
+/// The few C library functions the app needs: plain memory for buffers that
+/// hold no keys, syncing a folder after a rename, and creating a private
+/// folder whose permissions are right from the start.
 ///
 /// Only the symbols listed in tool/allowed-native-libs.txt may be looked up
 /// here; tool/check-privacy.sh enforces that.
@@ -13,7 +14,8 @@ final class Libc {
       _free = lib.lookupFunction<Void Function(Pointer<Void>), void Function(Pointer<Void>)>('free'),
       _open = lib.lookupFunction<Int Function(Pointer<Char>, Int, VarArgs<(UnsignedInt,)>), int Function(Pointer<Char>, int, int)>('open'),
       _fsync = lib.lookupFunction<Int Function(Int), int Function(int)>('fsync'),
-      _close = lib.lookupFunction<Int Function(Int), int Function(int)>('close');
+      _close = lib.lookupFunction<Int Function(Int), int Function(int)>('close'),
+      _mkdir = lib.lookupFunction<Int Function(Pointer<Char>, UnsignedInt), int Function(Pointer<Char>, int)>('mkdir');
 
   static Libc? _instance;
 
@@ -25,6 +27,7 @@ final class Libc {
   final int Function(Pointer<Char>, int, int) _open;
   final int Function(int) _fsync;
   final int Function(int) _close;
+  final int Function(Pointer<Char>, int) _mkdir;
 
   static const int _readOnly = 0; // O_RDONLY, the same on every Linux architecture.
 
@@ -55,6 +58,24 @@ final class Libc {
       }
       _fsync(fd);
       _close(fd);
+    } finally {
+      free(cPath);
+    }
+  }
+
+  /// Creates the folder [path] with permissions [mode] (for example `0x1C0`,
+  /// which is 0700), so it is never readable by others, not even briefly. The
+  /// process umask can only remove permissions. Throws if it can't be created,
+  /// including when it already exists.
+  void makeDirectory(String path, int mode) {
+    final bytes = utf8.encode(path);
+    final cPath = malloc(bytes.length + 1);
+    try {
+      cPath.asTypedList(bytes.length).setAll(0, bytes);
+      cPath[bytes.length] = 0;
+      if (_mkdir(cPath.cast(), mode) != 0) {
+        throw FileSystemException('Cannot create the folder', path);
+      }
     } finally {
       free(cPath);
     }

@@ -24,13 +24,20 @@ Before doing anything in this repository, read and follow all project guidelines
 
 ## Project state
 Portfolio Jockey v2 is a fully local, offline, encrypted project tracker built with Flutter for **Linux desktop**.
-- The Flutter app lives in `app/`, with app ID `io.github.seven11ven.portfolio_jockey`. Plan phases 0–5 (guidelines, mockups, toolchain, scaffold, vault core, projects/tags/files UI) are done, and phase 6 (preview and "Edit in another app") is next.
+- The Flutter app lives in `app/`, with app ID `io.github.seven11ven.portfolio_jockey`. Plan phases 0–6 (guidelines, mockups, toolchain, scaffold, vault core, projects/tags/files UI, preview and "Edit in another app") are done, and phase 7 (export) is next.
 - The vault core is in `app/lib/vault/`: libsodium through our own `dart:ffi` bindings (`vault/native/`), Argon2id MODERATE, an XChaCha20-Poly1305 index and secretstream files. Its file formats and known limits are in `docs/dependencies.md` ("Vault format"). It never asks for confirmation itself: the UI shows the confirm/cancel step before calling anything that writes.
 - App layout under `app/lib/`:
   - `app/`: controller, settings and theme
   - `services/`: `ProjectService`, which holds every disk operation the screens make, and the file picker
   - `ui/`: the screens and dialogs built to `project-mockups/`
-  - Phase 6–7 menu items are shown greyed out with "Coming in a later version" (`comingSoon()` in `ui/common.dart`).
+  - `ui/preview/`: the preview screen, its content views, and the edit dialogs and banner. `app/edit_session.dart` holds the one active edit.
+  - Phase 7 (export) menu items are shown greyed out with "Coming in a later version" (`comingSoon()` in `ui/common.dart`).
+- **Readable copies** (audio/video and "Edit in another app") go only in `services/private_folder.dart`'s memory-only folder: `$XDG_RUNTIME_DIR/portfolio_jockey/`, mode 0700, on tmpfs. If that isn't available the app refuses; it never falls back to a disk folder. Images, text, Markdown and PDF are decrypted into memory only. Details and known limits are in `docs/dependencies.md` ("Readable copies").
+- **media_kit rules** (see `docs/dependencies.md`):
+  - Load media with `NativePlayer.command(['loadfile', path])`. Never use `Player.open()`, `Media.memory()` or subtitle data tracks: they write temporary files to `/tmp`.
+  - Always apply `lockedDownMpvOptions`, and call `ensureMediaReady()` first.
+  - Never add `media_kit_libs_linux`: its build downloads mimalloc.
+- **Markdown:** always pass an `imageBuilder` to flutter_markdown_plus. Without one, it loads images from the network or disk.
 - "Delete from device" **moves the original to the Trash** (GLib's `g_file_trash`, through the Trash portal inside a Flatpak). The encrypted project copy is still deleted permanently. This was the PM's decision on 2026-10-22.
 - Phase 8 (Flatpak) to-dos and open questions go in `public-notes/phase8-packaging.md`. Add to it whenever a later phase finds something.
 - Supported Linux systems are listed in `public-notes/linux-support.md` (any 64-bit desktop with Flatpak; x64 now, arm64 to be decided in phase 8).
@@ -39,7 +46,7 @@ Portfolio Jockey v2 is a fully local, offline, encrypted project tracker built w
 
 ## Toolchain
 - `bash .devcontainer/check-lockdown.sh`: checks every telemetry layer. It must pass before running `flutter` or `dart`.
-- `bash .devcontainer/setup.sh`: installs or repairs the pinned Flutter 3.47.7 and its telemetry patch, plus `libsodium23`, which the vault and its tests need. Safe to re-run.
+- `bash .devcontainer/setup.sh`: installs or repairs the pinned Flutter 3.47.7 and its telemetry patch. It also installs `libsodium23` (the vault), `libmpv-dev` and `libepoxy-dev` (audio/video), and `libpoppler-glib8` (PDF), which the app and its tests need. Safe to re-run.
 - To upgrade Flutter, edit `FLUTTER_VERSION` and `FLUTTER_SHA256` in `setup.sh` and confirm the patch still applies. Never run `flutter upgrade` or `flutter channel`: they overwrite the patched source.
 - Run these from `app/`:
   - Lint: `flutter analyze --fatal-infos --fatal-warnings`

@@ -13,6 +13,7 @@ Flatpak can't run in this Codespace, because the sandbox it needs isn't allowed 
 - **No network permission** in the Flatpak manifest (`--share=network` must not appear).
 - **libsodium is bundled,** built from the official release after its minisign signature is checked (key `RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3`, confirmed on two official sources). The app loads `libsodium.so.26` (1.0.19+) or `libsodium.so.23`.
 - **App ID:** `io.github.seven11ven.portfolio_jockey`.
+- **Readable copies only in memory** (phase 6): audio/video copies and "Edit in another app" copies go only in `$XDG_RUNTIME_DIR/portfolio_jockey/`, which must be on tmpfs. Otherwise the app refuses. The Flatpak must not change that rule.
 
 ## To test inside the Flatpak
 1. **The file picker hands the app portal paths.** Files picked with "Add files" arrive as `/run/user/<uid>/doc/<id>/<name>`. Check that:
@@ -29,6 +30,16 @@ Flatpak can't run in this Codespace, because the sandbox it needs isn't allowed 
 4. **"Original missing" detection** (greying "Move to Trash") should still be correct with portal paths, including after the original is deleted outside the app.
 5. **The storage location chosen at first run.** A folder picked through the portal must stay writable across restarts. If not, consider a `--filesystem=` permission for that folder only, never the whole home folder.
 6. **Errors are shown, not hidden.** For example, the Trash portal missing (`Trash portal is not available`) or files on drives without a Trash. In the dev container, GLib refuses `/tmp`: "Trashing on system internal mounts is not supported".
+
+7. **`$XDG_RUNTIME_DIR` inside the sandbox** (phase 6). Flatpak gives each app its own `/run/user/<uid>`. Check that:
+   - it's tmpfs and mode 0700 there, so previews of audio/video and "Edit in another app" work
+   - the refusal dialog shows if it isn't
+8. **"Edit in another app" through the OpenURI portal.** Inside the sandbox, GLib uses the OpenURI portal and the desktop's app chooser. Check:
+   - that the chosen editor can **write** the copy back: the portal may hand it a read-only document-portal path unless the app asks for write access (`writable` option)
+   - that editors which save through rename ("safe save") still update the copy the app reads
+   - that "Save changes" sees the edit
+9. **Bundle or reuse libmpv and Poppler.** The app loads `libmpv.so.2` and `libpoppler-glib.so.8`, and the video plugin links `mpv` and `epoxy`. Decide between building them as Flatpak modules (checksum-verified sources, with the mpv build options chosen to leave out network protocols where possible) and an extension. The freedesktop/GNOME runtimes ship cairo and GLib, but not mpv or poppler-glib.
+10. **Media inside the sandbox:** audio output through PipeWire/PulseAudio (`--socket=pulseaudio`), and video through the GPU (`--device=dri`). Both are local and add no network access.
 
 ## Still open
 - **arm64:** it needs an arm64 build machine (Flutter can't build for one processor from the other). Decide whether to offer it.

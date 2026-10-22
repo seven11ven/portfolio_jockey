@@ -4,12 +4,24 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:portfolio_jockey/services/native/gio_trash.dart';
+import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/services/tag_changes.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
 import 'package:portfolio_jockey/vault/native/sodium.dart';
 import 'package:portfolio_jockey/vault/project_index.dart';
 import 'package:portfolio_jockey/vault/secure_buffer.dart';
 import 'package:portfolio_jockey/vault/vault.dart';
+
+/// A file is larger than a preview may decrypt into memory.
+final class TooLargeToPreview implements Exception {
+  const TooLargeToPreview(this.size, this.limit);
+
+  final int size;
+  final int limit;
+
+  @override
+  String toString() => 'The file is too large to preview ($size bytes; the limit is $limit)';
+}
 
 /// A project as the home screen shows it.
 final class ProjectSummary {
@@ -269,6 +281,104 @@ final class ProjectService {
   Future<void> trashOriginalAndDeleteCopy(String id, String fileId) async {
     await trashOriginal(id, fileId);
     await deleteFromProject(id, fileId);
+  }
+
+  /// Decrypts file [fileId] fully into memory, for a preview. Nothing is
+  /// returned unless the whole file decrypts and authenticates, so a damaged
+  /// file never shows half its content. Throws [TooLargeToPreview] above
+  /// [maxBytes]. Wipe the result when it's no longer shown.
+  Future<Uint8List> readFile(String id, FileEntry file, {required int maxBytes}) async {
+    if (file.size > maxBytes) {
+      throw TooLargeToPreview(file.size, maxBytes);
+    }
+    final chunks = <Uint8List>[];
+    var total = 0;
+    final key = file.openKey();
+    try {
+      await for (final chunk in vault.readBlob(id, file.id, key)) {
+        chunks.add(chunk);
+        total += chunk.length;
+        if (total > maxBytes) {
+          throw TooLargeToPreview(total, maxBytes);
+        }
+      }
+      final bytes = Uint8List(total);
+      var at = 0;
+      for (final chunk in chunks) {
+        bytes.setAll(at, chunk);
+        at += chunk.length;
+      }
+      return bytes;
+    } finally {
+      key.dispose();
+      for (final chunk in chunks) {
+        chunk.fillRange(0, chunk.length, 0);
+      }
+    }
+  }
+
+  /// Decrypts file [fileId] into [target], which must be in a private
+  /// memory-only folder (see PrivateFolders). If decryption fails part-way,
+  /// [target] is overwritten with zeros and deleted.
+  Future<void> decryptTo(String id, FileEntry file, File target) async {
+    final key = file.openKey();
+    final out = target.openWrite();
+    try {
+      await out.addStream(vault.readBlob(id, file.id, key));
+      await out.close();
+    } on Object {
+      await out.close().catchError((_) {});
+      if (await target.exists()) {
+        await PrivateFolders.overwriteWithZeros(target);
+        await target.delete();
+      }
+      rethrow;
+    } finally {
+      key.dispose();
+    }
+  }
+
+  /// Whether [edited] differs from file [fileId]'s current content.
+  Future<bool> differsFrom(String id, FileEntry file, File edited) async {
+    if (await edited.length() != file.size) {
+      return true;
+    }
+    final key = file.openKey();
+    final reader = await edited.open();
+    try {
+      await for (final chunk in vault.readBlob(id, file.id, key)) {
+        final other = await reader.read(chunk.length);
+        var same = other.length == chunk.length;
+        for (var i = 0; same && i < chunk.length; i++) {
+          same = chunk[i] == other[i];
+        }
+        chunk.fillRange(0, chunk.length, 0);
+        other.fillRange(0, other.length, 0);
+        if (!same) {
+          return true;
+        }
+      }
+      return (await reader.read(1)).isNotEmpty;
+    } finally {
+      key.dispose();
+      await reader.close();
+    }
+  }
+
+  /// Encrypts [edited] as the new content of file [fileId] with the file's
+  /// key, replacing the encrypted copy atomically, then records the new size.
+  Future<void> replaceContent(String id, String fileId, File edited) async {
+    final index = await vault.readIndex(id);
+    final entry = _file(index, fileId);
+    final size = await edited.length();
+    final key = entry.openKey();
+    try {
+      await vault.writeBlob(id, fileId, edited.openRead(), key);
+    } finally {
+      key.dispose();
+    }
+    entry.size = size;
+    await _save(id, index);
   }
 
   /// Whether the original is still where it was added from.

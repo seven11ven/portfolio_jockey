@@ -6,6 +6,8 @@ import 'package:portfolio_jockey/app/app_controller.dart';
 import 'package:portfolio_jockey/app/settings_store.dart';
 import 'package:portfolio_jockey/main.dart';
 import 'package:portfolio_jockey/services/file_picker.dart';
+import 'package:portfolio_jockey/services/native/gio_apps.dart';
+import 'package:portfolio_jockey/services/private_folder.dart';
 
 import '../vault/test_helpers.dart';
 
@@ -37,7 +39,14 @@ class TestApp {
 
 /// Starts the app in temporary folders. With [unlocked], a vault already
 /// exists and is open, so tests can start on the home screen.
-Future<TestApp> startApp(WidgetTester tester, {bool unlocked = false, Widget Function(Widget app)? wrap, Size size = const Size(1280, 900)}) async {
+Future<TestApp> startApp(
+  WidgetTester tester, {
+  bool unlocked = false,
+  Widget Function(Widget app)? wrap,
+  Size size = const Size(1280, 900),
+  AppLauncher? launcher,
+  PrivateFolders? privateFolders,
+}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -51,6 +60,8 @@ Future<TestApp> startApp(WidgetTester tester, {bool unlocked = false, Widget Fun
       settingsStore: SettingsStore(File('${config.path}/settings.json')),
       filePicker: picker,
       trasher: FakeTrash(await tempFolder()),
+      launcher: launcher ?? FakeLauncher(),
+      privateFolders: privateFolders ?? await fakePrivateFolders(),
       kdf: fastKdf,
     );
     if (unlocked) {

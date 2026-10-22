@@ -2,11 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:portfolio_jockey/app/app_controller.dart';
 import 'package:portfolio_jockey/app/theme.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/ui/common.dart';
 import 'package:portfolio_jockey/ui/home/home_screen.dart';
 import 'package:portfolio_jockey/ui/home/project_dialogs.dart';
+import 'package:portfolio_jockey/ui/preview/edit_dialogs.dart';
+import 'package:portfolio_jockey/ui/preview/preview_screen.dart';
 import 'package:portfolio_jockey/ui/project/file_dialogs.dart';
 import 'package:portfolio_jockey/ui/tags/tag_dialogs.dart';
 import 'package:portfolio_jockey/vault/project_index.dart';
@@ -63,6 +66,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
   }
 
   Future<void> _reload() async {
+    final controller = AppScope.read(context);
+    if (controller.stage != AppStage.unlocked) {
+      return; // Locked while a preview was open: this screen is going away.
+    }
     try {
       final index = await _service.readProject(widget.projectId);
       final cover = await _service.readCover(widget.projectId, index);
@@ -77,7 +84,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
           }
         });
       }
-    } on Exception catch (e) {
+    } on Object catch (e) {
+      if (controller.stage != AppStage.unlocked) {
+        return; // Locked during the read, which then failed: nothing to show.
+      }
+      if (e is! Exception) {
+        rethrow;
+      }
       if (mounted) {
         setState(() => _loadError = 'This project could not be opened: $e');
       }
@@ -144,6 +157,19 @@ class _ProjectScreenState extends State<ProjectScreen> {
     unawaited(_openFileMenu(file, position));
   }
 
+  /// Opens the preview, with previous/next through the files the current
+  /// filter shows. Reloads afterwards: an edit saved meanwhile changes sizes.
+  Future<void> _preview(FileEntry file) async {
+    final index = _index!;
+    final visible = _visible(index);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PreviewScreen(projectId: widget.projectId, projectName: index.name, files: visible, initial: visible.indexOf(file).clamp(0, visible.length - 1)),
+      ),
+    );
+    await _reload();
+  }
+
   Future<void> _openFileMenu(FileEntry file, Offset position) async {
     final index = _index!;
     final originalThere = await _service.originalExists(file);
@@ -199,8 +225,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
       position: RelativeRect.fromRect(position & const Size(1, 1), Offset.zero & overlay.size),
       items: [
         PopupMenuItem(enabled: false, height: 32, child: Text(file.name, style: const TextStyle(fontWeight: FontWeight.w700))),
-        later(Icons.visibility_outlined, 'Preview'),
-        later(Icons.open_in_new, 'Edit in another app…'),
+        item(Icons.visibility_outlined, 'Preview', () => _preview(file)),
+        item(Icons.open_in_new, 'Edit in another app…', () => editInAnotherApp(context, projectId: widget.projectId, projectName: index.name, file: file)),
         item(Icons.sell_outlined, 'Edit tags…', () => _show(EditFileTagsDialog(projectId: widget.projectId, index: index, files: [file]))),
         item(Icons.edit_outlined, 'Rename…', () => _show(RenameFileDialog(projectId: widget.projectId, file: file))),
         later(Icons.ios_share, 'Export a readable copy…'),
@@ -249,122 +275,126 @@ class _ProjectScreenState extends State<ProjectScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Wrap(
-            spacing: 20,
-            runSpacing: 16,
-            children: [
-              CoverView(name: index.name, image: _cover, height: 130, width: 200),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    if (index.description.isNotEmpty) Text(index.description, style: TextStyle(color: PjColors.of(context).muted)),
-                    Muted('${plural(index.files.length, 'file')} · ${formatBytes(index.totalSize)} · encrypted'),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        FilledButton.icon(onPressed: () => _addFiles(index), icon: const Icon(Icons.add), label: const Text('Add files')),
-                        OutlinedButton.icon(
-                          onPressed: () => _show(ManageTagsDialog(projectId: widget.projectId, index: index)),
-                          icon: const Icon(Icons.sell_outlined),
-                          label: const Text('Manage tags'),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () => setState(() {
-                            _selecting = !_selecting;
-                            if (!_selecting) {
-                              _selected.clear();
-                            }
-                          }),
-                          icon: Icon(_selecting ? Icons.close : Icons.checklist),
-                          label: Text(_selecting ? 'Done selecting' : 'Select'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              TagChip('All ${index.files.length}', check: false, selected: _filter is _All, onTap: () => setState(() => _filter = const _All())),
-              for (final tag in index.tags)
-                TagChip(
-                  '$tag ${index.files.where((f) => f.tags.contains(tag)).length}',
-                  check: false,
-                  selected: _isTagFilter(tag),
-                  onTap: () => setState(() => _filter = _Tagged(tag)),
-                ),
-              TagChip('Untagged $untagged', check: false, selected: _filter is _Untagged, onTap: () => setState(() => _filter = const _Untagged())),
-            ],
-          ),
-          if (_selected.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Row(
-                  spacing: 8,
-                  children: [
-                    Text('${_selected.length} selected', style: const TextStyle(fontWeight: FontWeight.w600)),
-                    const Spacer(),
-                    OutlinedButton.icon(
-                      onPressed: () => _show(EditFileTagsDialog(projectId: widget.projectId, index: index, files: selectedFiles)),
-                      icon: const Icon(Icons.sell_outlined),
-                      label: const Text('Edit tags…'),
-                    ),
-                    TextButton(onPressed: () => setState(_selected.clear), child: const Text('Clear')),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          if (index.files.isEmpty)
-            const Padding(padding: EdgeInsets.all(32), child: Center(child: Muted('No files yet. Use “Add files” to encrypt files into this project.', small: false)))
-          else if (visible.isEmpty)
-            const Padding(padding: EdgeInsets.all(32), child: Center(child: Muted('No files match this filter.', small: false)))
-          else
-            GridView.extent(
-              maxCrossAxisExtent: 190,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.82,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+      body: withEditBanner(
+        ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            Wrap(
+              spacing: 20,
+              runSpacing: 16,
               children: [
-                for (final file in visible)
-                  _FileCard(
-                    file: file,
-                    selected: _selected.contains(file.id),
-                    onTap: (position) => _tap(file, visible, position),
-                    onMenu: (position) => unawaited(_openFileMenu(file, position)),
+                CoverView(name: index.name, image: _cover, height: 130, width: 200),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 8,
+                    children: [
+                      if (index.description.isNotEmpty) Text(index.description, style: TextStyle(color: PjColors.of(context).muted)),
+                      Muted('${plural(index.files.length, 'file')} · ${formatBytes(index.totalSize)} · encrypted'),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilledButton.icon(onPressed: () => _addFiles(index), icon: const Icon(Icons.add), label: const Text('Add files')),
+                          OutlinedButton.icon(
+                            onPressed: () => _show(ManageTagsDialog(projectId: widget.projectId, index: index)),
+                            icon: const Icon(Icons.sell_outlined),
+                            label: const Text('Manage tags'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => setState(() {
+                              _selecting = !_selecting;
+                              if (!_selecting) {
+                                _selected.clear();
+                              }
+                            }),
+                            icon: Icon(_selecting ? Icons.close : Icons.checklist),
+                            label: Text(_selecting ? 'Done selecting' : 'Select'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
+                ),
               ],
             ),
-        ],
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                TagChip('All ${index.files.length}', check: false, selected: _filter is _All, onTap: () => setState(() => _filter = const _All())),
+                for (final tag in index.tags)
+                  TagChip(
+                    '$tag ${index.files.where((f) => f.tags.contains(tag)).length}',
+                    check: false,
+                    selected: _isTagFilter(tag),
+                    onTap: () => setState(() => _filter = _Tagged(tag)),
+                  ),
+                TagChip('Untagged $untagged', check: false, selected: _filter is _Untagged, onTap: () => setState(() => _filter = const _Untagged())),
+              ],
+            ),
+            if (_selected.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Row(
+                    spacing: 8,
+                    children: [
+                      Text('${_selected.length} selected', style: const TextStyle(fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      OutlinedButton.icon(
+                        onPressed: () => _show(EditFileTagsDialog(projectId: widget.projectId, index: index, files: selectedFiles)),
+                        icon: const Icon(Icons.sell_outlined),
+                        label: const Text('Edit tags…'),
+                      ),
+                      TextButton(onPressed: () => setState(_selected.clear), child: const Text('Clear')),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            if (index.files.isEmpty)
+              const Padding(padding: EdgeInsets.all(32), child: Center(child: Muted('No files yet. Use “Add files” to encrypt files into this project.', small: false)))
+            else if (visible.isEmpty)
+              const Padding(padding: EdgeInsets.all(32), child: Center(child: Muted('No files match this filter.', small: false)))
+            else
+              GridView.extent(
+                maxCrossAxisExtent: 190,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.82,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  for (final file in visible)
+                    _FileCard(
+                      file: file,
+                      selected: _selected.contains(file.id),
+                      onTap: (position) => _tap(file, visible, position),
+                      onMenu: (position) => unawaited(_openFileMenu(file, position)),
+                      onOpen: () => unawaited(_preview(file)),
+                    ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _FileCard extends StatelessWidget {
-  const _FileCard({required this.file, required this.selected, required this.onTap, required this.onMenu});
+  const _FileCard({required this.file, required this.selected, required this.onTap, required this.onMenu, required this.onOpen});
 
   final FileEntry file;
   final bool selected;
   final void Function(Offset position) onTap;
   final void Function(Offset position) onMenu;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -380,6 +410,7 @@ class _FileCard extends StatelessWidget {
         child: InkWell(
           onTapUp: (d) => onTap(d.globalPosition),
           onTap: () {},
+          onDoubleTap: onOpen,
           child: Padding(
             padding: const EdgeInsets.all(10),
             child: Column(

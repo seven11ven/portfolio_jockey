@@ -22,10 +22,12 @@ export FLUTTER_SUPPRESS_ANALYTICS=true DASH__SUPPRESS_ANALYTICS=true DO_NOT_TRAC
 # 2. Linux desktop build tools, from https://docs.flutter.dev/platform-integration/linux/setup
 #    (Debian packages; none of them collect telemetry). libsodium23 is the
 #    crypto library the vault calls through dart:ffi (see docs/dependencies.md).
+#    libmpv-dev and libepoxy-dev build media_kit's video player (audio/video
+#    preview); libpoppler-glib8 renders PDF previews through our own dart:ffi.
 sudo apt-get update -y
 sudo apt-get install -y --no-install-recommends \
   clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev \
-  libsodium23 \
+  libsodium23 libmpv-dev libepoxy-dev libpoppler-glib8 \
   curl git unzip xz-utils ca-certificates
 
 # 3. Pinned Flutter SDK, checksum verified before anything is unpacked.

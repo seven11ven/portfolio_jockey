@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:portfolio_jockey/app/app_controller.dart';
+import 'package:portfolio_jockey/app/edit_session.dart';
 import 'package:portfolio_jockey/app/theme.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/ui/common.dart';
 import 'package:portfolio_jockey/ui/home/project_dialogs.dart';
+import 'package:portfolio_jockey/ui/preview/edit_dialogs.dart';
 import 'package:portfolio_jockey/ui/project/project_screen.dart';
 
 /// The project grid.
@@ -19,23 +22,73 @@ class _HomeScreenState extends State<HomeScreen> {
   ProjectListing? _listing;
   String? _loadError;
   String _search = '';
+  late final EditSessions _edits = AppScope.read(context).edits;
+  bool _askingLeftovers = false;
 
   @override
   void initState() {
     super.initState();
     unawaited(_reload());
+    _edits.addListener(_leftoversChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _leftoversChanged());
+  }
+
+  @override
+  void dispose() {
+    _edits.removeListener(_leftoversChanged);
+    super.dispose();
+  }
+
+  void _leftoversChanged() {
+    if (mounted && !_askingLeftovers && _edits.leftovers.isNotEmpty) {
+      unawaited(_askLeftovers());
+    }
+  }
+
+  /// Scene 11: asks about each edit left by a crash until it's saved or
+  /// discarded. Both choices still show their own confirmation.
+  Future<void> _askLeftovers() async {
+    _askingLeftovers = true;
+    try {
+      while (true) {
+        final session = _edits.leftovers.firstOrNull;
+        if (session == null || !mounted) {
+          break;
+        }
+        final save = await showDialog<bool>(context: context, barrierDismissible: false, builder: (_) => LeftoverEditDialog(session: session));
+        if (save == null || !mounted) {
+          break;
+        }
+        await finishEdit(context, session, save: save);
+      }
+    } finally {
+      _askingLeftovers = false;
+    }
+    if (mounted) {
+      await _reload();
+    }
   }
 
   Future<void> _reload() async {
+    final controller = AppScope.read(context);
+    if (controller.stage != AppStage.unlocked) {
+      return; // Locked while a project was open: this screen is going away.
+    }
     try {
-      final listing = await AppScope.read(context).projects.listProjects();
+      final listing = await controller.projects.listProjects();
       if (mounted) {
         setState(() {
           _listing = listing;
           _loadError = null;
         });
       }
-    } on Exception catch (e) {
+    } on Object catch (e) {
+      if (controller.stage != AppStage.unlocked) {
+        return; // Locked during the read, which then failed: nothing to show.
+      }
+      if (e is! Exception) {
+        rethrow;
+      }
       if (mounted) {
         setState(() => _loadError = 'Projects could not be loaded: $e');
       }
@@ -81,56 +134,58 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           comingSoon(const IconButton(onPressed: null, icon: Icon(Icons.download_outlined))),
-          IconButton(tooltip: 'Lock', onPressed: () => AppScope.read(context).lock(), icon: const Icon(Icons.lock_outline)),
+          IconButton(tooltip: 'Lock', onPressed: () => unawaited(requestLock(context)), icon: const Icon(Icons.lock_outline)),
           comingSoon(const IconButton(onPressed: null, icon: Icon(Icons.settings_outlined))),
           const SizedBox(width: 8),
         ],
       ),
-      body: listing == null
-          ? Center(child: _loadError == null ? const CircularProgressIndicator() : Notice(_loadError!, danger: true))
-          : ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                Row(
-                  children: [
-                    Text('Projects', style: Theme.of(context).textTheme.headlineSmall),
-                    const Spacer(),
-                    FilledButton.icon(
-                      onPressed: () => _show(const NewProjectDialog()),
-                      icon: const Icon(Icons.add),
-                      label: const Text('New project'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (listing.unreadable.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Notice(
-                      '${plural(listing.unreadable.length, 'project')} could not be read: '
-                      'the index is damaged or from another vault. They are left untouched.',
-                      danger: true,
-                    ),
+      body: withEditBanner(
+          listing == null
+            ? Center(child: _loadError == null ? const CircularProgressIndicator() : Notice(_loadError!, danger: true))
+            : ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  Row(
+                    children: [
+                      Text('Projects', style: Theme.of(context).textTheme.headlineSmall),
+                      const Spacer(),
+                      FilledButton.icon(
+                        onPressed: () => _show(const NewProjectDialog()),
+                        icon: const Icon(Icons.add),
+                        label: const Text('New project'),
+                      ),
+                    ],
                   ),
-                GridView(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 300,
-                    mainAxisExtent: 270,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
+                  const SizedBox(height: 16),
+                  if (listing.unreadable.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Notice(
+                        '${plural(listing.unreadable.length, 'project')} could not be read: '
+                        'the index is damaged or from another vault. They are left untouched.',
+                        danger: true,
+                      ),
+                    ),
+                  GridView(
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 300,
+                      mainAxisExtent: 270,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                    ),
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      for (final project in projects)
+                        _ProjectCard(project: project, onOpen: () => _open(project), onAction: (dialog) => _show(dialog)),
+                      if (query.isEmpty) _NewProjectCard(onTap: () => _show(const NewProjectDialog())),
+                    ],
                   ),
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    for (final project in projects)
-                      _ProjectCard(project: project, onOpen: () => _open(project), onAction: (dialog) => _show(dialog)),
-                    if (query.isEmpty) _NewProjectCard(onTap: () => _show(const NewProjectDialog())),
-                  ],
-                ),
-                if (projects.isEmpty && query.isNotEmpty)
-                  Padding(padding: const EdgeInsets.only(top: 24), child: Center(child: Muted('No projects match “$_search”.', small: false))),
-              ],
-            ),
+                  if (projects.isEmpty && query.isNotEmpty)
+                    Padding(padding: const EdgeInsets.only(top: 24), child: Center(child: Muted('No projects match “$_search”.', small: false))),
+                ],
+              ),
+      ),
     );
   }
 }

@@ -49,6 +49,38 @@ String formatChanged(DateTime changedAt, {DateTime? now}) {
   return local.year == today.year ? 'Changed $date' : 'Changed $date, ${local.year}';
 }
 
+/// "Oct 21, 2026".
+String formatDate(DateTime date) {
+  final local = date.toLocal();
+  return '${_months[local.month - 1]} ${local.day}, ${local.year}';
+}
+
+/// "just now", "2 min ago", "3 h ago", then "Oct 22, 14:05".
+String formatAgo(DateTime time, {DateTime? now}) {
+  final local = time.toLocal();
+  final ago = (now ?? DateTime.now()).difference(local);
+  if (ago.inMinutes < 1) {
+    return 'just now';
+  }
+  if (ago.inHours < 1) {
+    return '${ago.inMinutes} min ago';
+  }
+  if (ago.inHours < 12) {
+    return '${ago.inHours} h ago';
+  }
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${_months[local.month - 1]} ${local.day}, ${two(local.hour)}:${two(local.minute)}';
+}
+
+/// "2:18", or "1:02:05" for an hour or more.
+String formatDuration(Duration duration) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes % 60;
+  final seconds = duration.inSeconds % 60;
+  return hours > 0 ? '$hours:${two(minutes)}:${two(seconds)}' : '$minutes:${two(seconds)}';
+}
+
 String plural(int count, String one, [String? many]) => '$count ${count == 1 ? one : many ?? '${one}s'}';
 
 /// A project's cover image, or a gradient with its first letter.

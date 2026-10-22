@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:portfolio_jockey/app/edit_session.dart';
 import 'package:portfolio_jockey/app/settings_store.dart';
 import 'package:portfolio_jockey/services/file_picker.dart';
+import 'package:portfolio_jockey/services/native/gio_apps.dart';
 import 'package:portfolio_jockey/services/native/gio_trash.dart';
+import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
 import 'package:portfolio_jockey/vault/kdf.dart';
@@ -14,13 +18,23 @@ enum AppStage { loading, setup, locked, unlocked }
 /// The app's top-level state: whether a vault exists, and whether it's
 /// unlocked. Locking wipes the master key and drops every decrypted value.
 class AppController extends ChangeNotifier {
-  AppController({required this.settingsStore, this.filePicker = const SystemFilePicker(), this.trasher = const GioTrash(), this.kdf});
+  AppController({
+    required this.settingsStore,
+    this.filePicker = const SystemFilePicker(),
+    this.trasher = const GioTrash(),
+    AppLauncher launcher = const GioAppLauncher(),
+    PrivateFolders? privateFolders,
+    this.kdf,
+  }) : edits = EditSessions(folders: privateFolders ?? PrivateFolders.standard(), launcher: launcher);
 
   final SettingsStore settingsStore;
   final FilePicker filePicker;
 
   /// Where originals go when the user moves them to the Trash.
   final Trasher trasher;
+
+  /// "Edit in another app", and the memory-only copies media plays from.
+  final EditSessions edits;
 
   /// Argon2id settings for new vaults. Null means libsodium MODERATE; tests
   /// pass smaller ones.
@@ -77,7 +91,15 @@ class AppController extends ChangeNotifier {
     }
   }
 
+  /// False while a file is being edited: the edit must be saved or discarded
+  /// first, so locking never leaves a readable copy behind.
+  bool get canLock => edits.active == null;
+
   void lock() {
+    if (!canLock) {
+      throw StateError('Save or discard the edit before locking');
+    }
+    unawaited(edits.wipeMediaCopies());
     _projects?.vault.lock();
     _projects = null;
     _stage = AppStage.locked;
@@ -88,10 +110,12 @@ class AppController extends ChangeNotifier {
     _projects = ProjectService(vault, trasher: trasher);
     _stage = AppStage.unlocked;
     notifyListeners();
+    unawaited(edits.findLeftovers());
   }
 
   @override
   void dispose() {
+    edits.dispose();
     _projects?.vault.lock();
     super.dispose();
   }
