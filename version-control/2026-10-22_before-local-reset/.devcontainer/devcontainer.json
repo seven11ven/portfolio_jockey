@@ -1,0 +1,38 @@
+// Dev container for Portfolio Jockey.
+// Works with DevPod, Coder, GitHub Codespaces and VS Code Dev Containers,
+// which all read this standard file (https://containers.dev).
+//
+// No secrets live here. After creating a new environment, create .env in
+// the repo root yourself (see .env_example and docs/setup/). Never commit it.
+{
+  "name": "Portfolio Jockey",
+
+  // Official Microsoft dev container image: image version 4, Node.js 24,
+  // Debian Bookworm. Matches the Node version the project is built with.
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:4-24-bookworm",
+
+  // Install exact dependency versions from package-lock.json.
+  "postCreateCommand": "npm ci",
+
+  // The Next.js dev server. Keep forwarded ports private, and stop the
+  // server (Ctrl+C) when you're done so the port closes.
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js dev server",
+      "onAutoForward": "notify"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  },
+
+  // Run as the image's regular user, not root.
+  "remoteUser": "node"
+}
