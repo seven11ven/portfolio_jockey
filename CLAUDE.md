@@ -15,7 +15,7 @@ Before doing anything in this repository, read and follow all project guidelines
 - New env variables go in `/.env_example` with EMPTY values and annotations on purpose and setup. Never put real values in annotations.
 - Floor Planning: show UI mockups before building or changing any UI. Agreed format is static HTML with fake data in `/project-mockups/`.
 - Budgeting: never choose a service or dependency that requires upfront card details or payment, unless the project manager explicitly says otherwise. Prefer secure, cost-efficient options. Always confirm on the provider's own pricing/plan pages, read in their entirety. Never decide from a first glance or a summary.
-- Open Source and Privacy: check every tool, dependency and service for telemetry, and pick options that respect users' privacy while staying secure.
+- Open Source and Privacy: check every tool, dependency and service for telemetry, and pick options that respect users' privacy while staying secure. Examine the code of every third-party package or resource for telemetry or tracking. Never take it at face value.
 - Clean up loose ends: close ports, dev servers, and other connections as soon as they're no longer needed.
 - All code, whether written, borrowed or reused, must meet OWASP and OSINT security standards. Check dependencies for vulnerabilities, and give keys and webhooks least privilege.
 - Double check before every commit: review staged changes for keys, secrets, private mentions, and critical infrastructure. Commits to this public repo can't be taken back.
@@ -24,22 +24,45 @@ Before doing anything in this repository, read and follow all project guidelines
 
 ## Project state
 Portfolio Jockey v2 is a fully local, offline, encrypted project tracker built with Flutter for **Linux desktop**.
-- No app code exists yet. Plan phases 0–2 (guidelines, mockups, toolchain) are done, and phase 3 (the scaffold) is next.
+- The Flutter app lives in `app/`, with app ID `io.github.seven11ven.portfolio_jockey`. Plan phases 0–5 (guidelines, mockups, toolchain, scaffold, vault core, projects/tags/files UI) are done, and phase 6 (preview and "Edit in another app") is next.
+- The vault core is in `app/lib/vault/`: libsodium through our own `dart:ffi` bindings (`vault/native/`), Argon2id MODERATE, an XChaCha20-Poly1305 index and secretstream files. Its file formats and known limits are in `docs/dependencies.md` ("Vault format"). It never asks for confirmation itself: the UI shows the confirm/cancel step before calling anything that writes.
+- App layout under `app/lib/`:
+  - `app/`: controller, settings and theme
+  - `services/`: `ProjectService`, which holds every disk operation the screens make, and the file picker
+  - `ui/`: the screens and dialogs built to `project-mockups/`
+  - Phase 6–7 menu items are shown greyed out with "Coming in a later version" (`comingSoon()` in `ui/common.dart`).
+- "Delete from device" **moves the original to the Trash** (GLib's `g_file_trash`, through the Trash portal inside a Flatpak). The encrypted project copy is still deleted permanently. This was the PM's decision on 2026-10-22.
+- Phase 8 (Flatpak) to-dos and open questions go in `public-notes/phase8-packaging.md`. Add to it whenever a later phase finds something.
+- Supported Linux systems are listed in `public-notes/linux-support.md` (any 64-bit desktop with Flatpak; x64 now, arm64 to be decided in phase 8).
 - The approved plan, including the encryption and storage design and the phase list, is `project-changelog/2026-10-22/local-app/plan.md`.
 - The Android port is on hold because the Android SDK license was declined (`public-notes/android-port.md`). Don't add Android platform code or install the Android SDK.
 
 ## Toolchain
 - `bash .devcontainer/check-lockdown.sh`: checks every telemetry layer. It must pass before running `flutter` or `dart`.
-- `bash .devcontainer/setup.sh`: installs or repairs the pinned Flutter 3.47.7 and its telemetry patch. Safe to re-run.
+- `bash .devcontainer/setup.sh`: installs or repairs the pinned Flutter 3.47.7 and its telemetry patch, plus `libsodium23`, which the vault and its tests need. Safe to re-run.
 - To upgrade Flutter, edit `FLUTTER_VERSION` and `FLUTTER_SHA256` in `setup.sh` and confirm the patch still applies. Never run `flutter upgrade` or `flutter channel`: they overwrite the patched source.
-- Build, lint and test commands get added here once phase 3 creates the app.
+- Run these from `app/`:
+  - Lint: `flutter analyze --fatal-infos --fatal-warnings`
+  - Test: `flutter test`, or `flutter test test/vault/vault_test.dart` for a single file. The widget tests (`test/ui/`) run the real app against a real vault in temporary folders, with a fake file picker. Real file and crypto work needs `settle()` / `settleUntil()` from `test/ui/ui_helpers.dart`.
+  - Screenshots for review: `SCREENSHOT_DIR=<folder> flutter test test/screenshots`. This renders every screen to PNG in light and dark. Never commit the PNGs. The vault tests use libsodium's smallest Argon2id settings (`fastKdf` in `test/vault/test_helpers.dart`); one test checks the real MODERATE default.
+  - Build: `flutter build linux --debug`. The container has no display, so the app can be built but not launched.
+- `bash app/tool/check-privacy.sh`:
+  - It must pass after every `flutter pub get` and before every commit.
+  - It fails on any package that isn't in `app/tool/allowed-packages.txt` at its exact version, on known network and analytics packages, and on network APIs in `app/lib`, `app/test` or `app/linux`.
+  - It also scans every dependency's code. Each hit must be listed in `app/tool/reviewed-hits.txt` for that exact version.
+  - Native code: only files in `app/tool/allowed-native-libs.txt` may open native libraries, using plain-string names and only the listed functions.
+  - `--list-hits` prints the current hits for a review. Read the code before adding any of them.
 
 ## Constraints that shape the code
 - The app must never use the network. No analytics, crash-reporting or networking packages, and no local HTTP servers, which rules out the usual workaround for streaming media.
-- Every new package needs a license, cost and telemetry check recorded in `docs/dependencies.md`.
+- Every new or upgraded package needs a license, cost and telemetry check and a code review, recorded in `docs/dependencies.md`, `app/tool/allowed-packages.txt` and `app/tool/reviewed-hits.txt`. The same goes for a new native library or libc function (`app/tool/allowed-native-libs.txt`).
+- Text in the UI must not rely on special characters that fonts may lack (✓ → ＋ emoji): use Material icons (`ChangeArrow`, `TagChip(icon:, check:)`).
+- `http` is replaced by the empty stand-in `app/tool/stubs/http/`, because the file picker lists it but never uses it. Never put code there.
+- Keys and the passphrase stay in `SecureBuffer` (libsodium's guarded memory), never in Dart lists or strings that outlive their use.
+- The app's tests must not turn on leak_tracker's retaining-path collection. It starts the Dart VM's local debug server, and `check-privacy.sh` blocks it.
 - Every action that writes to disk shows a confirm/cancel step, as the project brief requires.
 
 ## Repo conventions
-- Changelogs and backups for the local app go in `local-app/` subfolders: `project-changelog/YYYY-MM-DD/local-app/` and `version-control/local-app/<date>_before-<change>/`, each with a README explaining how to restore. Cloud-era history is under `cloud-service/`.
-- `public-notes/` is tracked and public. `project-notes/` is git-ignored and holds the project manager's private notes, prompts and session handoff.
+- Changelogs and backups for the local app go in `local-app/` subfolders: `project-changelog/YYYY-MM-DD/local-app/` and `version-control/local-app/<date>_before-<change>/`, each with a README explaining how to restore. Cloud-era history is under `cloud-service-abandoned/` (in `project-changelog/2026-10-22/`, `version-control/` and `project-mockups/`).
+- `public-notes/` is tracked and public. It holds the project brief (`prompts/application.md`) and command notes (`commands/`). `project-notes/` is git-ignored and holds the project manager's private notes and the session handoff.
 - Mockups: on each page, `mockup.js` clones every `.scene > .screen` into a desktop window and a phone frame. The phone layout comes from container queries in `styles.css`.

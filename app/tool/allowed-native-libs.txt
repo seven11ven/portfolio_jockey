@@ -1,0 +1,18 @@
+# Native libraries the app may load, used by tool/check-privacy.sh (check 6).
+# Format: file (under app/)  libraries (comma-separated)  symbols ("*" = any, else comma-separated)
+# Only these files may call DynamicLibrary.open or look up symbols, with plain
+# string names. Add a line only after reviewing the library's code (see
+# docs/dependencies.md) and, for general-purpose libraries like libc, list
+# every symbol, so network functions such as socket() stay out of reach.
+
+# libsodium: the vault's cryptography. Reviewed 2026-10-22: no network,
+# process or environment code. Any symbol may be bound.
+lib/vault/native/sodium.dart   libsodium.so.26,libsodium.so.23   *
+
+# The C library: plain memory for non-secret buffers, and syncing a folder after a rename.
+lib/vault/native/libc.dart     libc.so.6                         malloc,free,open,fsync,close
+
+# GLib's GIO: moving originals to the Trash (g_file_trash uses the Trash portal
+# inside a Flatpak). Reviewed 2026-10-22 in GLib's source. Already loaded by
+# Flutter's GTK engine. Only these functions: GIO's sockets stay unreachable.
+lib/services/native/gio_trash.dart   libgio-2.0.so.0,libgobject-2.0.so.0,libglib-2.0.so.0   g_file_new_for_path,g_file_trash,g_object_unref,g_error_free

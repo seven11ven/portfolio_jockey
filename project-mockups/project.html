@@ -95,26 +95,26 @@
           <button class="menu-item">✎ Rename…</button>
           <button class="menu-item">⇪ Export a readable copy…</button>
           <div class="menu-sep"></div>
-          <button class="menu-item danger">🗑 Delete from device <span class="hint">the original</span></button>
+          <button class="menu-item danger">🗑 Move to Trash <span class="hint">the original</span></button>
           <button class="menu-item danger">🗑 Delete from project <span class="hint">the encrypted copy</span></button>
-          <button class="menu-item danger">🗑 Delete from both</button>
+          <button class="menu-item danger">🗑 Trash original, delete copy</button>
         </div>
       </div>
     </div>
   </section>
 
   <section class="scene">
-    <div class="scene-title">4a. Delete from device (the original)</div>
-    <div class="scene-note">The encrypted copy in the project is kept.</div>
+    <div class="scene-title">4a. Move to Trash (the original)</div>
+    <div class="scene-note">The original goes to the system Trash (through the Trash portal inside a Flatpak), so it can be restored. The encrypted copy in the project is kept. Afterwards a notice says “contractor-quote.pdf: original moved to Trash”.</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
       <div class="overlay">
         <div class="card dialog">
           <div class="sheet-handle"></div>
-          <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Delete the original file?</h2></div>
+          <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Move the original to the Trash?</h2></div>
           <div class="summary-box"><div class="small muted">Original location</div><div class="path" style="padding:0;background:none">~/Downloads/contractor-quote.pdf</div></div>
-          <p>The original is permanently deleted from this device. The encrypted copy in <strong>Kitchen Remodel</strong> stays.</p>
-          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Delete original</button></div>
+          <p>The original is moved to your Trash. You can restore it from there until the Trash is emptied. The encrypted copy in <strong>Kitchen Remodel</strong> stays.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Move to Trash</button></div>
         </div>
       </div>
     </div>
@@ -137,20 +137,20 @@
   </section>
 
   <section class="scene">
-    <div class="scene-title">4c. Delete from both</div>
+    <div class="scene-title">4c. Trash the original, delete the copy</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
       <div class="overlay">
         <div class="card dialog">
           <div class="sheet-handle"></div>
-          <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Delete everywhere?</h2></div>
-          <p>Both copies of <strong>contractor-quote.pdf</strong> are permanently deleted:</p>
+          <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Trash the original and delete the copy?</h2></div>
+          <p>Both copies of <strong>contractor-quote.pdf</strong> are removed:</p>
           <div class="summary-box">
-            <div class="list-row"><span>📄</span><span style="flex:1">The original at ~/Downloads/contractor-quote.pdf</span></div>
-            <div class="list-row"><span>🔐</span><span style="flex:1">The encrypted copy in Kitchen Remodel</span></div>
+            <div class="list-row"><span>📄</span><span style="flex:1">The original at ~/Downloads/contractor-quote.pdf is moved to your Trash</span></div>
+            <div class="list-row"><span>🔐</span><span style="flex:1">The encrypted copy in Kitchen Remodel is permanently deleted</span></div>
           </div>
-          <p class="small muted">After this, the file can't be recovered by the app.</p>
-          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Delete both</button></div>
+          <p class="small muted">The original can be restored from the Trash until it is emptied.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Trash and delete</button></div>
         </div>
       </div>
     </div>
@@ -172,10 +172,10 @@
           <button class="menu-item">👁 Preview</button>
           <button class="menu-item">🏷 Edit tags…</button>
           <div class="menu-sep"></div>
-          <button class="menu-item danger" disabled>🗑 Delete from device</button>
+          <button class="menu-item danger" disabled>🗑 Move to Trash</button>
           <button class="menu-item danger">🗑 Delete from project</button>
-          <button class="menu-item danger" disabled>🗑 Delete from both</button>
-          <p class="small muted" style="padding:4px 10px 6px">The original is no longer at ~/Pictures/countertop-before.jpg, so only the project copy can be deleted.</p>
+          <button class="menu-item danger" disabled>🗑 Trash original, delete copy</button>
+          <p class="small muted" style="padding:4px 10px 6px">The original is no longer at ~/Pictures/countertop-before.jpg, so it can't be moved to the Trash. Only the project copy can be deleted.</p>
         </div>
       </div>
     </div>

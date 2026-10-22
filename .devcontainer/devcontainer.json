@@ -38,7 +38,10 @@
         // The Dart extension's own analytics switch (also off via DO_NOT_TRACK
         // and the Dart/Flutter opt-out file). VS Code's own telemetry setting
         // only works in your user settings: see docs/dependencies.md.
-        "dart.allowAnalytics": false
+        "dart.allowAnalytics": false,
+        // Don't start the DevTools server (a local port) as soon as a Flutter
+        // project opens. DevTools still opens on demand while debugging.
+        "dart.shareDevToolsWithFlutter": false
       }
     }
   },

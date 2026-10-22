@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project and files · Portfolio Jockey mockup</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="mock-bar">
+  <span>Design mockup · fake data</span><a href="index.html">All mockups</a>
+  <span class="seg"><button data-set-theme="light">Light</button><button data-set-theme="dark">Dark</button></span>
+  <span class="seg"><button data-set-view="both">Both</button><button data-set-view="desktop">Desktop</button><button data-set-view="phone">Phone</button></span>
+</div>
+<main class="mock-page">
+  <header>
+    <h1>Project view, adding files, and deleting files</h1>
+    <p class="muted">Files are encrypted as they're added. Right-click a file on desktop, or long-press it on a phone, for the file menu.</p>
+  </header>
+
+  <section class="scene">
+    <div class="scene-title">1. Project view</div>
+    <div class="scene-note">Tag chips filter the files. A file can have several tags. "Untagged" shows files with none.</div>
+    <div class="screen" hidden>
+      <header class="topbar">
+        <span class="icon-btn">←</span>
+        <h3 style="flex:1">Kitchen Remodel</h3>
+        <span class="icon-btn">⋯</span>
+        <span class="icon-btn hide-phone">⚙</span>
+      </header>
+      <div class="content stack">
+        <div class="project-head">
+          <div class="cover c1">🏠</div>
+          <div class="info">
+            <p class="muted">Contractor quotes, receipts and before/after photos.</p>
+            <span class="small muted">24 files · 412 MB · encrypted</span>
+            <div class="row" style="margin-top:6px"><button class="btn btn-primary">＋ Add files</button><button class="btn">🏷 Manage tags</button></div>
+          </div>
+        </div>
+        <div class="chips">
+          <span class="chip chip-on">All 24</span><span class="chip">Photos 14</span><span class="chip">Receipts 6</span><span class="chip">Plans 3</span><span class="chip">Inspiration 5</span><span class="chip">Untagged 2</span>
+        </div>
+        <div class="file-grid">
+          <div class="card file"><div class="thumb img">JPG</div><div class="fname">countertop-before.jpg</div><div class="ftags"><span class="chip">Photos</span></div></div>
+          <div class="card file"><div class="thumb img2">JPG</div><div class="fname">countertop-after.jpg</div><div class="ftags"><span class="chip">Photos</span><span class="chip">Inspiration</span></div></div>
+          <div class="card file"><div class="thumb pdf">PDF</div><div class="fname">contractor-quote.pdf</div><div class="ftags"><span class="chip">Receipts</span><span class="chip">Plans</span></div></div>
+          <div class="card file"><div class="thumb vid">▶ 2:18</div><div class="fname">walkthrough.mp4</div><div class="ftags"><span class="chip">Photos</span></div></div>
+          <div class="card file"><div class="thumb aud">♪ 3:05</div><div class="fname">plumber-voicemail.m4a</div><div class="ftags"></div></div>
+          <div class="card file"><div class="thumb">TXT</div><div class="fname">measurements.txt</div><div class="ftags"><span class="chip">Plans</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">2. Add files: confirmation</div>
+    <div class="scene-note">After picking files (desktop file dialog or Android picker). Tags can be applied to the whole batch. Originals stay where they are.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Add 3 files to “Kitchen Remodel”?</h2>
+          <div class="summary-box">
+            <div class="list-row"><span>🖼</span><span style="flex:1">tile-samples.jpg</span><span class="muted small">4.2 MB</span></div>
+            <div class="list-row"><span>📄</span><span style="flex:1">invoice-oct.pdf</span><span class="muted small">310 KB</span></div>
+            <div class="list-row"><span>🎞</span><span style="flex:1">demo-day.mp4</span><span class="muted small">186 MB</span></div>
+          </div>
+          <div><span class="label">Tags for these files (optional)</span><div class="chips"><span class="chip chip-on">Photos ✓</span><span class="chip">Receipts</span><span class="chip">Plans</span><span class="chip">Inspiration</span><span class="chip">＋ New tag</span></div></div>
+          <p class="small muted">Each file is encrypted and copied into the project. The originals are left where they are.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Encrypt and add 3 files</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">3. File menu (right-click / long-press)</div>
+    <div class="scene-note">The three delete options always mean the whole file, never just one tag. Removing a tag is done in "Edit tags".</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="content">
+        <div class="file-grid">
+          <div class="card file"><div class="thumb img">JPG</div><div class="fname">countertop-before.jpg</div><div class="ftags"><span class="chip">Photos</span></div></div>
+          <div class="card file selected"><div class="thumb pdf">PDF</div><div class="fname">contractor-quote.pdf</div><div class="ftags"><span class="chip">Receipts</span><span class="chip">Plans</span></div></div>
+          <div class="card file"><div class="thumb vid">▶ 2:18</div><div class="fname">walkthrough.mp4</div><div class="ftags"><span class="chip">Photos</span></div></div>
+        </div>
+      </div>
+      <div class="overlay light" style="display:block">
+        <div class="menu" style="left:300px;top:150px">
+          <div class="menu-title">contractor-quote.pdf</div>
+          <button class="menu-item">👁 Preview</button>
+          <button class="menu-item">✎ Edit in another app…</button>
+          <button class="menu-item">🏷 Edit tags…</button>
+          <button class="menu-item">✎ Rename…</button>
+          <button class="menu-item">⇪ Export a readable copy…</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item danger">🗑 Delete from device <span class="hint">the original</span></button>
+          <button class="menu-item danger">🗑 Delete from project <span class="hint">the encrypted copy</span></button>
+          <button class="menu-item danger">🗑 Delete from both</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">4a. Delete from device (the original)</div>
+    <div class="scene-note">The encrypted copy in the project is kept.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Delete the original file?</h2></div>
+          <div class="summary-box"><div class="small muted">Original location</div><div class="path" style="padding:0;background:none">~/Downloads/contractor-quote.pdf</div></div>
+          <p>The original is permanently deleted from this device. The encrypted copy in <strong>Kitchen Remodel</strong> stays.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Delete original</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">4b. Delete from project (the encrypted copy)</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Remove from “Kitchen Remodel”?</h2></div>
+          <p>The encrypted copy of <strong>contractor-quote.pdf</strong> is permanently deleted from the project, along with its tags (Receipts, Plans).</p>
+          <p class="small muted">The original at ~/Downloads/contractor-quote.pdf is not touched.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Delete from project</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">4c. Delete from both</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Delete everywhere?</h2></div>
+          <p>Both copies of <strong>contractor-quote.pdf</strong> are permanently deleted:</p>
+          <div class="summary-box">
+            <div class="list-row"><span>📄</span><span style="flex:1">The original at ~/Downloads/contractor-quote.pdf</span></div>
+            <div class="list-row"><span>🔐</span><span style="flex:1">The encrypted copy in Kitchen Remodel</span></div>
+          </div>
+          <p class="small muted">After this, the file can't be recovered by the app.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Delete both</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5. When the original can't be deleted</div>
+    <div class="scene-note">For example, the original was moved or deleted already, or on Android it was shared in from another app that didn't grant lasting access. The two options are greyed out, with the reason shown.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="content">
+        <div class="file-grid">
+          <div class="card file selected"><div class="thumb img">JPG</div><div class="fname">countertop-before.jpg</div><div class="ftags"><span class="chip">Photos</span></div></div>
+        </div>
+      </div>
+      <div class="overlay light" style="display:block">
+        <div class="menu" style="left:180px;top:120px">
+          <div class="menu-title">countertop-before.jpg</div>
+          <button class="menu-item">👁 Preview</button>
+          <button class="menu-item">🏷 Edit tags…</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item danger" disabled>🗑 Delete from device</button>
+          <button class="menu-item danger">🗑 Delete from project</button>
+          <button class="menu-item danger" disabled>🗑 Delete from both</button>
+          <p class="small muted" style="padding:4px 10px 6px">The original is no longer at ~/Pictures/countertop-before.jpg, so only the project copy can be deleted.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="mockup.js"></script>
+</body>
+</html>

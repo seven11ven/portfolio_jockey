@@ -20,10 +20,12 @@ bash "$here/lockdown.sh"
 export FLUTTER_SUPPRESS_ANALYTICS=true DASH__SUPPRESS_ANALYTICS=true DO_NOT_TRACK=1
 
 # 2. Linux desktop build tools, from https://docs.flutter.dev/platform-integration/linux/setup
-#    (Debian packages; none of them collect telemetry).
+#    (Debian packages; none of them collect telemetry). libsodium23 is the
+#    crypto library the vault calls through dart:ffi (see docs/dependencies.md).
 sudo apt-get update -y
 sudo apt-get install -y --no-install-recommends \
   clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev \
+  libsodium23 \
   curl git unzip xz-utils ca-certificates
 
 # 3. Pinned Flutter SDK, checksum verified before anything is unpacked.

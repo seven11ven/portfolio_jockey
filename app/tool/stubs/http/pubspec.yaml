@@ -1,0 +1,9 @@
+# An intentionally empty stand-in for the `http` networking package.
+# See README.md. It must never contain code: tool/check-privacy.sh checks that.
+name: http
+description: Empty stand-in so no networking package is in the dependency tree.
+version: 0.0.0-stub
+publish_to: none
+
+environment:
+  sdk: ^3.13.5

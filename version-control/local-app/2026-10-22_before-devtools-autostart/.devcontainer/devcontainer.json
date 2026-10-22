@@ -1,0 +1,48 @@
+// Dev container for Portfolio Jockey (Flutter, Linux desktop).
+// Works with DevPod, Coder, GitHub Codespaces and VS Code Dev Containers,
+// which all read this standard file (https://containers.dev).
+//
+// Telemetry is blocked in layers before Flutter or Dart ever run:
+// see lockdown.sh, check-lockdown.sh and docs/dependencies.md.
+// No secrets live here. Never commit a .env.
+{
+  "name": "Portfolio Jockey",
+
+  // Official Microsoft base image: image version 2, Debian 12 (Bookworm).
+  "image": "mcr.microsoft.com/devcontainers/base:2-bookworm",
+
+  // Telemetry suppression for every process in the container: the Flutter
+  // tool, the Dart tool, and the Dart/Flutter VS Code extensions.
+  "containerEnv": {
+    "FLUTTER_SUPPRESS_ANALYTICS": "true",
+    "DASH__SUPPRESS_ANALYTICS": "true",
+    "DO_NOT_TRACK": "1"
+  },
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/home/vscode/flutter/bin"
+  },
+
+  // Lock down telemetry, install build tools and the pinned Flutter SDK.
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  // Docker rewrites /etc/hosts on every start, so re-apply the block and
+  // re-check every layer each time.
+  "postStartCommand": "bash .devcontainer/lockdown.sh && bash .devcontainer/check-lockdown.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Dart-Code.dart-code",
+        "Dart-Code.flutter"
+      ],
+      "settings": {
+        // The Dart extension's own analytics switch (also off via DO_NOT_TRACK
+        // and the Dart/Flutter opt-out file). VS Code's own telemetry setting
+        // only works in your user settings: see docs/dependencies.md.
+        "dart.allowAnalytics": false
+      }
+    }
+  },
+
+  // Run as the image's regular user, not root.
+  "remoteUser": "vscode"
+}

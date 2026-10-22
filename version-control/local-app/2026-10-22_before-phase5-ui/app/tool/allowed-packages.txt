@@ -1,0 +1,41 @@
+# Packages allowed in app/pubspec.lock, used by tool/check-privacy.sh.
+# Format: name  version  kind  # note
+#   kind: runtime = compiled into the app; dev = tests and lints only, never shipped.
+#   SDK packages show version 0.0.0 in pubspec.lock; they come with Flutter 3.47.7.
+# Each package's code was reviewed for telemetry and tracking (2026-10-22).
+# Notes give the source repository and licence, read from each package's own files.
+# Cost and review notes: docs/dependencies.md. Add a line only after that review.
+
+# Flutter SDK
+flutter                       0.0.0    runtime  # flutter/flutter, BSD-3-Clause
+sky_engine                    0.0.0    runtime  # Dart standard library and dart:ui; LICENSE bundles the engine's third-party licenses
+flutter_test                  0.0.0    dev      # flutter/flutter, BSD-3-Clause (repo LICENSE)
+
+# Runtime dependencies of flutter, versions pinned by the Flutter SDK
+characters                    1.4.1    runtime  # dart-lang/core, BSD-3-Clause
+collection                    1.19.1   runtime  # dart-lang/core, BSD-3-Clause
+material_color_utilities      0.13.0   runtime  # material-foundation, Apache-2.0
+meta                          1.18.3   runtime  # dart-lang/sdk, BSD-3-Clause
+vector_math                   2.4.0    runtime  # flutter/core-packages, BSD-3-Clause
+
+# Lints (direct dev dependency)
+flutter_lints                 6.0.0    dev      # flutter/packages, BSD-3-Clause; lint config only
+lints                         6.1.0    dev      # dart-lang/core, BSD-3-Clause; lint config only
+
+# Dependencies of flutter_test, versions pinned by the Flutter SDK
+async                         2.13.1   dev      # dart-lang/core, BSD-3-Clause
+boolean_selector              2.1.2    dev      # dart-lang/tools, BSD-3-Clause
+clock                         1.1.3    dev      # dart-lang/tools, Apache-2.0
+fake_async                    1.3.3    dev      # dart-lang/test, Apache-2.0
+leak_tracker                  11.0.2   dev      # dart-lang/leak_tracker, BSD-3-Clause; memory-leak tracking in tests
+leak_tracker_flutter_testing  3.0.10   dev      # dart-lang/leak_tracker, BSD-3-Clause
+leak_tracker_testing          3.0.2    dev      # dart-lang/leak_tracker, BSD-3-Clause
+matcher                       0.12.20  dev      # dart-lang/test, BSD-3-Clause
+path                          1.9.1    dev      # dart-lang/core, BSD-3-Clause
+source_span                   1.10.2   dev      # dart-lang/tools, BSD-3-Clause
+stack_trace                   1.12.2   dev      # dart-lang/tools, BSD-3-Clause
+stream_channel                2.1.4    dev      # dart-lang/tools, BSD-3-Clause
+string_scanner                1.4.1    dev      # dart-lang/tools, BSD-3-Clause
+term_glyph                    1.2.2    dev      # dart-lang/tools, BSD-3-Clause
+test_api                      0.7.12   dev      # dart-lang/test, BSD-3-Clause
+vm_service                    15.4.0   dev      # dart-lang/sdk, BSD-3-Clause; local Dart VM debug protocol client

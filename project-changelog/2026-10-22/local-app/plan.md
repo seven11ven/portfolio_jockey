@@ -4,7 +4,7 @@
 # Portfolio Jockey v2: fully local, encrypted project tracker (Flutter, Linux + Android)
 
 ## Context
-The cloud version was removed (commit `7533a31`). The project manager's brief, in `project-notes/prompts/application.md`, describes a fully local project tracker for Linux and Android, with no cloud, no login and no accounts.
+The cloud version was removed (commit `7533a31`). The project manager's brief, in `public-notes/prompts/application.md` (moved there from the private `project-notes/prompts/` by the project manager on 2026-10-22), describes a fully local project tracker for Linux and Android, with no cloud, no login and no accounts.
 - **Projects** are folders under a storage location you choose. Each has a name, cover art, a description and tags (the brief calls them "categories").
 - **Files** added to a project are encrypted.
 - **Every action that changes files** asks you to confirm or cancel first.

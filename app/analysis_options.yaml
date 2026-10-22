@@ -1,0 +1,41 @@
+# Strict lints for Portfolio Jockey.
+# Run with: flutter analyze --fatal-infos --fatal-warnings
+# Uses only the first-party flutter_lints rule set (see docs/dependencies.md).
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  exclude:
+    - build/**
+    - linux/**
+
+linter:
+  rules:
+    # Safety: no unchecked dynamic calls, no forgotten futures or streams.
+    - avoid_dynamic_calls
+    - unawaited_futures
+    - discarded_futures
+    - cancel_subscriptions
+    - close_sinks
+    # Errors: throw and catch properly, never hide failures in finally.
+    - only_throw_errors
+    - avoid_catching_errors
+    - throw_in_finally
+    - control_flow_in_finally
+    # Clarity and correctness.
+    - always_declare_return_types
+    - prefer_final_locals
+    - prefer_final_fields
+    - prefer_const_constructors
+    - always_use_package_imports
+    - directives_ordering
+    - unnecessary_statements
+    - literal_only_boolean_expressions
+    - test_types_in_equals
+    - prefer_single_quotes
+    - use_super_parameters
+    - sort_child_properties_last
