@@ -302,3 +302,18 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **Docs:** `docs/dependencies.md`, `docs/install.md`, TESTING.md (D click note, H8).
 - **Backup:** `version-control/local-app/2026-10-23_before-temp-clear/`.
 - **Next:** the video frame rate investigation. **Not committed.**
+
+## Video playback settings: hardware decoding
+**Time:** 2026-10-23 20:54 UTC (Preview quality removed 21:01 UTC)
+- **Settings → Video playback → Hardware decoding** (PM approved the mockup, settings.html scene 1): a switch, on by default; mpv `hwdec=auto-copy-safe`, or `no`. It falls back to CPU decoding if there are no drivers. Saved in `settings.json` (`hardwareDecoding`; an unknown value counts as on) and applies to the next video.
+- **Preview quality (Balanced / Full) was built, then removed** (PM decision: ship decoding only, fix Balanced later). The check in the release build showed mpv's scale filter doesn't help: media_kit sizes its picture from the size before filters, so a 1920×1080 video was still drawn at 1920×1080 (shrunk, then drawn back up). `setSize` alone is reset by media_kit on every new video. Details in `docs/dependencies.md`. The mockup still shows the row, as the target for later.
+- **Code:** `AppSettings` and `AppController` (`hardwareDecoding`, `setHardwareDecoding`), `videoPlaybackOptions` (`preview_views.dart`), and `SharedPlayer.open(options:)`, which waits for the VideoController to start, then sets each option (time-limited) before `loadfile`.
+- **Tests:** 7 new (option order, waiting for the video output, stuck option and start steps, both option values, the switch saved and reloaded, `fromJson` defaults). The Change passphrase test now scrolls to its button. **Full run:** 223 pass (13 skipped); analyze clean; privacy check passes.
+- **Checked in the release build on the virtual screen:**
+  - the new card (no icons), and the switch saving to `settings.json`
+  - videos playing with the options set
+- **Found while checking, not fixed:**
+  - On the virtual screen, a playing video can make the app stop responding for up to a minute. gdb showed Mesa's software renderer busy on both of the container's cores; it recovers, and the last commit (`a03d5a1`) does the same. Not an app bug.
+  - **A video bigger than the free space in the memory folder spins forever** instead of showing an error (a 124 MB video against a 64 MB `/dev/shm` here). Needs a fix: an error that says the file is too big to preview.
+- **Docs:** `docs/dependencies.md` ("Video playback settings"), `CLAUDE.md` (media rules), TESTING.md (D7).
+- **Backup:** `version-control/local-app/2026-10-23_before-video-settings/` (with the mockup from before the card).

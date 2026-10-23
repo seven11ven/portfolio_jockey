@@ -314,6 +314,15 @@ The Flatpak (`packaging/flatpak/io.github.seven11ven.portfolio_jockey.yml`) runs
   - **Images:** flat. The app's own code doesn't leak.
   - **Video:** by default it kept climbing. With `MALLOC_ARENA_MAX=2` (in the manifest's finish-args), plus mpv's demuxer cache capped (`demuxer-max-bytes=32MiB`, `demuxer-max-back-bytes=0` in `lockedDownMpvOptions`), it levels off at about 350–415 MB, against about 650 MB and rising before.
 
+### Video playback settings (2026-10-23)
+- **Settings → Video playback → Hardware decoding** (on by default; approved mockup, settings.html scene 1). Saved in `settings.json` as `hardwareDecoding`; applies to the next video that opens. `SharedPlayer.open` sets it after pausing and before `loadfile`.
+  - mpv `hwdec=auto-copy-safe`, or `no` when off. media_kit sets `hwdec=auto` itself, which can't hand frames to its CPU (S/W) drawing path, so decoding had stayed on the processor. `auto-copy-safe` decodes on the graphics card and copies frames back to memory; with no working driver, mpv decodes on the processor as before.
+  - `open` first waits until the VideoController has started, so media_kit's own `hwdec` can't overwrite the choice.
+- **Preview quality (Balanced / Full) is postponed** (PM decision). Neither tried route works yet:
+  - mpv's scale filter (`vf`): media_kit sizes its picture from `video-params`, the size *before* filters, so the shrunk frames were drawn back up at full size. That costs more, not less (seen in the app's `VideoOutput.Resize` log: 1920×1080 either way).
+  - `VideoController.setSize` on its own: media_kit resets the size whenever a new video loads, and then skips a repeated `setSize`. A working version would call it after each video's own resize.
+- **Desktop check caveat:** on the virtual screen (2 CPU cores, Mesa's software renderer) the app can stop responding for up to a minute while a video plays, because drawing uses both cores. gdb showed the raster thread waiting on llvmpipe, which was busy; no deadlock, and it recovers. The last commit behaves the same, so this isn't a regression.
+
 ### Media time limits, the inbox, and the icon font (2026-10-23)
 - **Media can't spin forever:**
   - **Why:** media_kit 1.2.6 sends commands with `mpv_command_async` and waits for mpv's reply with no time limit, while `pause`, `play` and `stop` hold the player's lock. In the PM's test, a lost reply left every later preview spinning.

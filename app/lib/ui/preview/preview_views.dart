@@ -369,6 +369,14 @@ const Map<String, String> lockedDownMpvOptions = {
   'demuxer-max-back-bytes': '0',
 };
 
+/// mpv options for the next video, from Settings → Video playback.
+///
+/// `hwdec`: media_kit sets `auto` itself, which can't hand frames to its
+/// processor (S/W) drawing path, so decoding stayed on the processor.
+/// `auto-copy-safe` decodes on the graphics card and copies the frames back;
+/// with no working driver, mpv decodes on the processor as before.
+Map<String, String> videoPlaybackOptions({required bool hardwareDecoding}) => {'hwdec': hardwareDecoding ? 'auto-copy-safe' : 'no'};
+
 /// Audio or video, played by libmpv from a readable copy in a private
 /// memory-only folder. The copy is wiped when this closes.
 class MediaPreview extends StatefulWidget {
@@ -398,7 +406,12 @@ class _MediaPreviewState extends State<MediaPreview> {
       final shared = SharedPlayer.instance(prepare: ensureMediaReady, lockedDownOptions: lockedDownMpvOptions);
       _shared = shared;
       final player = await shared;
-      await player.open(widget.copy);
+      if (!mounted) {
+        return;
+      }
+      // Read once: a change applies to the next video, not this one.
+      final settings = context.getInheritedWidgetOfExactType<AppScope>()!.notifier!;
+      await player.open(widget.copy, options: videoPlaybackOptions(hardwareDecoding: settings.hardwareDecoding));
       if (!mounted) {
         return;
       }

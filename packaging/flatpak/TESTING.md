@@ -62,6 +62,7 @@ Open each type by **clicking it once** (right-click or a long press opens the fi
       3. Close the preview and run the same command again. The copy should be gone: the folder is empty, or "No such file or directory".
       If `flatpak enter` asks for permission, add `sudo` in front of it.
       **Edit copies** ("Edit in another app") are in the shared memory folder instead: `ls -la /run/user/$(id -u)/app/io.github.seven11ven.portfolio_jockey/portfolio_jockey/` shows an `edit-…` folder while an edit is open, and nothing after Save or Discard.
+- [ ] **D7. Hardware decoding.** Settings → Video playback → Hardware decoding is on by default. Play a large video (1080p or bigger) and note how smooth it is, and the app's CPU use in your system monitor. Then turn Hardware decoding off, close and reopen the video, and compare (the setting applies to the next video you open). Note anything that looks wrong with it on (glitches or wrong colours).
 
 ## E. "Edit in another app" (test item 8)
 - [ ] **E1.** On a text file, choose **Edit in another app…**, then **Open**. Your desktop's "Open With…" chooser appears **every time**, even if you picked an app before. Pick a text editor. If nothing appears, or the app shows an error, note the exact message.
@@ -120,7 +121,7 @@ These check that a crash or power cut never loses data or leaves a readable file
 | A1–A6 | | |
 | B1–B6 | | |
 | C1–C5 | | |
-| D1–D6 | | |
+| D1–D7 | | |
 | E1–E8 | | |
 | F1–F5 | | |
 | G1–G7 | | |

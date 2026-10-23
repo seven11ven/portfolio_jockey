@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:portfolio_jockey/ui/preview/preview_views.dart';
 import 'package:portfolio_jockey/ui/preview/shared_player.dart';
 
 /// A stand-in for the player: records what's sent and answers `idle-active` and
@@ -15,7 +16,7 @@ class FakeMpv {
   /// Steps that never finish, like a media_kit call whose mpv reply is lost.
   final Set<String> hang = {};
 
-  SharedPlayer player({Duration timeout = const Duration(seconds: 2), Duration stepLimit = const Duration(seconds: 5)}) => SharedPlayer(
+  SharedPlayer player({Duration timeout = const Duration(seconds: 2), Duration stepLimit = const Duration(seconds: 5), Future<void>? ready}) => SharedPlayer(
     command: (command) async {
       if (hang.contains(command.first)) {
         await Completer<void>().future;
@@ -49,6 +50,13 @@ class FakeMpv {
       'path' => path ?? '',
       _ => '',
     },
+    setProperty: (property, value) async {
+      if (hang.contains('set')) {
+        await Completer<void>().future;
+      }
+      calls.add('set $property=$value');
+    },
+    ready: ready,
     timeout: timeout,
     stepLimit: stepLimit,
     interval: Duration.zero,
@@ -68,6 +76,26 @@ void main() {
     await player.close(a);
     expect(mpv.calls.sublist(2), ['pause', 'stop'], reason: 'paused before stopping, so mpv has no frame in flight');
     expect(mpv.path, isNull);
+  });
+
+  test('options are set after pausing and before the file loads', () async {
+    final mpv = FakeMpv();
+    final player = mpv.player();
+    await player.open(a, options: {'hwdec': 'no', 'vf': ''});
+    expect(mpv.calls, ['pause', 'set hwdec=no', 'set vf=', 'loadfile ${a.path} replace']);
+  });
+
+  test('open waits until the video output has started, so its own hwdec cannot win', () async {
+    final mpv = FakeMpv();
+    final started = Completer<void>();
+    final player = mpv.player(ready: started.future);
+    final opening = player.open(a, options: {'hwdec': 'auto-copy-safe'});
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(mpv.calls, isEmpty);
+    started.complete();
+    await opening;
+    expect(mpv.calls.first, 'pause');
+    expect(mpv.calls[1], 'set hwdec=auto-copy-safe');
   });
 
   test('switching files: the old preview closing late does not stop the new file', () async {
@@ -123,6 +151,19 @@ void main() {
       expect(player.stuck, isTrue);
     });
 
+    test('an option that never sets is caught too', () async {
+      final mpv = FakeMpv()..hang.add('set');
+      final player = mpv.player(stepLimit: limit);
+      await expectLater(player.open(a, options: {'vf': ''}), throwsA(isA<PlayerStuck>()));
+      expect(player.stuck, isTrue);
+    });
+
+    test('a video output that never starts is caught too', () async {
+      final mpv = FakeMpv();
+      final player = mpv.player(stepLimit: limit, ready: Completer<void>().future);
+      await expectLater(player.open(a), throwsA(isA<PlayerStuck>()));
+    });
+
     test('loadfile that never returns is caught too', () async {
       final mpv = FakeMpv()..hang.add('loadfile');
       final player = mpv.player(stepLimit: limit);
@@ -132,5 +173,10 @@ void main() {
     test('the message says what to do', () {
       expect(const PlayerStuck().toString(), 'The player stopped responding. Close this preview and open it again.');
     });
+  });
+
+  test('video playback options: hardware decoding on, or off', () {
+    expect(videoPlaybackOptions(hardwareDecoding: true), {'hwdec': 'auto-copy-safe'});
+    expect(videoPlaybackOptions(hardwareDecoding: false), {'hwdec': 'no'});
   });
 }

@@ -27,6 +27,8 @@ final class SharedPlayer {
     required this.pause,
     required this.stop,
     required this.getProperty,
+    this.setProperty,
+    this.ready,
     this.player,
     this.video,
     this.timeout = const Duration(seconds: 2),
@@ -67,6 +69,9 @@ final class SharedPlayer {
       await native.setProperty(key, value);
     }
     final video = VideoController(player);
+    final ready = video.platform.future;
+    // A failed start shows up when open() waits on it; until then it's handled.
+    unawaited(ready.then<void>((_) {}, onError: (Object _) {}));
     // pause() and stop() go through media_kit, not raw mpv commands, so its own
     // playing state stays in step and the Play button works on the next file.
     return SharedPlayer(
@@ -74,6 +79,8 @@ final class SharedPlayer {
       pause: player.pause,
       stop: player.stop,
       getProperty: native.getProperty,
+      setProperty: native.setProperty,
+      ready: ready,
       player: player,
       video: video,
     );
@@ -85,6 +92,11 @@ final class SharedPlayer {
   final Future<void> Function() pause;
   final Future<void> Function() stop;
   final Future<String> Function(String property) getProperty;
+  final Future<void> Function(String property, String value)? setProperty;
+
+  /// Completes once the VideoController has finished starting. It sets mpv's
+  /// `hwdec` itself, so [open] waits for it before setting its own options.
+  final Future<void>? ready;
   final Player? player;
   final VideoController? video;
   final Duration timeout;
@@ -105,14 +117,23 @@ final class SharedPlayer {
   String? _current;
   Future<void> _queue = Future<void>.value();
 
-  /// Loads [copy] paused. Waits (up to [timeout]) until mpv has it open.
-  /// Throws [PlayerStuck] if the player stops responding.
-  Future<void> open(File copy) => _serial(() async {
+  /// Loads [copy] paused, with mpv [options] set first (they apply to this
+  /// file). Waits (up to [timeout]) until mpv has it open. Throws
+  /// [PlayerStuck] if the player stops responding.
+  Future<void> open(File copy, {Map<String, String> options = const {}}) => _serial(() async {
     if (_stuck) {
       throw const PlayerStuck();
     }
     _current = copy.path;
+    if (ready case final ready?) {
+      await _limited('start', () => ready);
+    }
     await _limited('pause', pause);
+    if (setProperty case final set?) {
+      for (final MapEntry(:key, :value) in options.entries) {
+        await _limited('set $key', () => set(key, value));
+      }
+    }
     // Player.open() would write a playlist file with this path to /tmp, so
     // the file is loaded with mpv's own command instead.
     await _limited('loadfile', () => command(['loadfile', copy.path, 'replace']));
