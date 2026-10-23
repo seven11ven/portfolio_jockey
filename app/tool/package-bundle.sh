@@ -6,8 +6,10 @@
 #
 # 1. Runs every check first: the telemetry lockdown, the privacy check,
 #    flutter analyze and the full test suite. Any failure stops here.
-# 2. flutter build linux --release, then packs the bundle as a reproducible
-#    tarball (sorted names, fixed owner and date) with its SHA-256.
+# 2. flutter build linux --release, then packs the bundle as a tarball with
+#    its SHA-256. Packing adds no differences (sorted names, fixed owner and
+#    date), but Flutter's own build output can differ between builds, so each
+#    run gives a new checksum.
 # 3. Writes that SHA-256 into a copy of the manifest and packs the build kit:
 #    the manifest, desktop file, metainfo, icon, bundle, build.sh and
 #    TESTING.md (when present).
@@ -45,7 +47,7 @@ built="$app/build/linux/x64/release/bundle"
 
 rm -rf "$dist"
 mkdir -p "$dist/$kit_name"
-# A fixed date, owner and order, so the same build gives the same tarball.
+# A fixed date, owner and order, so packing the same files gives the same tarball.
 tar --sort=name --owner=0 --group=0 --numeric-owner --mtime='2026-01-01 00:00:00Z' \
   -C "$built/.." -cf - bundle | gzip -n -9 > "$dist/$bundle_name"
 bundle_sha=$(sha256sum "$dist/$bundle_name" | cut -d' ' -f1)

@@ -222,7 +222,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         'License',
                         TextButton(
                           onPressed: () => showLicensePage(context: context, applicationName: 'Portfolio Jockey', applicationVersion: appVersion),
-                          child: const Text('AGPL-3.0 · Show licenses'),
+                          child: const Text('AGPL-3.0-or-later · Show licenses'),
                         ),
                       ),
                     ]),

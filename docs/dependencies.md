@@ -278,7 +278,7 @@ The Flatpak (`packaging/flatpak/io.github.seven11ven.portfolio_jockey.yml`) runs
   - Allowed: `wayland`, `fallback-x11`, `ipc`, `dri` and `pulseaudio`.
   - **Never** `--share=network`, and no `--filesystem`.
   - `build.sh` prints the permissions after the build and stops if network access shows up.
-- **The app bundle:** `app/tool/package-bundle.sh` runs every check and the full test suite, then builds the release bundle here. It packs the bundle as a reproducible tarball (sorted names, fixed owner and date) and writes that tarball's SHA-256 into the kit's copy of the manifest.
+- **The app bundle:** `app/tool/package-bundle.sh` runs every check and the full test suite, then builds the release bundle here. It packs the bundle as a tarball (sorted names, fixed owner and date, so packing adds no differences) and writes that tarball's SHA-256 into the kit's copy of the manifest. Flutter's own release build isn't byte-for-byte reproducible: two builds of the same code gave different checksums. So the checksum identifies one particular build, and the kit's `SHA256SUMS` and `build.sh` check it.
   - Every direct dependency of the bundle is in the runtime, apart from `libmpv.so.2`, which is our module.
   - The highest glibc version it needs is 2.34; the runtime has 2.44.
 - **`app/tool/verify_minisign.dart`** is a build-time tool, not part of the app. It binds 7 libsodium functions, listed in `allowed-native-libs.txt`. `check-privacy.sh` now scans `app/tool/` too, both for native code and for network APIs.

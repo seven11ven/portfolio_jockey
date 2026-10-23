@@ -159,3 +159,17 @@ A research agent read the primary sources (freedesktop-sdk and gnome-build-meta 
 - PM decision: the app is `AGPL-3.0-or-later` (version 3, or at the user's option any later version).
 - The metainfo's `project_license` is now `AGPL-3.0-or-later`. `README.md` has a new "License" section just above its closing line, saying the same and linking `LICENSE`. The rest of the README is unchanged.
 - **Impact:** metadata and documentation only. The `LICENSE` text itself (AGPL v3) is unchanged.
+
+## Step 4: TESTING.md, and the kit rebuilt
+**Time:** 2026-10-22 23:42–23:46 UTC (it started after commit `ab9cd86`)
+- **New: `packaging/flatpak/TESTING.md`.** A plain-language checklist for the PM's PC:
+  - A: terminal checks for no network permission, only loopback inside the sandbox, `$XDG_RUNTIME_DIR` on tmpfs with mode 700, and codecs-extra installed
+  - B–H: first run, projects and files, every preview type, "Edit in another app", Trash, export, import and readable copies, and settings. These cover test items 1–12 in `phase8-packaging.md`.
+  - I: cleanup
+  - a results table, with a reminder to remove personal folder names before sharing any output
+- **Readable-copy check (D6):** it uses `flatpak enter` on the running instance. A new `flatpak run` gets a fresh sandbox, and could miss leftover copies.
+- **Kit rebuilt** with `TESTING.md` inside: 172 tests pass (13 skipped), and the privacy check and `flutter analyze` are clean.
+  - Bundle SHA-256: `c1867dfb…26bc`. Kit SHA-256: `8f0dcc64…8406`.
+- **Correction:** the bundle's checksum changed between two builds of the same code, so Flutter's release build isn't byte-for-byte reproducible. The packing step is still deterministic. `package-bundle.sh` and `docs/dependencies.md` no longer call the tarball "reproducible".
+- **Backup:** `version-control/local-app/2026-10-22_before-testing-doc/`.
+- **Impact:** documentation and packaging only. **Not committed.**
