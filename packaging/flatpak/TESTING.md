@@ -95,6 +95,14 @@ Open each type with **Preview**. Audio and video open **paused**: press Play.
 - [ ] **H5.** **Show licenses** opens the list of licenses.
 - [ ] **H6. Open vault folder.** On the home screen, the folder button (first icon in the top bar) opens your file manager at the vault's folder. You'll see only folders with long random names and a hidden `.pj` folder; nothing in it is readable.
 
+## J. Pull the plug
+These check that a crash or power cut never loses data or leaves a readable file behind. To "pull the plug", run `flatpak kill io.github.seven11ven.portfolio_jockey` in a terminal at the moment described. Then start the app again and unlock it.
+- [ ] **J1. Export.** Start an unlocked ZIP export of a project with a big file, and kill the app while it's still writing. After unlocking, a message says "An export was interrupted. Its unfinished file was removed." In the export folder, no hidden `.….tmp-…` file is left (`ls -la` shows hidden files).
+- [ ] **J2. Import.** Start importing a `.pjx` with several projects, and kill the app partway. After unlocking, a message says the import was undone, and none of its projects are in the list.
+- [ ] **J3. Storage move.** Start **Move…** to a new folder, and kill the app while it's copying. After restarting, your projects are all there, at the old location, and a message says the unfinished copy was removed. The new folder is empty.
+- [ ] **J4. Edit save.** Open a file with **Edit in another app**, change and save it in the editor, press **Save changes** and confirm, and kill the app right away. After unlocking, the file opens and shows either the old version or the new one, complete. Export it as a readable copy to be sure it isn't damaged.
+- [ ] **J5. Edit open.** Open a file with **Edit in another app**, make a change in the editor, and kill the app **without** saving in Portfolio Jockey. After unlocking, note what happens: either "An edit wasn't finished" is offered (save or discard), or a message says the edit's changes weren't saved. Either is fine; which one shows tells us how Flatpak treats the memory folder.
+
 ## I. Clean up
 - [ ] **I1.** Remove the test data: `flatpak uninstall --user --delete-data io.github.seven11ven.portfolio_jockey`. Only do this if you won't keep using this build. It deletes the vault in the app's own data folder; a storage folder moved elsewhere (H3) stays.
 - [ ] **I2.** Delete the test exports and the moved storage folder by hand.
@@ -113,6 +121,7 @@ Open each type with **Preview**. Audio and video open **paused**: press Play.
 | F1–F5 | | |
 | G1–G7 | | |
 | H1–H6 | | |
+| J1–J5 | | |
 
 Also include:
 - your distribution and version (`cat /etc/os-release | head -3`)

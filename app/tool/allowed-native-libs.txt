@@ -12,7 +12,7 @@ lib/vault/native/sodium.dart   libsodium.so.26,libsodium.so.23   *
 # The C library: plain memory for non-secret buffers, syncing a folder after a
 # rename, mkdir for the private 0700 folders of "Edit in another app", and
 # statvfs for free disk space before exports and storage moves.
-lib/vault/native/libc.dart     libc.so.6                         malloc,free,open,fsync,close,mkdir,statvfs,getxattr
+lib/vault/native/libc.dart     libc.so.6                         malloc,free,open,fsync,close,mkdir,statvfs,getxattr,__errno_location
 
 # GLib's GIO: moving originals to the Trash (g_file_trash uses the Trash portal
 # inside a Flatpak). Reviewed 2026-10-22 in GLib's source. Already loaded by

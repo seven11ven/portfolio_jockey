@@ -86,10 +86,18 @@ final class StorageMove {
           await _copy(entity, copy);
           await _verify(entity, copy);
           done += await entity.length();
-          onProgress?.call(MoveProgress(done, bytesTotal));
+          // The journal entry for this move is written after planning, so the
+          // copy can be a little bigger than planned.
+          onProgress?.call(MoveProgress(done < bytesTotal ? done : bytesTotal, bytesTotal));
         }
       }
-      Libc.instance.syncDirectory(target.path);
+      // Every folder of the copy, deepest first, then the folder holding the
+      // target: the copy must be on disk before the old folder is removed.
+      final folders = [await for (final e in target.list(recursive: true, followLinks: false)) if (e is Directory) e.path]
+        ..sort((a, b) => b.length.compareTo(a.length));
+      for (final folder in [...folders, target.path, target.parent.path]) {
+        Libc.instance.syncDirectory(folder);
+      }
     } on Object {
       if (createdTarget) {
         await target.delete(recursive: true).catchError((_) => target);

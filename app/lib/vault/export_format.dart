@@ -46,13 +46,13 @@ final class ExportKey {
 
 /// Writes [content] to [target] as a locked export, protected by [passphrase]
 /// (Argon2id with [kdf], default MODERATE). [target] is written atomically.
-Future<void> writeLockedExport(File target, String passphrase, Stream<List<int>> content, {KdfParams? kdf}) async {
+Future<void> writeLockedExport(File target, String passphrase, Stream<List<int>> content, {KdfParams? kdf, Future<void> Function(File temp)? onTemp}) async {
   final params = kdf ?? KdfParams.moderate();
   final sodium = Sodium.instance;
   final salt = sodium.randomBytes(sodium.pwhashSaltBytes);
   final key = await _deriveKey(passphrase, salt, params);
   try {
-    await writeAtomically(target, (out) async {
+    await writeAtomically(target, onTemp: onTemp, (out) async {
       await out.writeFrom(_header(params, salt));
       await encryptTo(out, content, key._key);
     });

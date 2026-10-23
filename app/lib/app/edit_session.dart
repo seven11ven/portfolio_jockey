@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:portfolio_jockey/services/native/gio_apps.dart';
 import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
+import 'package:portfolio_jockey/vault/atomic_write.dart';
+import 'package:portfolio_jockey/vault/journal.dart';
 import 'package:portfolio_jockey/vault/project_index.dart';
 
 /// Which project file an edit belongs to. Saved as `session.json` next to the
@@ -52,6 +54,9 @@ final class EditSession {
 
   File get copy => File('${folder.path}/file/${info.fileName}');
 
+  /// The edit's journal entry ID: its folder's name, which is unique.
+  String get journalId => folder.uri.pathSegments.where((s) => s.isNotEmpty).last;
+
   /// When the copy was last saved by the other app, or null if it's gone.
   Future<DateTime?> lastChanged() async => await copy.exists() ? copy.lastModified() : null;
 }
@@ -93,6 +98,11 @@ class EditSessions extends ChangeNotifier {
   /// other app is still writing isn't encrypted half-done.
   final Duration settle;
 
+  /// The open vault, whose journal lists the edit in progress, so the user
+  /// is told if the app closes and the copy is lost (journal.dart). Set by
+  /// the app controller while unlocked.
+  ProjectService? journal;
+
   static const String _editPrefix = 'edit';
   static const String _viewPrefix = 'view';
 
@@ -128,8 +138,12 @@ class EditSessions extends ChangeNotifier {
     );
     try {
       await Directory('${folder.path}/file').create();
-      await File('${folder.path}/session.json').writeAsString(jsonEncode(session.info.toJson()), flush: true);
       await service.decryptTo(projectId, file, session.copy);
+      // Written last and atomically: an edit folder without session.json is a
+      // start that was cut off (for example, by a power cut mid-decrypt), and
+      // findLeftovers wipes it instead of offering a partial copy for saving.
+      await writeBytesAtomically(File('${folder.path}/session.json'), utf8.encode(jsonEncode(session.info.toJson())));
+      await journal?.journalPut(EditStarted(session.journalId, projectName: projectName, fileName: file.name));
       await launcher.open(session.copy.path, appId: app?.id);
     } on Object {
       await PrivateFolders.wipe(folder);
@@ -224,6 +238,7 @@ class EditSessions extends ChangeNotifier {
 
   Future<void> _finish(EditSession session) async {
     await PrivateFolders.wipe(session.folder);
+    await journal?.journalRemove(session.journalId);
     if (identical(_active, session) || _active?.folder.path == session.folder.path) {
       _active = null;
     }

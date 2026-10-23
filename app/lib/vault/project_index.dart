@@ -10,7 +10,7 @@ import 'package:portfolio_jockey/vault/secure_buffer.dart';
 /// Everything about a project except its files' contents: its name,
 /// description, tags and file list. Stored encrypted as `index.enc`.
 final class ProjectIndex {
-  ProjectIndex({required this.name, this.description = '', List<String>? tags, List<FileEntry>? files, this.coverKey, DateTime? changedAt})
+  ProjectIndex({required this.name, this.description = '', List<String>? tags, List<FileEntry>? files, this.coverKey, this.coverId, DateTime? changedAt})
     : tags = tags ?? [],
       files = files ?? [],
       changedAt = (changedAt ?? DateTime.now()).toUtc();
@@ -21,6 +21,7 @@ final class ProjectIndex {
     tags: _field<List<Object?>>(json, 'tags').map(_asString).toList(),
     files: _field<List<Object?>>(json, 'files').map((f) => FileEntry.fromJson(_asMap(f))).toList(),
     coverKey: json['coverKey'] as String?,
+    coverId: json['coverId'] as String?,
     changedAt: _optionalDate(json, 'changedAt'),
   );
 
@@ -31,6 +32,11 @@ final class ProjectIndex {
 
   /// The cover art's key (base64), or null if the project has no cover.
   String? coverKey;
+
+  /// Which cover file holds the cover: `cover-<coverId>.enc`, or `cover.enc`
+  /// when null (vaults from before 2026-10-23). A new cover gets a new ID, so
+  /// the old one stays readable until the index points at the new one.
+  String? coverId;
 
   /// When the project was last changed. Updated only by confirmed changes;
   /// opening a project never writes to disk.
@@ -45,6 +51,7 @@ final class ProjectIndex {
     'tags': tags,
     'files': [for (final f in files) f.toJson()],
     'coverKey': coverKey,
+    if (coverId != null) 'coverId': coverId,
     'changedAt': changedAt.toIso8601String(),
   };
 }
@@ -61,6 +68,7 @@ final class FileEntry {
     List<String>? tags,
     this.originalPath,
     this.originalShownPath,
+    this.blobId,
   }) : tags = tags ?? [] {
     checkId(id);
   }
@@ -87,6 +95,7 @@ final class FileEntry {
     tags: _field<List<Object?>>(json, 'tags').map(_asString).toList(),
     originalPath: json['originalPath'] as String?,
     originalShownPath: json['originalShownPath'] as String?,
+    blobId: json['blobId'] as String?,
   );
 
   final String id;
@@ -104,6 +113,15 @@ final class FileEntry {
   /// path (inside a Flatpak). Only shown; Trash and checks use [originalPath].
   final String? originalShownPath;
 
+  /// Which encrypted file holds the contents: `blobs/<blobId>.enc`, or the
+  /// file's [id] when null (vaults from before 2026-10-23). Saving an edit
+  /// writes a new blob under a new ID, then points the index at it, so a crash
+  /// leaves either the old version or the new one, never a mix.
+  String? blobId;
+
+  /// The blob that holds the contents.
+  String get blob => blobId ?? id;
+
   /// The original's location as the user should see it.
   String? get shownOriginal => originalShownPath ?? originalPath;
 
@@ -119,6 +137,7 @@ final class FileEntry {
     'tags': tags,
     'originalPath': originalPath,
     if (originalShownPath != null) 'originalShownPath': originalShownPath,
+    if (blobId != null) 'blobId': blobId,
   };
 }
 

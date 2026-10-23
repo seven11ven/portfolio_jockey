@@ -96,7 +96,10 @@ void main() {
     await tester.tap(find.text('Move…'));
     await settleUntil(tester, find.text('Move 1 project'));
     await tester.tap(find.text('Move 1 project'));
-    await settleUntil(tester, find.textContaining('Moved to'));
+    // Copying, checking and syncing every folder takes a few rounds of real I/O.
+    for (var i = 0; i < 3 && find.textContaining('Moved to').evaluate().isEmpty; i++) {
+      await settleUntil(tester, find.textContaining('Moved to'));
+    }
     expect(app.controller.storagePath, (await tester.runAsync(destination.resolveSymbolicLinks))!);
     expect(await tester.runAsync(app.storage.exists), isFalse);
     expect((await tester.runAsync(() async => savedSettings(app)))!['storagePath'], app.controller.storagePath);

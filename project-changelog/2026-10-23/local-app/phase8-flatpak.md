@@ -206,3 +206,31 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **TESTING.md:** E6–E8.
 - **Backup:** `version-control/local-app/2026-10-23_before-edit-safeguards/`.
 - **Impact:** wording and save checks in the edit flow. **Not committed.**
+
+## Crash and power-cut safety
+**Time:** 2026-10-23 16:34 UTC
+- **PM request:** a fail-safe for the app closing, or the device turning off, while editing, moving or changing files.
+- **Audit:** an Explore agent read every write. I checked the serious items in the code myself:
+  - an interrupted export or readable copy left a readable temp file in the user's folder
+  - an edit cut off mid-decrypt was offered for saving
+  - a cover replace overwrote the cover before the index had its new key
+  - an edit save could leave a wrong size in the index
+  - moves and imports weren't safe across a crash
+  - nothing was cleaned up at unlock
+- **Built:**
+  - **Edits:** `session.json` is written last, atomically.
+  - **New names:** `FileEntry.blobId` and `ProjectIndex.coverId` (optional), with new-name-then-index-then-delete for edit saves and covers.
+  - **The journal:** `lib/vault/journal.dart`, `.pj/journal.enc`, encrypted. Exports (through `writeAtomically(onTemp:)`), imports (pre-chosen project IDs) and storage moves are listed in it, and so are open edits.
+  - **At unlock:** `ProjectService.recoverJournal` and `cleanUp` (only files from before it started; never unreadable projects).
+  - **Fsync:** `syncDirectory` checks `fsync` through `errno` (`__errno_location` added to the allowlist; "not supported" is tolerated). Moves fsync every copied folder.
+  - **Messages:** recovery messages appear on the home screen after unlocking. Move progress no longer overcounts.
+- **Tests:**
+  - `test/services/crash_safety_test.dart` (13)
+  - `test/services/storage_move_test.dart` (new)
+  - a UI test of the message
+  - the cover test updated for `cover-<id>.enc`
+  - the move UI test gets more settle rounds (the extra fsyncs make it slower, not stuck)
+  - Full run: 201 pass (13 skipped); analyze clean; privacy check passes; release build works.
+- **Not verified here:** a real process kill. The tests recreate the disk state a crash leaves; the real kill is TESTING.md J1–J5 on the PM's PC. J5 also settles whether Flatpak keeps the memory folder across a restart.
+- **Backup:** `version-control/local-app/2026-10-23_before-crash-safety/`.
+- **Impact:** an index format addition (backward compatible), a new journal file, and messages after unlock. **Not committed.**

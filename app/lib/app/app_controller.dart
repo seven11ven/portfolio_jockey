@@ -15,6 +15,8 @@ import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/services/sandbox.dart';
 import 'package:portfolio_jockey/services/storage_move.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
+import 'package:portfolio_jockey/vault/ids.dart';
+import 'package:portfolio_jockey/vault/journal.dart';
 import 'package:portfolio_jockey/vault/kdf.dart';
 import 'package:portfolio_jockey/vault/vault.dart';
 
@@ -138,17 +140,30 @@ class AppController extends ChangeNotifier {
     if (current == null || edits.active != null) {
       throw StateError('Finish editing before moving the storage location');
     }
-    await move.copyAndVerify(onProgress: onProgress);
+    // Listed before copying (and copied along), so a move cut off by a crash
+    // is tidied up at the next unlock, whichever folder is in use then.
+    final journalId = newId();
+    await current.journalPut(MoveStarted(journalId, source: move.source.absolute.path, target: move.target.absolute.path));
+    try {
+      await move.copyAndVerify(onProgress: onProgress);
+    } on Object {
+      await current.journalRemove(journalId);
+      rethrow;
+    }
     _settings = _settings.copyWith(storagePath: move.target.path);
     await settingsStore.save(_settings);
     _storagePath = move.target.path;
-    _projects = ProjectService(current.vault.relocatedTo(move.target), trasher: trasher, hostPathOf: hostPathOf);
+    final moved = ProjectService(current.vault.relocatedTo(move.target), trasher: trasher, hostPathOf: hostPathOf);
+    _projects = moved;
+    edits.journal = moved;
     notifyListeners();
     try {
       await move.removeSource();
       return true;
     } on FileSystemException {
       return false;
+    } finally {
+      await moved.journalRemove(journalId);
     }
   }
 
@@ -193,15 +208,46 @@ class AppController extends ChangeNotifier {
     unawaited(edits.wipeMediaCopies());
     _projects?.vault.lock();
     _projects = null;
+    edits.journal = null;
     _stage = AppStage.locked;
     notifyListeners();
   }
 
   void _open(UnlockedVault vault) {
-    _projects = ProjectService(vault, trasher: trasher, hostPathOf: hostPathOf);
+    final projects = ProjectService(vault, trasher: trasher, hostPathOf: hostPathOf);
+    _projects = projects;
+    edits.journal = projects;
     _stage = AppStage.unlocked;
     notifyListeners();
-    unawaited(edits.findLeftovers());
+    unawaited(_afterUnlock(projects));
+  }
+
+  /// Notices about work tidied up after a crash or power cut, for the home
+  /// screen to show once ([takeRecoveryNotices]).
+  final List<String> _recoveryNotices = [];
+
+  /// The notices not shown yet; each is returned once.
+  List<String> takeRecoveryNotices() {
+    final notices = [..._recoveryNotices];
+    _recoveryNotices.clear();
+    return notices;
+  }
+
+  /// Finds unfinished edits, then tidies up what the journal still lists
+  /// (exports, imports, a storage move, an edit whose copy is gone), then
+  /// removes leftovers inside projects.
+  Future<void> _afterUnlock(ProjectService projects) async {
+    try {
+      await edits.findLeftovers();
+      final open = {for (final s in edits.leftovers) s.journalId};
+      _recoveryNotices.addAll(await projects.recoverJournal(openEditIds: open));
+      await projects.cleanUp();
+    } on Object catch (e) {
+      _recoveryNotices.add("Couldn't check for work left unfinished last time: $e");
+    }
+    if (identical(_projects, projects)) {
+      notifyListeners();
+    }
   }
 
   @override

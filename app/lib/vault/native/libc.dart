@@ -17,6 +17,7 @@ final class Libc {
       _free = lib.lookupFunction<Void Function(Pointer<Void>), void Function(Pointer<Void>)>('free'),
       _open = lib.lookupFunction<Int Function(Pointer<Char>, Int, VarArgs<(UnsignedInt,)>), int Function(Pointer<Char>, int, int)>('open'),
       _fsync = lib.lookupFunction<Int Function(Int), int Function(int)>('fsync'),
+      _errnoLocation = lib.lookupFunction<Pointer<Int> Function(), Pointer<Int> Function()>('__errno_location'),
       _close = lib.lookupFunction<Int Function(Int), int Function(int)>('close'),
       _mkdir = lib.lookupFunction<Int Function(Pointer<Char>, UnsignedInt), int Function(Pointer<Char>, int)>('mkdir'),
       _statvfs = lib.lookupFunction<Int Function(Pointer<Char>, Pointer<Uint8>), int Function(Pointer<Char>, Pointer<Uint8>)>('statvfs'),
@@ -31,12 +32,15 @@ final class Libc {
   final void Function(Pointer<Void>) _free;
   final int Function(Pointer<Char>, int, int) _open;
   final int Function(int) _fsync;
+  final Pointer<Int> Function() _errnoLocation;
   final int Function(int) _close;
   final int Function(Pointer<Char>, int) _mkdir;
   final int Function(Pointer<Char>, Pointer<Uint8>) _statvfs;
   final int Function(Pointer<Char>, Pointer<Char>, Pointer<Uint8>, int) _getxattr;
 
   static const int _readOnly = 0; // O_RDONLY, the same on every Linux architecture.
+  // EINVAL, EROFS and EOPNOTSUPP, the same on x86-64 and arm64.
+  static const Set<int> _cannotSyncFolders = {22, 30, 95};
   static const int _readWrite = 2; // O_RDWR, the same on every Linux architecture.
   static const int _closeOnExec = 0x80000; // O_CLOEXEC on x86-64 and arm64.
 
@@ -65,8 +69,16 @@ final class Libc {
       if (fd < 0) {
         throw FileSystemException('Cannot open the folder to sync it', path);
       }
-      _fsync(fd);
+      final synced = _fsync(fd) == 0;
+      final error = synced ? 0 : _errnoLocation().value;
       _close(fd);
+      // Some file systems can't sync a folder (FUSE mounts such as the
+      // document portal, read-only mounts): fine, the rename is still done.
+      // Any other failure (an I/O error, for example) means the write may
+      // not survive a power cut, so it isn't reported as done.
+      if (!synced && !_cannotSyncFolders.contains(error)) {
+        throw FileSystemException('Cannot sync the folder to disk (error $error)', path);
+      }
     } finally {
       free(cPath);
     }

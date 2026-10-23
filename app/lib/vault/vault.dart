@@ -7,8 +7,10 @@ import 'package:portfolio_jockey/vault/atomic_write.dart';
 import 'package:portfolio_jockey/vault/blob_stream.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
 import 'package:portfolio_jockey/vault/ids.dart';
+import 'package:portfolio_jockey/vault/journal.dart';
 import 'package:portfolio_jockey/vault/kdf.dart';
 import 'package:portfolio_jockey/vault/layout.dart';
+import 'package:portfolio_jockey/vault/native/libc.dart';
 import 'package:portfolio_jockey/vault/native/sodium.dart';
 import 'package:portfolio_jockey/vault/project_index.dart';
 import 'package:portfolio_jockey/vault/secure_buffer.dart';
@@ -150,11 +152,41 @@ final class UnlockedVault {
   }
 
   /// Creates a project folder and its encrypted index. Returns the new ID.
-  Future<String> createProject(ProjectIndex index) async {
-    final id = newId();
-    await layout.blobDir(id).create(recursive: true);
-    await writeIndex(id, index);
-    return id;
+  /// Creates a project with a new ID, or with [id] when the caller has
+  /// already listed it in the journal (imports).
+  Future<String> createProject(ProjectIndex index, {String? id}) async {
+    final projectId = id ?? newId();
+    checkId(projectId);
+    if (await layout.projectDir(projectId).exists()) {
+      throw StateError('Project $projectId already exists');
+    }
+    await layout.blobDir(projectId).create(recursive: true);
+    await writeIndex(projectId, index);
+    return projectId;
+  }
+
+  /// The unfinished work listed in the journal; empty if there's none.
+  Future<List<JournalEntry>> readJournal() async {
+    _checkUnlocked();
+    final file = layout.journalFile;
+    if (!await file.exists()) {
+      return [];
+    }
+    return decryptJournal(await file.readAsBytes(), masterKey: _masterKey);
+  }
+
+  /// Replaces the journal, atomically. An empty journal removes the file.
+  Future<void> writeJournal(List<JournalEntry> entries) async {
+    _checkUnlocked();
+    final file = layout.journalFile;
+    if (entries.isEmpty) {
+      if (await file.exists()) {
+        await file.delete();
+        Libc.instance.syncDirectory(file.parent.path);
+      }
+      return;
+    }
+    await writeBytesAtomically(file, encryptJournal(entries, masterKey: _masterKey));
   }
 
   Future<ProjectIndex> readIndex(String projectId) async =>
@@ -199,15 +231,15 @@ final class UnlockedVault {
   }
 
   /// Encrypts [image] as the project's cover with [key].
-  Future<void> writeCover(String projectId, Uint8List image, SecureBuffer key) {
+  Future<void> writeCover(String projectId, Uint8List image, SecureBuffer key, {String? coverId}) {
     _checkUnlocked();
-    return encryptToFile(Stream.value(image), layout.coverFile(projectId), key);
+    return encryptToFile(Stream.value(image), layout.coverFile(projectId, coverId), key);
   }
 
   /// The project's decrypted cover image, or null if it has none.
-  Future<Uint8List?> readCover(String projectId, SecureBuffer key) async {
+  Future<Uint8List?> readCover(String projectId, SecureBuffer key, {String? coverId}) async {
     _checkUnlocked();
-    final file = layout.coverFile(projectId);
+    final file = layout.coverFile(projectId, coverId);
     if (!await file.exists()) {
       return null;
     }
@@ -218,9 +250,9 @@ final class UnlockedVault {
     return builder.takeBytes();
   }
 
-  Future<void> deleteCover(String projectId) async {
+  Future<void> deleteCover(String projectId, {String? coverId}) async {
     _checkUnlocked();
-    final file = layout.coverFile(projectId);
+    final file = layout.coverFile(projectId, coverId);
     if (await file.exists()) {
       await file.delete();
     }

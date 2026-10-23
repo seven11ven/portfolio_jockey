@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:portfolio_jockey/app/app_controller.dart';
+import 'package:portfolio_jockey/vault/journal.dart';
 import 'package:portfolio_jockey/vault/vault.dart';
 
 import 'ui_helpers.dart';
@@ -85,5 +86,23 @@ void main() {
     await settleUntil(tester, find.text('Projects'));
     expect(find.text('Projects'), findsOneWidget);
     expect(app.controller.backoff.failures, 0);
+  });
+
+  testWidgets('After a crash, unlocking tidies up and says what it did', (tester) async {
+    final app = await startApp(tester, unlocked: true);
+    final temp = File('${app.storage.parent.path}/.Kitchen.zip.tmp-crash');
+    await tester.runAsync(() async {
+      await temp.writeAsString('readable export content');
+      await app.controller.projects.journalPut(ExportStarted('e1', tempPath: temp.path));
+    });
+    await tester.tap(find.byTooltip('Lock'));
+    await settle(tester);
+
+    await tester.enterText(find.byKey(const Key('unlock-passphrase')), 'test passphrase');
+    await tester.pump();
+    await tester.tap(find.text('Unlock'));
+    await settleUntil(tester, find.textContaining('export was interrupted'));
+    expect(find.text('An export was interrupted. Its unfinished file was removed.'), findsOneWidget);
+    expect(await tester.runAsync(temp.exists), isFalse);
   });
 }

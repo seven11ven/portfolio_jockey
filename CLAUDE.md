@@ -73,6 +73,7 @@ Portfolio Jockey v2 is a fully local, offline, encrypted project tracker built w
 - Keys and the passphrase stay in `SecureBuffer` (libsodium's guarded memory), never in Dart lists or strings that outlive their use.
 - The app's tests must not turn on leak_tracker's retaining-path collection. It starts the Dart VM's local debug server, and `check-privacy.sh` blocks it.
 - Every action that writes to disk shows a confirm/cancel step, as the project brief requires.
+- Crash safety (docs/dependencies.md, "Crash and power-cut safety"): write a new version under a new ID, save the index, then delete the old one; list multi-step work (exports, imports, moves, edits) in the vault journal before it starts, and remove the entry when it ends. Never delete anything an index refers to.
 
 ## Repo conventions
 - Changelogs and backups for the local app go in `local-app/` subfolders: `project-changelog/YYYY-MM-DD/local-app/` and `version-control/local-app/<date>_before-<change>/`, each with a README explaining how to restore. Cloud-era history is under `cloud-service-abandoned/` (in `project-changelog/2026-10-22/`, `version-control/` and `project-mockups/`).

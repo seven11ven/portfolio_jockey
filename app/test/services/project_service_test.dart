@@ -62,18 +62,21 @@ void main() {
       final id = await service.createProject(name: 'P', cover: cover);
       var index = await service.readProject(id);
       expect(await service.readCover(id, index), cover);
-      expect(await File('${root.path}/$id/cover.enc').exists(), isTrue);
+      List<String> coverFiles() =>
+          Directory('${root.path}/$id').listSync().map((e) => e.uri.pathSegments.last).where((n) => n.startsWith('cover')).toList();
+      expect(coverFiles(), ['cover-${index.coverId}.enc']);
 
       final other = Uint8List.fromList([9, 8, 7]);
       await service.updateDetails(id, description: 'New', cover: ReplaceCover(other));
       index = await service.readProject(id);
       expect(index.description, 'New');
       expect(await service.readCover(id, index), other);
+      expect(coverFiles(), ['cover-${index.coverId}.enc'], reason: 'the old cover is deleted once the index points at the new one');
 
       await service.updateDetails(id, description: 'New', cover: const RemoveCover());
       index = await service.readProject(id);
       expect(index.coverKey, isNull);
-      expect(await File('${root.path}/$id/cover.enc').exists(), isFalse);
+      expect(coverFiles(), isEmpty);
     });
 
     test('deleting a project removes its folder and nothing else', () async {

@@ -12,6 +12,8 @@ import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/services/tag_changes.dart';
 import 'package:portfolio_jockey/vault/atomic_write.dart';
 import 'package:portfolio_jockey/vault/export_format.dart';
+import 'package:portfolio_jockey/vault/ids.dart';
+import 'package:portfolio_jockey/vault/journal.dart';
 import 'package:portfolio_jockey/vault/kdf.dart';
 import 'package:portfolio_jockey/vault/project_index.dart';
 
@@ -165,21 +167,30 @@ final class ExportService {
       onProgress?.call(ExportProgress(projectName: projectName, fileNumber: fileNumber, fileCount: fileCount, bytesDone: bytesDone, bytesTotal: bytesTotal));
     }
 
-    switch (lock) {
-      case Unlocked(:final format):
-        final entries = _readableEntries(indexes, tracked);
-        await writeAtomically(
-          target,
-          (out) async {
-            await for (final chunk in format == ArchiveFormat.zip ? zipStream(entries) : tarStream(entries)) {
-              cancel?.check();
-              await out.writeFrom(chunk);
-            }
-          },
-          beforeDelete: PrivateFolders.overwriteWithZeros,
-        );
-      case LockedWith(:final passphrase):
-        await writeLockedExport(target, passphrase, tarStream(_lockedEntries(indexes, tracked)), kdf: kdf);
+    // The temporary file is listed in the journal before anything is written,
+    // so a crash mid-export doesn't leave it behind (readable, when unlocked).
+    final journalId = newId();
+    Future<void> listTemp(File temp) => projects.journalPut(ExportStarted(journalId, tempPath: temp.path));
+    try {
+      switch (lock) {
+        case Unlocked(:final format):
+          final entries = _readableEntries(indexes, tracked);
+          await writeAtomically(
+            target,
+            onTemp: listTemp,
+            (out) async {
+              await for (final chunk in format == ArchiveFormat.zip ? zipStream(entries) : tarStream(entries)) {
+                cancel?.check();
+                await out.writeFrom(chunk);
+              }
+            },
+            beforeDelete: PrivateFolders.overwriteWithZeros,
+          );
+        case LockedWith(:final passphrase):
+          await writeLockedExport(target, passphrase, tarStream(_lockedEntries(indexes, tracked)), kdf: kdf, onTemp: listTemp);
+      }
+    } finally {
+      await projects.journalRemove(journalId);
     }
   }
 
@@ -187,8 +198,18 @@ final class ExportService {
   /// decrypted chunk by chunk straight into it. [target] is written
   /// atomically; if anything fails, the partial copy is overwritten with
   /// zeros and removed.
-  Future<void> exportReadableCopy(String id, FileEntry file, File target) => writeAtomically(
+  Future<void> exportReadableCopy(String id, FileEntry file, File target) async {
+    final journalId = newId();
+    try {
+      await _writeReadableCopy(id, file, target, (temp) => projects.journalPut(ExportStarted(journalId, tempPath: temp.path)));
+    } finally {
+      await projects.journalRemove(journalId);
+    }
+  }
+
+  Future<void> _writeReadableCopy(String id, FileEntry file, File target, Future<void> Function(File temp) listTemp) => writeAtomically(
     target,
+    onTemp: listTemp,
     (out) async {
       var written = 0;
       await for (final chunk in projects.openFile(id, file)) {
@@ -316,6 +337,9 @@ final class ExportService {
   /// deleted, so an import is all or nothing. Returns the new project IDs.
   Future<List<String>> import(LockedExport export, {void Function(ExportProgress progress)? onProgress, CancelToken? cancel}) async {
     final created = <String>[];
+    // Each project is listed in the journal before it's created, so an
+    // import cut off by a crash is undone at the next unlock too.
+    final journalId = newId();
     final plan = export.projects;
     final expected = <String>{
       for (final p in plan) ...[?p.cover, for (final f in p.files) f.path],
@@ -327,7 +351,9 @@ final class ExportService {
     Future<String> projectFor(int p) async {
       while (created.length <= p) {
         final i = created.length;
-        created.add(await projects.createProject(name: export.importNames[i], description: plan[i].description));
+        final projectId = newId();
+        await projects.journalPut(ImportStarted(journalId, projectIds: [...created, projectId]));
+        created.add(await projects.createProject(name: export.importNames[i], description: plan[i].description, id: projectId));
         if (plan[i].tags.isNotEmpty) {
           await projects.applyTagChanges(created[i], TagChanges(added: plan[i].tags));
         }
@@ -376,12 +402,14 @@ final class ExportService {
       if (plan.isNotEmpty) {
         await projectFor(plan.length - 1); // projects with no files or cover
       }
+      await projects.journalRemove(journalId);
       return created;
     } on Object {
       await reader.cancel();
       for (final id in created) {
         await projects.deleteProject(id);
       }
+      await projects.journalRemove(journalId);
       rethrow;
     }
   }

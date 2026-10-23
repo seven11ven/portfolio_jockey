@@ -10,10 +10,18 @@ import 'package:portfolio_jockey/vault/native/libc.dart';
 /// then the folder is synced so the rename itself survives a power cut. If
 /// [write] fails, the temporary file is removed and [target] is unchanged;
 /// [beforeDelete] runs first, for example to overwrite readable content.
-Future<void> writeAtomically(File target, Future<void> Function(RandomAccessFile file) write, {Future<void> Function(File temp)? beforeDelete}) async {
+/// [onTemp] runs before anything is written, so a caller can list the
+/// temporary file in the journal and have it tidied up after a crash.
+Future<void> writeAtomically(
+  File target,
+  Future<void> Function(RandomAccessFile file) write, {
+  Future<void> Function(File temp)? beforeDelete,
+  Future<void> Function(File temp)? onTemp,
+}) async {
   final folder = target.parent;
   final name = target.uri.pathSegments.last;
   final temp = File('${folder.path}/.$name.tmp-${newId()}');
+  await onTemp?.call(temp);
   var renamed = false;
   try {
     final file = await temp.open(mode: FileMode.writeOnly);

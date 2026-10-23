@@ -28,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _loadError;
   String _search = '';
   late final EditSessions _edits = AppScope.read(context).edits;
+  late final AppController _controller = AppScope.read(context);
   bool _askingLeftovers = false;
 
   @override
@@ -35,13 +36,28 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     unawaited(_reload());
     _edits.addListener(_leftoversChanged);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _leftoversChanged());
+    _controller.addListener(_showRecoveryNotices);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _leftoversChanged();
+      _showRecoveryNotices();
+    });
   }
 
   @override
   void dispose() {
     _edits.removeListener(_leftoversChanged);
+    _controller.removeListener(_showRecoveryNotices);
     super.dispose();
+  }
+
+  /// Says what was tidied up after a crash or power cut, once each.
+  void _showRecoveryNotices() {
+    if (!mounted) {
+      return;
+    }
+    for (final notice in _controller.takeRecoveryNotices()) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(notice), duration: const Duration(seconds: 10)));
+    }
   }
 
   void _leftoversChanged() {

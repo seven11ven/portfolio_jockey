@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:portfolio_jockey/services/native/gio_trash.dart';
 import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/services/tag_changes.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
+import 'package:portfolio_jockey/vault/ids.dart';
+import 'package:portfolio_jockey/vault/journal.dart';
 import 'package:portfolio_jockey/vault/native/libc.dart';
 import 'package:portfolio_jockey/vault/native/sodium.dart';
 import 'package:portfolio_jockey/vault/project_index.dart';
@@ -95,6 +97,145 @@ final class ProjectService {
   /// Where originals go: the system Trash (tests use a fake).
   final Trasher trasher;
 
+  Future<void> _journalQueue = Future<void>.value();
+
+  /// Adds or replaces [entry] in the vault's journal of unfinished work
+  /// (journal.dart). Changes are made one at a time.
+  Future<void> journalPut(JournalEntry entry) => _journal((entries) => [...entries.where((e) => e.id != entry.id), entry]);
+
+  /// Removes the entry [id] once its work has finished or been tidied up.
+  Future<void> journalRemove(String id) => _journal((entries) => [...entries.where((e) => e.id != id)]);
+
+  /// The unfinished work listed in the journal.
+  Future<List<JournalEntry>> journalEntries() async {
+    await _journalQueue;
+    return vault.readJournal();
+  }
+
+  Future<void> _journal(List<JournalEntry> Function(List<JournalEntry> entries) change) {
+    final next = _journalQueue.then((_) async => vault.writeJournal(change(await vault.readJournal())));
+    _journalQueue = next.then((_) {}, onError: (Object _) {});
+    return next;
+  }
+
+  /// Tidies up work the journal still lists, so after a crash or power cut
+  /// nothing is half done or left readable. Call after unlocking, once
+  /// [EditSessions.findLeftovers] has run. [openEditIds] are the edit folders
+  /// that still exist (they're offered to the user as usual). Returns one
+  /// plain-language notice per thing that was tidied up.
+  Future<List<String>> recoverJournal({required Set<String> openEditIds}) async {
+    final notices = <String>[];
+    final currentRoot = vault.layout.root.absolute.path;
+    for (final entry in await journalEntries()) {
+      try {
+        switch (entry) {
+          case ExportStarted(:final tempPath):
+            final temp = File(tempPath);
+            if (await temp.exists()) {
+              await PrivateFolders.overwriteWithZeros(temp);
+              await temp.delete();
+              notices.add('An export was interrupted. Its unfinished file was removed.');
+            }
+          case ImportStarted(:final projectIds):
+            var removed = 0;
+            for (final id in projectIds) {
+              if (await vault.layout.projectDir(id).exists()) {
+                await vault.deleteProject(id);
+                removed++;
+              }
+            }
+            if (removed > 0) {
+              notices.add('An import was interrupted, so it was undone. Nothing from it was kept.');
+            }
+          case MoveStarted(:final source, :final target):
+            if (target == currentRoot && source != currentRoot) {
+              // The switch was saved; only the old folder's removal was cut off.
+              final old = Directory(source);
+              if (await File('$source/.pj/vault').exists()) {
+                await old.delete(recursive: true);
+                notices.add('Moving the storage location was interrupted at the end. The move is complete, and the old folder was removed.');
+              }
+            } else if (source == currentRoot && target != currentRoot) {
+              // Cut off before the switch: the copy at the target is unfinished.
+              final copy = Directory(target);
+              if (await copy.exists()) {
+                await for (final child in copy.list(followLinks: false)) {
+                  await child.delete(recursive: true);
+                }
+                notices.add('Moving the storage location was interrupted. Your projects stay where they were, and the unfinished copy was removed.');
+              }
+            }
+          case EditStarted(:final projectName, :final fileName):
+            if (openEditIds.contains(entry.id)) {
+              continue; // still there: it's offered to save or discard as usual
+            }
+            notices.add(
+              "An edit of $fileName in $projectName was open when the app closed. Its changes weren't saved; "
+              'the project still has the previous version.',
+            );
+        }
+        await journalRemove(entry.id);
+      } on Object catch (e) {
+        notices.add("Couldn't tidy up after an interrupted task: $e");
+      }
+    }
+    return notices;
+  }
+
+  /// Deletes leftovers a crash can leave inside projects: encrypted files no
+  /// index refers to, old covers, and unfinished temporary files. Only
+  /// projects whose index can be read are touched; nothing an index refers
+  /// to is ever deleted, and nothing written after the clean-up started (an
+  /// add or edit the user began meanwhile). Returns how many files it removed.
+  Future<int> cleanUp() async {
+    final startedAt = DateTime.now();
+    var removed = 0;
+    Future<void> remove(FileSystemEntity entity) async {
+      if ((await entity.stat()).modified.isBefore(startedAt)) {
+        await entity.delete();
+        removed++;
+      }
+    }
+
+    bool isTemp(String name) => name.startsWith('.') && name.contains('.tmp-');
+    for (final id in await vault.projectIds()) {
+      final ProjectIndex index;
+      try {
+        index = await vault.readIndex(id);
+      } on VaultException {
+        continue; // unreadable: reported by listProjects, never deleted here
+      }
+      final cover = index.coverKey == null ? null : vault.layout.coverFile(id, index.coverId).uri.pathSegments.last;
+      await for (final entity in vault.layout.projectDir(id).list(followLinks: false)) {
+        final name = entity.uri.pathSegments.last;
+        if (entity is File && (isTemp(name) || (name.startsWith('cover') && name.endsWith('.enc') && name != cover))) {
+          await remove(entity);
+        }
+      }
+      final blobDir = vault.layout.blobDir(id);
+      if (await blobDir.exists()) {
+        final blobs = {for (final f in index.files) '${f.blob}.enc'};
+        await for (final entity in blobDir.list(followLinks: false)) {
+          final name = entity.uri.pathSegments.last;
+          if (entity is File && (isTemp(name) || (name.endsWith('.enc') && !blobs.contains(name)))) {
+            await remove(entity);
+          }
+        }
+      }
+    }
+    await for (final entity in vault.layout.metadataDir.list(followLinks: false)) {
+      if (entity is File && isTemp(entity.uri.pathSegments.last)) {
+        await remove(entity);
+      }
+    }
+    return removed;
+  }
+
+  /// Tests only: called between the steps of a multi-step write, so a test
+  /// can throw there to simulate a crash or power cut at that point.
+  @visibleForTesting
+  void Function(String step)? crashPoint;
+
   /// The real path behind a document portal path, or null (tests use a fake).
   final String? Function(String path) _hostPathOf;
 
@@ -119,12 +260,13 @@ final class ProjectService {
   /// The project's cover, or null if it has none or it can't be read.
   Future<Uint8List?> readCover(String id, ProjectIndex index) async {
     final key = index.coverKey;
+    final coverId = index.coverId;
     if (key == null) {
       return null;
     }
     final buffer = SecureBuffer.takeBytes(base64.decode(key));
     try {
-      return await vault.readCover(id, buffer);
+      return await vault.readCover(id, buffer, coverId: coverId);
     } on VaultException {
       return null;
     } finally {
@@ -132,13 +274,13 @@ final class ProjectService {
     }
   }
 
-  Future<String> createProject({required String name, String description = '', Uint8List? cover}) async {
+  Future<String> createProject({required String name, String description = '', Uint8List? cover, String? id}) async {
     final index = ProjectIndex(name: name.trim(), description: description.trim());
-    final id = await vault.createProject(index);
+    final projectId = await vault.createProject(index, id: id);
     if (cover != null) {
-      await updateDetails(id, description: index.description, cover: ReplaceCover(cover));
+      await updateDetails(projectId, description: index.description, cover: ReplaceCover(cover));
     }
-    return id;
+    return projectId;
   }
 
   Future<void> renameProject(String id, String name) => _update(id, (index) => index.name = name.trim());
@@ -146,25 +288,36 @@ final class ProjectService {
   Future<void> updateDetails(String id, {required String description, required CoverChange cover}) async {
     final index = await vault.readIndex(id);
     index.description = description.trim();
+    // The old cover is only deleted once the index no longer points at it, so
+    // a crash leaves either the old cover or the new one, both readable.
+    final oldCoverKey = index.coverKey;
+    final oldCoverId = index.coverId;
     switch (cover) {
       case KeepCover():
         break;
       case RemoveCover():
-        index.coverKey = null;
+        index
+          ..coverKey = null
+          ..coverId = null;
       case ReplaceCover(:final image):
         // Like file keys, the cover key is stored (encrypted) in the index.
         final encodedKey = base64.encode(Sodium.instance.randomBytes(Sodium.instance.streamKeyBytes));
+        final coverId = newId();
         final key = SecureBuffer.takeBytes(base64.decode(encodedKey));
         try {
-          await vault.writeCover(id, image, key);
+          await vault.writeCover(id, image, key, coverId: coverId);
         } finally {
           key.dispose();
         }
-        index.coverKey = encodedKey;
+        crashPoint?.call('cover written');
+        index
+          ..coverKey = encodedKey
+          ..coverId = coverId;
     }
     await _save(id, index);
-    if (cover is RemoveCover) {
-      await vault.deleteCover(id);
+    if (cover is! KeepCover && oldCoverKey != null) {
+      crashPoint?.call('index saved');
+      await vault.deleteCover(id, coverId: oldCoverId);
     }
   }
 
@@ -266,8 +419,12 @@ final class ProjectService {
   /// Deletes the encrypted copy. The index is saved first, so an interrupted
   /// delete can't leave the project listing a file it no longer has.
   Future<void> deleteFromProject(String id, String fileId) async {
-    await _update(id, (index) => index.files.removeWhere((f) => f.id == fileId));
-    await vault.deleteBlob(id, fileId);
+    var blob = fileId;
+    await _update(id, (index) {
+      blob = _file(index, fileId).blob;
+      index.files.removeWhere((f) => f.id == fileId);
+    });
+    await vault.deleteBlob(id, blob);
   }
 
   /// Moves the original file on this device to the Trash, where it can be
@@ -300,7 +457,7 @@ final class ProjectService {
     var total = 0;
     final key = file.openKey();
     try {
-      await for (final chunk in vault.readBlob(id, file.id, key)) {
+      await for (final chunk in vault.readBlob(id, file.blob, key)) {
         chunks.add(chunk);
         total += chunk.length;
         if (total > maxBytes) {
@@ -328,7 +485,7 @@ final class ProjectService {
   Stream<Uint8List> openFile(String id, FileEntry file) async* {
     final key = file.openKey();
     try {
-      yield* vault.readBlob(id, file.id, key);
+      yield* vault.readBlob(id, file.blob, key);
     } finally {
       key.dispose();
     }
@@ -374,7 +531,7 @@ final class ProjectService {
     final key = file.openKey();
     final out = target.openWrite();
     try {
-      await out.addStream(vault.readBlob(id, file.id, key));
+      await out.addStream(vault.readBlob(id, file.blob, key));
       await out.close();
     } on Object {
       await out.close().catchError((_) {});
@@ -396,7 +553,7 @@ final class ProjectService {
     final key = file.openKey();
     final reader = await edited.open();
     try {
-      await for (final chunk in vault.readBlob(id, file.id, key)) {
+      await for (final chunk in vault.readBlob(id, file.blob, key)) {
         final other = await reader.read(chunk.length);
         var same = other.length == chunk.length;
         for (var i = 0; same && i < chunk.length; i++) {
@@ -417,18 +574,29 @@ final class ProjectService {
 
   /// Encrypts [edited] as the new content of file [fileId] with the file's
   /// key, replacing the encrypted copy atomically, then records the new size.
+  /// The new version goes under a new blob ID, then the index points at it
+  /// (with its size), and only then is the old blob deleted. A crash at any
+  /// point leaves the old version or the new one complete; a leftover blob is
+  /// removed by [cleanUp].
   Future<void> replaceContent(String id, String fileId, File edited) async {
     final index = await vault.readIndex(id);
     final entry = _file(index, fileId);
+    final oldBlob = entry.blob;
+    final newBlob = newId();
     final size = await edited.length();
     final key = entry.openKey();
     try {
-      await vault.writeBlob(id, fileId, edited.openRead(), key);
+      await vault.writeBlob(id, newBlob, edited.openRead(), key);
     } finally {
       key.dispose();
     }
-    entry.size = size;
+    crashPoint?.call('blob written');
+    entry
+      ..blobId = newBlob
+      ..size = size;
     await _save(id, index);
+    crashPoint?.call('index saved');
+    await vault.deleteBlob(id, oldBlob);
   }
 
   /// Whether the original is still where it was added from.

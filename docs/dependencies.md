@@ -169,6 +169,21 @@ The vault calls these through Dart's built-in `dart:ffi`. That keeps the app fre
   - While a project is open, its decrypted names and per-file keys are in Dart's normal memory. The master key never is.
   - Decrypting a file streams it, so if a file turns out to be damaged, the earlier chunks have already been delivered. Callers must discard everything from a stream that ends in an error.
 
+## Crash and power-cut safety (2026-10-23)
+What happens if the app is killed or the device loses power partway through a change, and what the next unlock does about it:
+- **New versions go under new names:** saving an edit or a cover writes the new encrypted file under a **new random ID**, then saves the index (which now names it: `FileEntry.blobId`, `ProjectIndex.coverId`) atomically, and only then deletes the old file. A crash leaves the old version or the new one complete, never a mix, and the size in the index always matches. Older vaults without these fields read as before (`blobs/<file id>.enc`, `cover.enc`).
+- **The journal of unfinished work:** `.pj/journal.enc` (`lib/vault/journal.dart`; magic `PJJN`, XChaCha20-Poly1305 under the master key, associated data `PJJN…` plus `journal`, written atomically). It holds paths and IDs only, never file contents. Entries, and what the next unlock does with them:
+  - **Export** (unlocked, locked, or readable copy): the temporary file is listed before anything is written. If it's still listed, the file is overwritten with zeros and deleted.
+  - **Import:** each project ID is listed before the project is created (`createProject(id:)`). If still listed, those projects are deleted, so imports are all or nothing across a crash too.
+  - **Storage move:** listed before copying, and copied along. If the move was cut off before the switch, the unfinished copy is emptied. If it was cut off after the switch, the old folder is removed (only if it holds a vault).
+  - **An open edit:** if its readable copy is gone (inside a Flatpak, the sandbox's memory folder doesn't outlive the app), the user is told its changes weren't saved. If the copy is still there, it's offered to save or discard as before.
+- **Edits:** `session.json` is written last and atomically, so an edit cut off mid-decrypt is wiped at unlock instead of being offered for saving.
+- **Clean-up at unlock** (`ProjectService.cleanUp`): in projects whose index can be read, it deletes encrypted files the index doesn't name, old covers, and `.tmp-*` files, but only those written before the clean-up started. Unreadable projects are never touched; they're reported by the project list.
+- **Folder fsync:** `syncDirectory` now throws when `fsync` fails, except for "not supported" (EINVAL, EROFS, EOPNOTSUPP: FUSE and read-only mounts), so a write is never reported done when it may not survive a power cut. It reads `errno` with libc's `__errno_location`, which is added to the allowlist.
+- **Storage move:** every copied folder is fsynced, deepest first, before the switch.
+- **What the user sees:** one message per thing tidied up after unlocking, for example "An export was interrupted. Its unfinished file was removed."
+- **Tests:** `test/services/crash_safety_test.dart` (a crash at each step of edit save and cover replace, plus the disk state a crash leaves for each journal entry, and the clean-up's rules) and a UI test of the message.
+
 ## Exports (plan phase 7)
 
 Every export, of one project or several, offers exactly two options (PM decision, 2026-10-22). The vault passphrase is never used for exports.
