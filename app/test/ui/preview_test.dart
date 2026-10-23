@@ -289,4 +289,54 @@ void main() {
     await settleUntil(tester, find.textContaining('Editing measurements.txt.'));
     expect(launcher.opened.single.$2, isNull);
   });
+
+  group("Audio and video play in the desktop's player", () {
+    List<Directory> viewFolders(PrivateFolders folders) {
+      final root = Directory('${folders.runtimeDir}/${PrivateFolders.appFolderName}');
+      return root.existsSync() ? [for (final e in root.listSync()) if (e is Directory && e.path.split('/').last.startsWith('view-')) e] : [];
+    }
+
+    testWidgets('nothing is decrypted before Play; Play hands a copy over; closing wipes it', (tester) async {
+      final launcher = FakeLauncher();
+      final folders = (await tester.runAsync(fakePrivateFolders))!;
+      await withFiles(tester, {'walkthrough.mp4': List.filled(4000, 7)}, launcher: launcher, privateFolders: folders);
+      await tester.tap(find.text('walkthrough.mp4').first);
+      await settleUntil(tester, find.text("Plays in your desktop's video player."));
+      expect(find.text('While it plays, other apps can read the readable copy. Closing this preview deletes it and stops playback.'), findsOneWidget);
+      expect(viewFolders(folders), isEmpty, reason: 'no readable copy until Play');
+
+      await tester.tap(find.byKey(const Key('media-play')));
+      await settleUntil(tester, find.text('Play again'));
+      expect(find.text("Playing in your desktop's video player."), findsOneWidget);
+      final copy = File(launcher.viewed.single);
+      expect(copy.readAsBytesSync(), List.filled(4000, 7));
+      expect(viewFolders(folders), hasLength(1));
+
+      await tester.tap(find.byKey(const Key('media-play')));
+      await settleUntil(tester, find.text('Play again'));
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+      expect(launcher.viewed, [copy.path, copy.path], reason: 'Play again reuses the same copy');
+      expect(viewFolders(folders), hasLength(1));
+
+      await tester.tap(find.byTooltip('Back'));
+      // The wipe runs as the preview is disposed, after the route's exit animation.
+      for (var i = 0; i < 20 && copy.existsSync(); i++) {
+        await settle(tester);
+      }
+      expect(find.text("Plays in your desktop's video player."), findsNothing, reason: 'the preview closed');
+      expect(copy.existsSync(), isFalse);
+      expect(viewFolders(folders), isEmpty, reason: 'closing the preview wipes the copy');
+    });
+
+    testWidgets('audio says audio player; a player that fails to open is reported', (tester) async {
+      final launcher = FakeLauncher()..viewError = const FileSystemException("Couldn't open your desktop's player: no app for audio/mpeg");
+      await withFiles(tester, {'voice-memo.mp3': List.filled(100, 1)}, launcher: launcher);
+      await tester.tap(find.text('voice-memo.mp3').first);
+      await settleUntil(tester, find.text("Plays in your desktop's audio player."));
+      expect(find.descendant(of: find.byType(MediaHandoff), matching: find.byIcon(Icons.music_note_outlined)), findsOneWidget);
+      await tester.tap(find.byKey(const Key('media-play')));
+      await settleUntil(tester, find.textContaining('no app for audio/mpeg'));
+      expect(find.text("Couldn't open your desktop's player: no app for audio/mpeg"), findsOneWidget);
+    });
+  });
 }

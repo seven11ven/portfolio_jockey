@@ -92,15 +92,6 @@ class AppController extends ChangeNotifier {
     await settingsStore.save(_settings);
   }
 
-  /// Settings → Video playback. It applies to the next video that opens.
-  bool get hardwareDecoding => _settings.hardwareDecoding;
-
-  Future<void> setHardwareDecoding(bool on) async {
-    _settings = _settings.copyWith(hardwareDecoding: on);
-    notifyListeners();
-    await settingsStore.save(_settings);
-  }
-
   /// Saves the colour scheme. It's a preference, not project data, so it
   /// applies at once without a confirmation.
   Future<void> setAppearance({ThemeMode? mode, PjAccent? accent}) async {

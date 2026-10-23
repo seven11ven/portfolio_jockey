@@ -15,12 +15,6 @@ dependencies:
   # Previews (plan phase 6), pinned to the reviewed versions. Reviewed: docs/dependencies.md
   # Markdown; the app always passes its own imageBuilder, so no image is ever loaded.
   flutter_markdown_plus: 1.0.12
-  # Audio/video through the system libmpv. Not media_kit_libs_linux: its build
-  # downloads mimalloc; linux/CMakeLists.txt sets MEDIA_KIT_LIBS_AVAILABLE instead.
-  media_kit: 1.2.6
-  media_kit_video: 2.0.1
-  # Only to register a no-op wakelock, so wakelock_plus never uses D-Bus.
-  wakelock_plus_platform_interface: 1.7.0
 
 # The file picker's interface lists `http` but never uses it. This empty stand-in
 # keeps all networking code out of the dependency tree. See tool/stubs/http/README.md.

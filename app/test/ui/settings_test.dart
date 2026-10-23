@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:portfolio_jockey/app/settings_store.dart';
 import 'package:portfolio_jockey/app/theme.dart';
 import 'package:portfolio_jockey/services/storage_move.dart';
 
@@ -47,27 +46,6 @@ void main() {
     expect(saved['themeMode'], 'dark');
     expect(saved['accent'], 'teal');
     expect(saved['storagePath'], app.storage.path, reason: 'the storage path is kept');
-  });
-
-  testWidgets('Video playback: hardware decoding is saved and survives a restart', (tester) async {
-    final app = await withProject(tester);
-    expect(app.controller.hardwareDecoding, isTrue, reason: 'on by default');
-    await openSettings(tester);
-    await tester.scrollUntilVisible(find.byKey(const Key('hwdec')), 200);
-    await settle(tester);
-    await tester.tap(find.byKey(const Key('hwdec')));
-    await settle(tester);
-    expect(app.controller.hardwareDecoding, isFalse);
-    final saved = (await tester.runAsync(() async => savedSettings(app)))!;
-    expect(saved['hardwareDecoding'], false);
-    final reloaded = (await tester.runAsync(() => app.controller.settingsStore.load()))!;
-    expect(reloaded.hardwareDecoding, isFalse);
-  });
-
-  test('Hardware decoding: a missing or unknown value falls back to on', () {
-    expect(AppSettings.fromJson({}).hardwareDecoding, isTrue);
-    expect(AppSettings.fromJson({'hardwareDecoding': 'yes'}).hardwareDecoding, isTrue);
-    expect(AppSettings.fromJson(const AppSettings(hardwareDecoding: false).toJson()).hardwareDecoding, isFalse);
   });
 
   testWidgets('Change passphrase: a wrong current one changes nothing; the new one unlocks', (tester) async {

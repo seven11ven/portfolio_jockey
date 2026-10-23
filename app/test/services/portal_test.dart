@@ -5,6 +5,7 @@ void main() {
   test('both portal requests are valid (sha{sv}) arguments for GLib', () {
     expect(OpenUriPortal.checkArguments(OpenUriPortal.openFileArguments), isNull);
     expect(OpenUriPortal.checkArguments(OpenUriPortal.openDirectoryArguments), isNull);
+    expect(OpenUriPortal.checkArguments(OpenUriPortal.openToViewArguments), isNull);
   });
 
   test('"Edit in another app" always asks and lets the editor save', () {

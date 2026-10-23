@@ -22,8 +22,8 @@ export FLUTTER_SUPPRESS_ANALYTICS=true DASH__SUPPRESS_ANALYTICS=true DO_NOT_TRAC
 # 2. Linux desktop build tools, from https://docs.flutter.dev/platform-integration/linux/setup
 #    (Debian packages; none of them collect telemetry). libsodium23 is the
 #    crypto library the vault calls through dart:ffi (see docs/dependencies.md).
-#    libmpv-dev and libepoxy-dev build media_kit's video player (audio/video
-#    preview); libpoppler-glib8 renders PDF previews through our own dart:ffi.
+#    libpoppler-glib8 renders PDF previews through our own dart:ffi. (Audio
+#    and video play in the desktop's own player, so libmpv isn't needed.)
 #    xvfb, xdotool and xclip run the real app on a virtual screen for
 #    app/tool/desktop-check.sh (Xvfb with -nolisten tcp: a local socket only);
 #    python3-yaml, appstream and desktop-file-utils check the Flatpak files
@@ -32,7 +32,7 @@ export FLUTTER_SUPPRESS_ANALYTICS=true DASH__SUPPRESS_ANALYTICS=true DO_NOT_TRAC
 sudo apt-get update -y
 sudo apt-get install -y --no-install-recommends \
   clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev \
-  libsodium23 libmpv-dev libepoxy-dev libpoppler-glib8 \
+  libsodium23 libpoppler-glib8 \
   xvfb xdotool xclip python3-yaml appstream desktop-file-utils gdb \
   curl git unzip xz-utils ca-certificates
 

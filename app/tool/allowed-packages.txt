@@ -53,32 +53,9 @@ flutter_markdown_plus         1.0.12   runtime  # foresightmobile/flutter_markdo
 markdown                      7.3.1    runtime  # dart-lang/tools, BSD-3-Clause; pure-Dart parser (its bin/ CLI is not compiled into the app)
 args                          2.7.0    runtime  # dart-lang/core, BSD-3-Clause; command-line parser only used by markdown's bin/ CLI, pure Dart
 
-# Audio/video preview (plan phase 6): reviewed 2026-10-22, including media_kit_video's C++ code.
-# Rules for app code (docs/dependencies.md): load with NativePlayer.command(['loadfile', path]),
-# never Player.open() or Media.memory() (both write temp files to /tmp); libmpv pinned to libmpv.so.2;
-# protocolWhitelist ['file']; cache-on-disk=no; ytdl=no; wakelock off and replaced by a no-op.
-# media_kit_libs_linux is NOT used: its CMake downloads mimalloc. linux/CMakeLists.txt sets MEDIA_KIT_LIBS_AVAILABLE.
-media_kit                     1.2.6    runtime  # media-kit/media-kit, MIT; Dart bindings to the system libmpv
-media_kit_video               2.0.1    runtime  # media-kit/media-kit, MIT; renders libmpv video into a Flutter texture (C++ reviewed: no network/process/file code)
-wakelock_plus                 1.8.1    runtime  # fluttercommunity/wakelock_plus, BSD-3-Clause; required by media_kit_video, never enabled (replaced by a no-op)
-wakelock_plus_platform_interface 1.7.0 runtime  # fluttercommunity/wakelock_plus, BSD-3-Clause
-package_info_plus             10.2.2   runtime  # fluttercommunity/plus_plugins, BSD-3-Clause; only called by wakelock_plus when enabled (runs `stat`); never reached
-package_info_plus_platform_interface 4.1.0 runtime # fluttercommunity/plus_plugins, BSD-3-Clause
-dbus                          0.8.0    runtime  # canonical/dbus.dart, MPL-2.0; used by wakelock_plus; connects lazily, only on a call, which never happens
-posix                         6.5.2    runtime  # bsutton/posix, MIT; libc bindings (dbus uses getuid)
+# media_kit and its packages were removed on 2026-10-23 (audio and video play in the desktop's
+# own player; docs/dependencies.md). These stayed because other packages still use them.
+posix                         6.5.2    runtime  # bsutton/posix, MIT; libc bindings
 ffi                           2.2.0    runtime  # dart-lang/native, BSD-3-Clause; malloc/calloc helpers
-synchronized                  3.5.0    runtime  # tekartik/synchronized.dart, MIT; async locks
-safe_local_storage            2.0.6    runtime  # alexmercerind/safe_local_storage, MIT; file helpers used by media_kit's temp files, which our usage never creates
-uri_parser                    3.0.2    runtime  # alexmercerind/uri_parser, MIT; URI/path parsing, checks whether a path exists
-uuid                          4.6.0    runtime  # daegalus/dart-uuid, MIT; temp-file names in media_kit
-universal_platform            1.1.0    runtime  # gskinnerTeam/flutter-universal-platform, MIT; platform checks
-image                         4.12.0   runtime  # brendan-duncan/image, MIT; used only by media_kit's screenshot(), which we never call
-archive                       4.5.2    runtime  # brendan-duncan/archive, MIT; image's dependency; file APIs only run when called
-xml                           7.0.1    runtime  # renggli/dart-xml, MIT; image's dependency (pure Dart)
-petitparser                   7.0.2    runtime  # petitparser/dart-petitparser, MIT; xml's dependency (pure Dart)
-crypto                        3.0.7    runtime  # dart-lang/core, BSD-3-Clause; hashes (pure Dart)
-typed_data                    1.4.0    runtime  # dart-lang/core, BSD-3-Clause
-fixnum                        1.1.1    runtime  # dart-lang/core, BSD-3-Clause
-flutter_web_plugins           0.0.0    runtime  # flutter/flutter, BSD-3-Clause; SDK package, web builds only
+archive                       4.5.2    runtime  # brendan-duncan/archive, MIT; direct dev dependency (archive tests); file APIs only run when called
 win32                         6.4.0    runtime  # halildurmus/win32, BSD-3-Clause; Windows-only, never compiled into the Linux app
-ffi_leak_tracker              0.1.2    runtime  # halildurmus/win32, BSD-3-Clause; win32's dependency, Windows-only

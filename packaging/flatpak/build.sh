@@ -84,18 +84,12 @@ if flatpak info --user --show-permissions "$id" | grep -E '^shared=' | grep -q n
 fi
 licenses=$(flatpak run --command=ls "$id" "/app/share/licenses/$id" 2>/dev/null | tr '\n' ' ')
 echo "License files installed for: ${licenses:-none}"
-for module in libsodium libass libplacebo libmpv poppler portfolio_jockey; do
+for module in libsodium poppler portfolio_jockey; do
   if [[ " $licenses " != *" $module "* ]]; then
     echo "WARNING: no license files for $module. Don't share this build; report it." >&2
     exit 1
   fi
 done
-if flatpak list --runtime --columns=application | grep -qx org.freedesktop.Platform.codecs-extra; then
-  echo "codecs-extra (H.264/HEVC video) is installed."
-else
-  echo "Note: org.freedesktop.Platform.codecs-extra isn't installed, so H.264/HEVC videos won't play."
-  echo "It normally comes with the runtime; see TESTING.md."
-fi
 if command -v appstreamcli >/dev/null; then
   appstreamcli validate --no-net "$id.metainfo.xml" || echo "Note: appstreamcli reported problems with the metainfo (above)."
 fi

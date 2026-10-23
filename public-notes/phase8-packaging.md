@@ -85,5 +85,4 @@ Every release on GitHub publishes these together. Never publish the `.flatpak` w
 
 ## Still open
 - **Distribution testing:** check the distributions listed in `linux-support.md`.
-- **Large video previews (found 2026-10-23):** a video bigger than the free space in the memory folder spins forever instead of saying it's too big to preview. Needs a clear error.
-- **Preview quality (Balanced / Full), postponed:** mpv's scale filter doesn't shrink media_kit's picture (it sizes from the size before filters). Next try: `VideoController.setSize` after each video's own resize. See `docs/dependencies.md`, "Video playback settings".
+- **Audio and video (2026-10-23):** they now play in the desktop's own player through the portal; media_kit and the mpv modules are gone. A file too big for the memory folder now shows an error instead of spinning. An in-app player could come back later as our own GStreamer player, after a full review that includes the issue tracker.

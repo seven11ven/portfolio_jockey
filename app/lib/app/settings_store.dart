@@ -6,7 +6,7 @@ import 'package:portfolio_jockey/vault/atomic_write.dart';
 /// App settings that aren't secret: where projects are stored, and how the
 /// app looks.
 final class AppSettings {
-  const AppSettings({this.storagePath, this.themeMode = 'system', this.accent = 'indigo', this.allowPassphraseCopy = true, this.hardwareDecoding = true});
+  const AppSettings({this.storagePath, this.themeMode = 'system', this.accent = 'indigo', this.allowPassphraseCopy = true});
 
   factory AppSettings.fromJson(Map<String, Object?> json) => AppSettings(
     storagePath: json['storagePath'] is String ? json['storagePath']! as String : null,
@@ -17,7 +17,6 @@ final class AppSettings {
     },
     accent: json['accent'] is String ? json['accent']! as String : 'indigo',
     allowPassphraseCopy: json['allowPassphraseCopy'] is! bool || json['allowPassphraseCopy']! as bool,
-    hardwareDecoding: json['hardwareDecoding'] is! bool || json['hardwareDecoding']! as bool,
   );
 
   final String? storagePath;
@@ -32,26 +31,14 @@ final class AppSettings {
   /// default: the user's choice (PM decision, 2026-10-22).
   final bool allowPassphraseCopy;
 
-  /// Whether video previews may decode on the graphics card. On by default
-  /// (PM decision, 2026-10-23); mpv falls back to the processor by itself.
-  final bool hardwareDecoding;
-
-  AppSettings copyWith({String? storagePath, String? themeMode, String? accent, bool? allowPassphraseCopy, bool? hardwareDecoding}) => AppSettings(
-
+  AppSettings copyWith({String? storagePath, String? themeMode, String? accent, bool? allowPassphraseCopy}) => AppSettings(
     storagePath: storagePath ?? this.storagePath,
     themeMode: themeMode ?? this.themeMode,
     accent: accent ?? this.accent,
     allowPassphraseCopy: allowPassphraseCopy ?? this.allowPassphraseCopy,
-    hardwareDecoding: hardwareDecoding ?? this.hardwareDecoding,
   );
 
-  Map<String, Object?> toJson() => {
-    'storagePath': storagePath,
-    'themeMode': themeMode,
-    'accent': accent,
-    'allowPassphraseCopy': allowPassphraseCopy,
-    'hardwareDecoding': hardwareDecoding,
-  };
+  Map<String, Object?> toJson() => {'storagePath': storagePath, 'themeMode': themeMode, 'accent': accent, 'allowPassphraseCopy': allowPassphraseCopy};
 }
 
 /// Reads and writes `settings.json` in the app's config folder

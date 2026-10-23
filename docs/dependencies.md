@@ -67,7 +67,7 @@ The hosting service you use (GitHub Codespaces, DevPod, Coder) has its own polic
 
 Each package's code was reviewed on 2026-10-22, as the Open Source and Privacy guideline requires. That means its downloaded source, not its web page. The exact versions are in `app/tool/allowed-packages.txt`.
 
-The app's direct dependencies are `file_selector_linux` and `file_selector_platform_interface` (phase 5), `flutter_markdown_plus`, `media_kit`, `media_kit_video` and `wakelock_plus_platform_interface` (phase 6), and the dev-only `flutter_lints` and `archive` (phase 7, tests only). The packages in the first table come with the Flutter SDK, which pins their versions. `cupertino_icons`, an iOS icon font, isn't used; the `--empty` template leaves it out.
+The app's direct dependencies are `file_selector_linux` and `file_selector_platform_interface` (phase 5), `flutter_markdown_plus` (phase 6; `media_kit`, `media_kit_video` and `wakelock_plus_platform_interface` were removed on 2026-10-23, see below), and the dev-only `flutter_lints` and `archive` (phase 7, tests only). The packages in the first table come with the Flutter SDK, which pins their versions. `cupertino_icons`, an iOS icon font, isn't used; the `--empty` template leaves it out.
 
 | Package(s) | Version | Ships in the app? | License (from its LICENSE file) | Cost | Code review |
 |---|---|---|---|---|---|
@@ -112,6 +112,8 @@ The 22 hits that remain after the review are listed, with reasons, in `app/tool/
 - **Linux runner:** the generated runner (`app/linux/runner/`) was read in full. It creates a GTK window and registers no plugins. `g_application_register` uses D-Bus, the desktop's local message bus, not the network.
 
 ### Previews (plan phase 6)
+
+> **Removed on 2026-10-23: media_kit, media_kit_video, wakelock_plus and the 17 packages only they used** (the rows below are kept as history). Audio and video now play in the desktop's own player through the OpenURI portal (`MediaHandoff`, `AppLauncher.openToView`), with no media library in the app. **Why:** on the PM's PC (Linux Mint, X11, AMD) the in-app player froze the app: first on closing a playing video, then with the player no longer answering (`pause timed out`). The research done after the fact found the cause upstream: [media-kit #1404](https://github.com/media-kit/media-kit/issues/1404) (open): on Flutter 3.38 and newer, media_kit_video 2.0.1 always falls back to CPU (S/W) drawing on Linux, on X11 and Wayland; the fix ([PR #1466](https://github.com/media-kit/media-kit/pull/1466)) isn't merged or released, and hasn't been tested on real hardware. There are also Linux freeze and crash reports during video load ([#898](https://github.com/media-kit/media-kit/issues/898), [#852](https://github.com/media-kit/media-kit/issues/852)), and about 340 open issues. **This check of the issue tracker wasn't done when media_kit was chosen in phase 6.** It's now a required part of every dependency review (CLAUDE.md).
 
 Reviewed on 2026-10-22, including media_kit_video's C++ code (1,133 lines). Each package's `lib/` was grepped for file, process, socket, HTTP, native-library and environment code, and every hit was read. The 12 hits that remain are in `app/tool/reviewed-hits.txt`.
 
@@ -222,7 +224,7 @@ Every export, of one project or several, offers exactly two options (PM decision
 - **Previews:**
   - Images, text, Markdown and PDF are decrypted **fully into memory** before anything is shown, so a damaged file shows nothing. The limits are 200 MB, 5 MB, 5 MB and 200 MB.
   - The bytes are zeroed when the preview closes, and the decoded image is evicted from Flutter's image cache.
-- **Audio, video and "Edit in another app"** need a real file. It's put in a private memory-only folder: `$XDG_RUNTIME_DIR/portfolio_jockey/<view|edit>-<random>/`.
+- **Audio, video and "Edit in another app"** need a real file. It's put in a private memory-only folder: `$XDG_RUNTIME_DIR/portfolio_jockey/<view|edit>-<random>/` (inside the Flatpak, under Flatpak's shared `$XDG_RUNTIME_DIR/app/$FLATPAK_ID/`, so the desktop's player or editor can be handed it). An audio or video copy is made only when Play is pressed, and wiped when the preview closes; the preview warns that other apps can read it while it plays.
   - **Creation:** the folder is made with mode 0700 by libc's `mkdir`.
   - **Checks:** the app refuses, and writes nothing, unless `$XDG_RUNTIME_DIR` is set, has no group or other permissions, isn't a link, and is on tmpfs or ramfs according to `/proc/self/mountinfo`.
   - **Wiping:** every file in the folder (including editors' backups and lock files) is overwritten with zeros and deleted. Links are deleted, never followed.
@@ -278,6 +280,8 @@ The Flatpak (`packaging/flatpak/io.github.seven11ven.portfolio_jockey.yml`) runs
 | Module | Version | Licence | Source | Pin | Confirmed by |
 |---|---|---|---|---|---|
 | libsodium | 1.0.22 | ISC | `download.libsodium.org/libsodium/releases/libsodium-1.0.22.tar.gz` | sha256 `adbdd8f1…191be3349` | minisign signature, checked with `app/tool/verify_minisign.dart` against key `RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3`. Trusted comment: `file:libsodium-1.0.22.tar.gz hashed`, timestamp 2026-04-09 |
+> **libass, libplacebo and mpv were removed from the Flatpak on 2026-10-23** with media_kit (rows kept as history). The Flatpak now builds libsodium, Poppler and the app, and no longer asks for sound (`--socket=pulseaudio`) or sets `MALLOC_ARENA_MAX`.
+
 | libass | 0.17.5 | ISC | GitHub release `libass-0.17.5.tar.xz` | sha256 `2dca25c0…288864acc` | GPG `.asc`, signing subkey `DDAFC19E46B2AD2D6B26F84397A08E0CFFD70951` (primary `5EE63F2A…2824C720`, listed in libass's `MAINTAINERS`). Fixes CVE-2026-61626 and CVE-2026-61627 |
 | libplacebo | v7.360.1 | LGPL-2.1+; compiles in fast_float (Apache-2.0 OR MIT OR BSL-1.0) and a glad-generated loader (see its `LICENSE`) | git `github.com/haasn/libplacebo.git` | commit `cee9b076f2c63104ccfd497fa79c39a867293ec4` | the code.videolan.org tag, and the same tag and commit in Flathub's `io.mpv.Mpv`. A git source, because the release archives lack the submodules (glad, jinja, markupsafe, fast_float) the OpenGL output needs |
 | mpv (libmpv only) | 0.41.0 | GPL-2.0-or-later (mpv's `Copyright` file: "licensed under the GNU General Public License GPL version 2 or later … by default"; the `gpl` option is on by default) | GitHub tag archive `v0.41.0.tar.gz` | sha256 `ee21092a…fad626209` | the same pin in Flathub's `com.matthiasn.lotti`. mpv publishes no checksums or signatures |
@@ -294,7 +298,7 @@ The Flatpak (`packaging/flatpak/io.github.seven11ven.portfolio_jockey.yml`) runs
   - **Never** `--share=network`, and no `--filesystem`.
   - `build.sh` prints the permissions after the build and stops if network access shows up.
 - **The app bundle:** `app/tool/package-bundle.sh` runs every check and the full test suite, then builds the release bundle here. It packs the bundle as a tarball (sorted names, fixed owner and date, so packing adds no differences) and writes that tarball's SHA-256 into the kit's copy of the manifest. Flutter's release build isn't guaranteed to be byte-for-byte reproducible: one pair of builds of the same app code gave different checksums, and a later pair matched. So the checksum identifies one particular build, and the kit's `SHA256SUMS` and `build.sh` check it.
-  - Every direct dependency of the bundle is in the runtime, apart from `libmpv.so.2`, which is our module.
+  - Every direct dependency of the bundle is in the runtime.
   - The highest glibc version it needs is 2.34; the runtime has 2.44.
 - **`app/tool/verify_minisign.dart`** is a build-time tool, not part of the app. It binds 7 libsodium functions, listed in `allowed-native-libs.txt`. `check-privacy.sh` now scans `app/tool/` too, both for native code and for network APIs.
   - It accepts only prehashed (`ED`) signatures, and it checks the key ID, the file signature and the trusted comment.
@@ -314,13 +318,8 @@ The Flatpak (`packaging/flatpak/io.github.seven11ven.portfolio_jockey.yml`) runs
   - **Images:** flat. The app's own code doesn't leak.
   - **Video:** by default it kept climbing. With `MALLOC_ARENA_MAX=2` (in the manifest's finish-args), plus mpv's demuxer cache capped (`demuxer-max-bytes=32MiB`, `demuxer-max-back-bytes=0` in `lockedDownMpvOptions`), it levels off at about 350–415 MB, against about 650 MB and rising before.
 
-### Video playback settings (2026-10-23)
-- **Settings → Video playback → Hardware decoding** (on by default; approved mockup, settings.html scene 1). Saved in `settings.json` as `hardwareDecoding`; applies to the next video that opens. `SharedPlayer.open` sets it after pausing and before `loadfile`.
-  - mpv `hwdec=auto-copy-safe`, or `no` when off. media_kit sets `hwdec=auto` itself, which can't hand frames to its CPU (S/W) drawing path, so decoding had stayed on the processor. `auto-copy-safe` decodes on the graphics card and copies frames back to memory; with no working driver, mpv decodes on the processor as before.
-  - `open` first waits until the VideoController has started, so media_kit's own `hwdec` can't overwrite the choice.
-- **Preview quality (Balanced / Full) is postponed** (PM decision). Neither tried route works yet:
-  - mpv's scale filter (`vf`): media_kit sizes its picture from `video-params`, the size *before* filters, so the shrunk frames were drawn back up at full size. That costs more, not less (seen in the app's `VideoOutput.Resize` log: 1920×1080 either way).
-  - `VideoController.setSize` on its own: media_kit resets the size whenever a new video loads, and then skips a repeated `setSize`. A working version would call it after each video's own resize.
+### Video playback settings (2026-10-23, removed the same day)
+- A Hardware decoding setting (mpv `hwdec`) shipped in kit `59f0c7d`, and was removed with media_kit. A Preview quality setting was built and dropped before that: mpv's scale filter can't shrink media_kit's picture, which is sized from the video's size before filters.
 - **Desktop check caveat:** on the virtual screen (2 CPU cores, Mesa's software renderer) the app can stop responding for up to a minute while a video plays, because drawing uses both cores. gdb showed the raster thread waiting on llvmpipe, which was busy; no deadlock, and it recovers. The last commit behaves the same, so this isn't a regression.
 
 ### Media time limits, the inbox, and the icon font (2026-10-23)
@@ -365,7 +364,7 @@ The Flatpak (`packaging/flatpak/io.github.seven11ven.portfolio_jockey.yml`) runs
 - **Compatibility:** all five can be combined with the app's `AGPL-3.0-or-later`.
   - ISC, MIT, Apache and BSL are permissive.
   - libplacebo's LGPL allows dynamic linking.
-  - mpv and Poppler are used under GPL-3.0, and GPLv3 §13 and AGPLv3 §13 allow combining GPLv3 and AGPLv3 code. Each part keeps its own license.
+  - Poppler is used under GPL-3.0, and GPLv3 §13 and AGPLv3 §13 allow combining GPLv3 and AGPLv3 code. Each part keeps its own license.
 - **Source:** the GPL and AGPL require offering the exact corresponding source with every copy of the binaries.
   - `build.sh` builds with `--bundle-sources` and makes `portfolio-jockey-<version>-sources.flatpak`. It holds the exact sources of every module, including libplacebo's git submodules, and the built app bundle.
   - The app's own source is `portfolio-jockey-source-<version>.tar.gz`, a `git archive` of the commit the bundle was built from. `package-bundle.sh` makes it, refuses to run with uncommitted changes, and records the commit in the kit (`SOURCE_COMMIT`).

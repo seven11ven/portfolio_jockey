@@ -30,11 +30,6 @@ finish-args:
   - --socket=fallback-x11
   - --share=ipc
   - --device=dri
-  # Sound for audio and video previews.
-  - --socket=pulseaudio
-  # Fewer malloc arenas: mpv's decoder threads otherwise keep freed memory
-  # in reserve, so memory grew with every video preview (measured 2026-10-23).
-  - --env=MALLOC_ARENA_MAX=2
 
 cleanup:
   - /include
@@ -61,77 +56,6 @@ modules:
       - type: archive
         url: https://download.libsodium.org/libsodium/releases/libsodium-1.0.22.tar.gz
         sha256: adbdd8f16149e81ac6078a03aca6fc03b592b89ef7b5ed83841c086191be3349
-
-  # Subtitle rendering, which libmpv needs. 0.17.5 fixes CVE-2026-61626 and
-  # CVE-2026-61627. GPG signature checked.
-  - name: libass
-    buildsystem: autotools
-    config-opts:
-      - --disable-static
-      - --enable-fontconfig
-    post-install:
-      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}/COPYING" -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/libass"
-    sources:
-      - type: archive
-        url: https://github.com/libass/libass/releases/download/0.17.5/libass-0.17.5.tar.xz
-        sha256: 2dca25c0e0c837ddf00b52011b3f82cac1e4ddd3ad018227806b0c2288864acc
-
-  # mpv's video renderer. A git source, because the release archives lack the
-  # submodules (glad, jinja, markupsafe, fast_float) the OpenGL output needs;
-  # flatpak-builder fetches them at the commits the tag pins. OpenGL on, the
-  # rest off.
-  - name: libplacebo
-    buildsystem: meson
-    config-opts:
-      - --libdir=lib
-      - -Dopengl=enabled
-      - -Dvulkan=disabled
-      - -Dglslang=disabled
-      - -Dshaderc=disabled
-      - -Dd3d11=disabled
-      - -Ddemos=false
-      - -Dtests=false
-    post-install:
-      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}/LICENSE" -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/libplacebo"
-      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}"/3rdparty/fast_float/LICENSE-* -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/libplacebo/fast_float"
-      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}/3rdparty/glad/LICENSE" -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/libplacebo/glad"
-    sources:
-      - type: git
-        url: https://github.com/haasn/libplacebo.git
-        tag: v7.360.1
-        commit: cee9b076f2c63104ccfd497fa79c39a867293ec4
-
-  # libmpv only (libmpv.so.2), for audio and video previews. It uses the
-  # runtime's FFmpeg; H.264/HEVC come from Flathub's codecs-extra extension.
-  # Scripting, discs, archives, capture devices and C plugins are left out,
-  # and the app also whitelists only the file protocol at run time.
-  - name: libmpv
-    buildsystem: meson
-    config-opts:
-      - --libdir=lib
-      - -Dlibmpv=true
-      - -Dcplayer=false
-      - -Dlua=disabled
-      - -Djavascript=disabled
-      - -Dlibbluray=disabled
-      - -Ddvdnav=disabled
-      - -Dcdda=disabled
-      - -Ddvbin=disabled
-      - -Dlibarchive=disabled
-      - -Dlibavdevice=disabled
-      - -Dcplugins=disabled
-      - -Dvapoursynth=disabled
-      - -Dvulkan=disabled
-      - -Dmanpage-build=disabled
-      - -Dhtml-build=disabled
-      - -Dpdf-build=disabled
-      - -Dbuild-date=false
-    post-install:
-      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}/Copyright" "${FLATPAK_BUILDER_BUILDDIR}/LICENSE.GPL" "${FLATPAK_BUILDER_BUILDDIR}/LICENSE.LGPL" -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/libmpv"
-    sources:
-      - type: archive
-        url: https://github.com/mpv-player/mpv/archive/refs/tags/v0.41.0.tar.gz
-        sha256: ee21092a5ee427353392360929dc64645c54479aefdb5babc5cfbb5fad626209
 
   # PDF previews: the GLib binding only (libpoppler-glib.so.8). Signature
   # checking (NSS, GPGME), network fetching (libcurl), Qt, C++ and the

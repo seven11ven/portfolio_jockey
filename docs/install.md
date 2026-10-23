@@ -43,7 +43,7 @@ The long string it prints must match the published one exactly. If it doesn't, d
 flatpak install --user portfolio-jockey-0.1.0-x86_64.flatpak
 ```
 
-Flatpak lists the permissions the app asks for, then installs. The first time, it also fetches the freedesktop runtime from Flathub, along with its video codecs extension (H.264/HEVC). That's a few hundred MB, downloaded once and shared with other Flatpak apps.
+Flatpak lists the permissions the app asks for, then installs. The first time, it also fetches the freedesktop runtime from Flathub. That's a few hundred MB, downloaded once and shared with other Flatpak apps.
 
 Start **Portfolio Jockey** from your applications menu. If it isn't there after your first Flatpak install for your user, log out and back in once: the menu picks up per-user Flatpak apps at login. Or start it with:
 
@@ -60,15 +60,15 @@ flatpak info --show-permissions io.github.seven11ven.portfolio_jockey
 
 - **Allowed:**
   - showing its window (Wayland, or X11 as a fallback)
-  - using the graphics card, for video
-  - playing sound, for audio and video previews
+  - using the graphics card, to draw its window
+- **Not needed any more:** sound. Audio and video play in your desktop's own player, outside the app.
 - **Not allowed:**
   - **the network**: the `shared=` line says `ipc` only, never `network`
   - **your files**: the app sees only the files and folders you pick in your desktop's own file dialogs
 
 ## Licenses and source code
 - **In the app:** Settings → "Show licenses" lists the licenses of Flutter and every package the app uses.
-- **The libraries bundled in the Flatpak** (libsodium, libass, libplacebo, mpv, Poppler) have their license texts installed with the app. You can list them with:
+- **The libraries bundled in the Flatpak** (libsodium and Poppler) have their license texts installed with the app. You can list them with:
   `flatpak run --command=ls io.github.seven11ven.portfolio_jockey /app/share/licenses/io.github.seven11ven.portfolio_jockey`
 - **Source code:** each release publishes two more files next to the `.flatpak`:
   - `portfolio-jockey-<version>-sources.flatpak`: the exact source of every bundled library
@@ -103,7 +103,7 @@ A storage location you moved outside the app's data folder isn't touched; delete
 ## If something doesn't work
 - **The file dialogs don't open, or "Move to Trash" says the Trash portal isn't available.** Your desktop needs its portal service: `xdg-desktop-portal` plus one for your desktop, such as `xdg-desktop-portal-gnome`, `-kde` or `-gtk`. Most desktops install them already. Install the missing one with your package manager and log in again.
 - **Audio, video or "Edit in another app" refuses, saying no memory-only folder is available.** The app keeps the readable copies these need only in memory (`$XDG_RUNTIME_DIR`, a tmpfs), never on disk, and refuses rather than fall back to the disk. That folder exists on all normal desktop logins. It can be missing in unusual sessions, such as a root shell or some remote logins.
-- **An H.264 or HEVC video won't play.** Check that the codecs extension is installed: `flatpak list --runtime | grep codecs-extra`. If it isn't, run `flatpak update --user`.
+- **Play doesn't open anything, or opens the wrong app.** Audio and video play in your desktop's default app for that file type. Set one in your desktop's settings (for example "Preferred Applications" or "Default Applications"), then press Play again.
 - **Something else.** Start the app from a terminal with `flatpak run io.github.seven11ven.portfolio_jockey` to see its messages. Before sharing them, remove anything personal, such as your username or folder names.
 
 ## Building it yourself

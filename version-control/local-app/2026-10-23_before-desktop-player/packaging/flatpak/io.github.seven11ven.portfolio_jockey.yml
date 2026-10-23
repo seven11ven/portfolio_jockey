@@ -1,0 +1,193 @@
+# Flatpak manifest for Portfolio Jockey (plan phase 8). x64 only for now.
+#
+# Every source is pinned: archives by SHA-256, git sources by tag and commit.
+# How each one was confirmed (signatures, Flathub's own pins) is recorded in
+# docs/dependencies.md ("Flatpak modules"). Don't change a version or checksum
+# without redoing that check.
+#
+# The app bundle's file name and SHA-256 (the two placeholders at the end) are
+# filled in by app/tool/package-bundle.sh, which builds the Flutter app here
+# and copies this file into the build kit.
+#
+# The app never gets network access: there's no --share=network below, and
+# no --filesystem either. Files come and go through the desktop's portals.
+#
+# Each module installs its license files into /app/share/licenses/<app-id>/
+# <module>/. flatpak-builder only does that by itself from 1.4.5, and Ubuntu
+# 24.04 has 1.4.2. The sources of every module are published with each
+# release (build.sh makes the matching -sources.flatpak).
+#
+# Meson and CMake modules pin their library folder to lib/: left alone, they
+# may pick lib64/, where neither pkg-config nor the app's loader looks.
+app-id: io.github.seven11ven.portfolio_jockey
+runtime: org.freedesktop.Platform
+runtime-version: '26.08'
+sdk: org.freedesktop.Sdk
+command: portfolio_jockey
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --device=dri
+  # Sound for audio and video previews.
+  - --socket=pulseaudio
+  # Fewer malloc arenas: mpv's decoder threads otherwise keep freed memory
+  # in reserve, so memory grew with every video preview (measured 2026-10-23).
+  - --env=MALLOC_ARENA_MAX=2
+
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /share/pkgconfig
+  - /lib/cmake
+  - '*.a'
+  - '*.la'
+  - /share/man
+  - /share/doc
+  - /share/gtk-doc
+
+modules:
+  # The vault's cryptography. Signature checked with minisign (key
+  # RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3). Gives
+  # libsodium.so.26, which the app loads first.
+  - name: libsodium
+    buildsystem: autotools
+    config-opts:
+      - --disable-static
+    post-install:
+      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}/LICENSE" -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/libsodium"
+    sources:
+      - type: archive
+        url: https://download.libsodium.org/libsodium/releases/libsodium-1.0.22.tar.gz
+        sha256: adbdd8f16149e81ac6078a03aca6fc03b592b89ef7b5ed83841c086191be3349
+
+  # Subtitle rendering, which libmpv needs. 0.17.5 fixes CVE-2026-61626 and
+  # CVE-2026-61627. GPG signature checked.
+  - name: libass
+    buildsystem: autotools
+    config-opts:
+      - --disable-static
+      - --enable-fontconfig
+    post-install:
+      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}/COPYING" -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/libass"
+    sources:
+      - type: archive
+        url: https://github.com/libass/libass/releases/download/0.17.5/libass-0.17.5.tar.xz
+        sha256: 2dca25c0e0c837ddf00b52011b3f82cac1e4ddd3ad018227806b0c2288864acc
+
+  # mpv's video renderer. A git source, because the release archives lack the
+  # submodules (glad, jinja, markupsafe, fast_float) the OpenGL output needs;
+  # flatpak-builder fetches them at the commits the tag pins. OpenGL on, the
+  # rest off.
+  - name: libplacebo
+    buildsystem: meson
+    config-opts:
+      - --libdir=lib
+      - -Dopengl=enabled
+      - -Dvulkan=disabled
+      - -Dglslang=disabled
+      - -Dshaderc=disabled
+      - -Dd3d11=disabled
+      - -Ddemos=false
+      - -Dtests=false
+    post-install:
+      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}/LICENSE" -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/libplacebo"
+      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}"/3rdparty/fast_float/LICENSE-* -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/libplacebo/fast_float"
+      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}/3rdparty/glad/LICENSE" -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/libplacebo/glad"
+    sources:
+      - type: git
+        url: https://github.com/haasn/libplacebo.git
+        tag: v7.360.1
+        commit: cee9b076f2c63104ccfd497fa79c39a867293ec4
+
+  # libmpv only (libmpv.so.2), for audio and video previews. It uses the
+  # runtime's FFmpeg; H.264/HEVC come from Flathub's codecs-extra extension.
+  # Scripting, discs, archives, capture devices and C plugins are left out,
+  # and the app also whitelists only the file protocol at run time.
+  - name: libmpv
+    buildsystem: meson
+    config-opts:
+      - --libdir=lib
+      - -Dlibmpv=true
+      - -Dcplayer=false
+      - -Dlua=disabled
+      - -Djavascript=disabled
+      - -Dlibbluray=disabled
+      - -Ddvdnav=disabled
+      - -Dcdda=disabled
+      - -Ddvbin=disabled
+      - -Dlibarchive=disabled
+      - -Dlibavdevice=disabled
+      - -Dcplugins=disabled
+      - -Dvapoursynth=disabled
+      - -Dvulkan=disabled
+      - -Dmanpage-build=disabled
+      - -Dhtml-build=disabled
+      - -Dpdf-build=disabled
+      - -Dbuild-date=false
+    post-install:
+      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}/Copyright" "${FLATPAK_BUILDER_BUILDDIR}/LICENSE.GPL" "${FLATPAK_BUILDER_BUILDDIR}/LICENSE.LGPL" -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/libmpv"
+    sources:
+      - type: archive
+        url: https://github.com/mpv-player/mpv/archive/refs/tags/v0.41.0.tar.gz
+        sha256: ee21092a5ee427353392360929dc64645c54479aefdb5babc5cfbb5fad626209
+
+  # PDF previews: the GLib binding only (libpoppler-glib.so.8). Signature
+  # checking (NSS, GPGME), network fetching (libcurl), Qt, C++ and the
+  # command-line tools are all left out. GPG signature checked.
+  - name: poppler
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_INSTALL_LIBDIR=lib
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DENABLE_GLIB=ON
+      - -DENABLE_NSS3=OFF
+      - -DENABLE_GPGME=OFF
+      - -DENABLE_LIBCURL=OFF
+      - -DENABLE_QT5=OFF
+      - -DENABLE_QT6=OFF
+      - -DENABLE_CPP=OFF
+      - -DENABLE_UTILS=OFF
+      - -DENABLE_BOOST=OFF
+      - -DENABLE_GOBJECT_INTROSPECTION=OFF
+      - -DENABLE_GTK_DOC=OFF
+      - -DBUILD_GTK_TESTS=OFF
+      - -DBUILD_CPP_TESTS=OFF
+      - -DBUILD_MANUAL_TESTS=OFF
+      - -DBUILD_QT5_TESTS=OFF
+      - -DBUILD_QT6_TESTS=OFF
+    # CMake turns the GLib binding off silently if cairo or GLib is missing.
+    post-install:
+      - test -e "${FLATPAK_DEST}/lib/libpoppler-glib.so.8"
+      # README-XPDF asks everyone who passes on binaries to include the README.
+      - install -Dm644 "${FLATPAK_BUILDER_BUILDDIR}/COPYING" "${FLATPAK_BUILDER_BUILDDIR}/COPYING3" "${FLATPAK_BUILDER_BUILDDIR}/README-XPDF" "${FLATPAK_BUILDER_BUILDDIR}/README.md" -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/poppler"
+    sources:
+      - type: archive
+        url: https://poppler.freedesktop.org/poppler-26.10.0.tar.xz
+        sha256: 6792cb7c69205007ad87d2e936cecc5b3a31fac29ab54ffc3175fdb6b2a6ce35
+
+  # The app: the Flutter release bundle built by app/tool/package-bundle.sh.
+  - name: portfolio_jockey
+    buildsystem: simple
+    build-commands:
+      - mkdir -p "${FLATPAK_DEST}/portfolio_jockey" "${FLATPAK_DEST}/bin"
+      - cp -a bundle/. "${FLATPAK_DEST}/portfolio_jockey/"
+      - ln -s ../portfolio_jockey/portfolio_jockey "${FLATPAK_DEST}/bin/portfolio_jockey"
+      - install -Dm644 io.github.seven11ven.portfolio_jockey.desktop -t "${FLATPAK_DEST}/share/applications"
+      - install -Dm644 io.github.seven11ven.portfolio_jockey.metainfo.xml -t "${FLATPAK_DEST}/share/metainfo"
+      - install -Dm644 io.github.seven11ven.portfolio_jockey.svg -t "${FLATPAK_DEST}/share/icons/hicolor/scalable/apps"
+      - install -Dm644 LICENSE -t "${FLATPAK_DEST}/share/licenses/${FLATPAK_ID}/portfolio_jockey"
+    sources:
+      - type: archive
+        path: '@BUNDLE_NAME@'
+        sha256: '@BUNDLE_SHA256@'
+        dest: bundle
+      - type: file
+        path: io.github.seven11ven.portfolio_jockey.desktop
+      - type: file
+        path: io.github.seven11ven.portfolio_jockey.metainfo.xml
+      - type: file
+        path: io.github.seven11ven.portfolio_jockey.svg
+      - type: file
+        path: LICENSE

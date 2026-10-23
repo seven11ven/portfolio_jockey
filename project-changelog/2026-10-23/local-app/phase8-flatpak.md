@@ -317,3 +317,36 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - **A video bigger than the free space in the memory folder spins forever** instead of showing an error (a 124 MB video against a 64 MB `/dev/shm` here). Needs a fix: an error that says the file is too big to preview.
 - **Docs:** `docs/dependencies.md` ("Video playback settings"), `CLAUDE.md` (media rules), TESTING.md (D7).
 - **Backup:** `version-control/local-app/2026-10-23_before-video-settings/` (with the mockup from before the card).
+
+## PM test results recorded
+**Time:** 2026-10-23 21:33 UTC
+- TESTING.md: everything passes (PM) except **D4–D7** (audio and video). With kit `59f0c7d`, the log showed repeated `Failed to open VDPAU backend libvdpau_radeonsi.so`, then `SharedPlayer: pause timed out after 5 s`; the preview said the player stopped responding, then the whole app froze.
+- Next: a quick look at known media_kit problems before choosing between the desktop's own player (portal) and a GStreamer player of our own.
+- **media_kit known problems (web search):** media-kit issue #1404 (open): on Flutter 3.38+ media_kit_video 2.0.1 always falls back to CPU (S/W) rendering on Linux, X11 and Wayland; the fix (PR #1466) isn't merged or released and hasn't been tested on real hardware. Linux freeze and crash reports during video load: #898, #852. No upstream report matches the `pause` hang. The project has 342 open issues.
+
+## Audio and video play in the desktop's own player; media_kit removed
+**Time:** 2026-10-23 21:47 UTC
+- **PM decisions:**
+  - play in the desktop's own player through the portal
+  - a **Play** button, so no readable copy exists until it's pressed
+  - remove media_kit and libmpv completely
+  - layout approved from the preview shown in the question
+- **Why:** media_kit's in-app player froze the app on the PM's PC (D4–D7 failed: `pause timed out`, then a full freeze). The cause is upstream: media-kit #1404, open, not fixed (see `docs/dependencies.md`). The PM pointed out that the issue tracker was never checked when media_kit was chosen. That check is now required in CLAUDE.md, and saved as a standing rule.
+- **App:**
+  - `MediaHandoff` (`preview_views.dart`) replaces `MediaPreview`. It shows a note or play icon, "Plays in your desktop's audio/video player.", the warning, and **Play** (then **Play again**, which reuses the copy).
+  - The copy is made in `EditSessions.editFolders` (Flatpak's shared memory folder inside the sandbox) and wiped when the preview closes.
+  - Errors are shown in the stage: no memory folder, the memory folder full (ENOSPC), the player didn't open.
+  - **New launcher method:** `AppLauncher.openToView`. In the Flatpak it calls `OpenUriPortal.openFileToView` (`ask` false, `writable` false); outside it, GLib's default app.
+  - The start, unlock and Clear wipes now cover media copies in both folders.
+  - **The endless spinner:** the preview loader caught only `Exception`, so an `Error` left the stage spinning forever. It now catches everything.
+  - **Removed:** `shared_player.dart`, the Hardware decoding setting (the code is back to `a03d5a1`), `MEDIA_KIT_LIBS_AVAILABLE` in CMake, and `setlocale(LC_NUMERIC)` in the runner (only libmpv needed it).
+- **Dependencies:** removed media_kit, media_kit_video and wakelock_plus_platform_interface. With them, 21 packages left `pubspec.lock`, 20 entries left `allowed-packages.txt`, and 9 reviewed hits left `reviewed-hits.txt`. `setup.sh` no longer installs libmpv-dev or libepoxy-dev.
+- **Flatpak:** removed the libass, libplacebo and libmpv modules, `--socket=pulseaudio` and `MALLOC_ARENA_MAX`. `build.sh` checks licenses for libsodium, poppler and the app only, and the codecs check is gone.
+- **Tests:**
+  - **Removed:** `shared_player_test`, `media_lockdown_test` and `linux_runner_test`.
+  - **Added:** nothing is decrypted before Play; Play hands over a copy, Play again reuses it, and closing wipes it; the audio wording; a player that fails to open; media copies in the edit folders, with old ones cleared; the portal's view arguments.
+- **Mockups:** `preview.html` scene 2 now shows the hand-off; the Video playback card is gone from `settings.html`.
+- **Docs:** `CLAUDE.md`, `docs/dependencies.md`, `docs/install.md`, TESTING.md (A4, A6, D4–D7 rewritten), `public-notes/phase8-packaging.md`.
+- **Full run:** 208 pass (13 skipped); analyze clean; privacy check passes (38 reviewed hits).
+- **Checked in the release build on the virtual screen** (with a fake default player registered): the video and audio stages and icons; no copy before Play; Play launched the default app with a readable copy; Play again; closing wiped the copy; the 124 MB file showed the "too big" error and left nothing behind; Settings without the Video playback card.
+- **Backup:** `version-control/local-app/2026-10-23_before-desktop-player/`.

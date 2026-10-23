@@ -192,13 +192,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                     ]),
-                    section('Video playback', [
-                      row(
-                        'Hardware decoding',
-                        Switch(key: const Key('hwdec'), value: controller.hardwareDecoding, onChanged: (on) => unawaited(controller.setHardwareDecoding(on))),
-                        detail: "Uses your graphics card to decode video when it can, so playback needs less processor time. If it can't, video is decoded as before. Turn this off if videos show glitches.",
-                      ),
-                    ]),
                     section('Security', [
                       row(
                         'Change passphrase',

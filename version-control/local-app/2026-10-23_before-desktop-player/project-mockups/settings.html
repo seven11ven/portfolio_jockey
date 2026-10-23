@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings · Portfolio Jockey mockup</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="mock-bar">
+  <span>Design mockup · fake data</span><a href="index.html">All mockups</a>
+  <span class="seg"><button data-set-theme="light">Light</button><button data-set-theme="dark">Dark</button></span>
+  <span class="seg"><button data-set-view="both">Both</button><button data-set-view="desktop">Desktop</button><button data-set-view="phone">Phone</button></span>
+</div>
+<main class="mock-page">
+  <header>
+    <h1>Settings</h1>
+    <p class="muted">Opened from the ⚙ cog. Color scheme, version, storage location, bulk export and passphrase.</p>
+  </header>
+
+  <section class="scene">
+    <div class="scene-title">1. Settings</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Settings</h3></header>
+      <div class="content">
+        <div class="settings">
+          <section class="card">
+            <h3>Color scheme</h3>
+            <div class="row"><span style="flex:1">Mode</span><div class="seg-app"><span class="on">System</span><span>Light</span><span>Dark</span></div></div>
+            <div class="row"><span style="flex:1">Accent color</span>
+              <div class="swatches"><span class="swatch on" style="background:#4f46e5"></span><span class="swatch" style="background:#0d9488"></span><span class="swatch" style="background:#e11d48"></span><span class="swatch" style="background:#d97706"></span><span class="swatch" style="background:#475569"></span></div>
+            </div>
+          </section>
+          <section class="card">
+            <h3>Storage location</h3>
+            <p class="small muted">Where project folders are kept. Everything inside is encrypted.</p>
+            <div class="path">~/Documents/Portfolio Jockey</div>
+            <div class="row"><span class="small muted" style="flex:1">5 projects · 2.6 GB · 31 GB free</span><button class="btn">Move…</button></div>
+          </section>
+          <section class="card">
+            <h3>Export</h3>
+            <div class="row"><span style="flex:1">Export several or all projects as one ZIP or TAR.</span><button class="btn">Export projects…</button></div>
+          </section>
+          <section class="card">
+            <h3>Video playback</h3>
+            <div class="row" style="align-items:flex-start"><span style="flex:1">Hardware decoding<br><span class="small muted">Uses your graphics card to decode video when it can, so playback needs less processor time. If it can't, video is decoded as before. Turn this off if videos show glitches.</span></span><span class="switch on" role="switch" aria-checked="true" aria-label="Hardware decoding"></span></div>
+            <div class="row" style="align-items:flex-start"><span style="flex:1">Preview quality<br><span class="small muted">Balanced shows video at up to 960 × 540, which plays more smoothly on computers that draw video with the processor. Full shows every pixel.</span></span><div class="seg-app"><span class="on">Balanced</span><span>Full</span></div></div>
+          </section>
+          <section class="card">
+            <h3>Security</h3>
+            <div class="row"><span style="flex:1">Change passphrase</span><button class="btn">Change…</button></div>
+            <div class="row"><span style="flex:1">Lock now</span><button class="btn">🔒 Lock</button></div>
+            <div class="row" style="align-items:flex-start"><span style="flex:1">Allow copying passphrases<br><span class="small muted">When a passphrase is shown with the eye button, it can be copied. Some desktops keep copied text in a clipboard history, so turn this off if you'd rather a passphrase never reaches the clipboard.</span></span><span class="switch on" role="switch" aria-checked="true" aria-label="Allow copying passphrases"></span></div>
+            <div class="row" style="align-items:flex-start"><span style="flex:1">Temporary files<br><span class="small muted">Readable copies the app makes to preview audio and video and to edit files in other apps. They're kept in memory only, and cleared when the app opens and closes.</span></span><button class="btn">Clear…</button></div>
+          </section>
+          <section class="card">
+            <h3>About</h3>
+            <div class="row"><span style="flex:1">Version</span><span class="muted">0.1.0</span></div>
+            <div class="row"><span style="flex:1">Network access</span><span class="muted">None. This app never connects to the internet.</span></div>
+            <div class="row"><span style="flex:1">License</span><span class="muted">See LICENSE</span></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">2. Move storage location: confirmation</div>
+    <div class="scene-note">Everything is copied and checked before the old folder is removed. If anything fails, the old location stays in use.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Settings</h3></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Move all projects?</h2>
+          <div class="summary-box">
+            <div class="small muted">From</div><div class="path" style="padding:0;background:none">~/Documents/Portfolio Jockey</div>
+            <div class="small muted" style="margin-top:8px">To</div><div class="path" style="padding:0;background:none">/media/backup-drive/Portfolio Jockey</div>
+          </div>
+          <p>5 projects (2.6 GB) are copied to the new location and checked. Then the old folder is deleted.</p>
+          <p class="small muted">The new location has 412 GB free. Don't remove the drive while moving.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Move 5 projects</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">3. Change passphrase</div>
+    <div class="scene-note">Fast: only the key that protects your files is re-wrapped. Files aren't re-encrypted. Each field has an eye button. As on first run, "Confirm new passphrase" appears once the new passphrase reaches Fair or better.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Settings</h3></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Change passphrase</h2>
+          <div><label class="label">Current passphrase</label><div class="pw"><input class="input" type="password" value="correct horse battery"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div></div>
+          <div><label class="label">New passphrase</label><div class="pw"><input class="input" type="password" value="new long passphrase here"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div><div class="strength" style="margin-top:6px"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div></div>
+          <div><label class="label">Confirm new passphrase</label><div class="pw"><input class="input" type="password" value="new long passphrase here"><button class="eye" title="Show passphrase" aria-label="Show passphrase">👁</button></div></div>
+          <p class="small muted">Exports aren't affected: a locked export keeps the passphrase chosen when it was made.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Confirm new passphrase</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="scene">
+    <div class="scene-title">4. Clear temporary files: confirmation</div>
+    <div class="scene-note">From Settings → Security → Temporary files. The second paragraph only appears while a file is open in another app: that copy is never cleared without asking, so its changes can't be lost by accident.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Settings</h3></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <h2>Clear temporary files?</h2>
+        <p>Readable copies made for previews are overwritten with zeros and deleted. Your projects aren't touched.</p>
+        <div class="notice">measurements.txt is still open in another app, so its copy is kept. Save or discard that edit to clear it too.</div>
+        <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Clear</button></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5. Closing the app while a file is being edited</div>
+    <div class="scene-note">Shown when the window's close button is pressed during an edit, like locking (preview.html scene 10). Without an edit open, the app clears its temporary files and closes straight away.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <h2>Finish editing before closing</h2>
+        <p><strong>measurements.txt</strong> is still open in another app. Save your changes into the project, or discard them, and the app then closes and clears its temporary files.</p>
+        <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn">Discard…</button><button class="btn btn-primary">Save changes…</button></div>
+      </div></div>
+    </div>
+  </section>
+
+</main>
+<script src="mockup.js"></script>
+</body>
+</html>

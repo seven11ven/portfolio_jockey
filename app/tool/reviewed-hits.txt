@@ -41,13 +41,4 @@ web@1.1.1	lib/src/helpers/http.dart	HttpRequest	browser API declarations (web bu
 web@1.1.1	lib/src/helpers/http.dart	XMLHttpRequest	browser API declarations (web builds only); never compiled into the Linux app
 flutter_markdown_plus@1.0.12	lib/src/_functions_io.dart	Image.network	kDefaultImageBuilder: only used when imageBuilder is null; the app always passes its own imageBuilder (a test checks that no network or file image is built)
 flutter_markdown_plus@1.0.12	lib/src/_functions_web.dart	Image.network	web-only code, never compiled into the Linux app
-dbus@0.8.0	lib/src/dbus_client.dart	InternetAddress	connects only when a D-Bus call is made (wakelock_plus enable), which the app never does; a tcp: bus address would only be used then
-dbus@0.8.0	lib/src/dbus_client.dart	RawSocket	connects only when a D-Bus call is made (wakelock_plus enable), which the app never does; a tcp: bus address would only be used then
-dbus@0.8.0	lib/src/dbus_server.dart	InternetAddress	D-Bus server class; the app never creates one
-dbus@0.8.0	lib/src/dbus_server.dart	RawSocket	D-Bus server class; the app never creates one
-image@4.12.0	lib/src/command/_executor.dart	dart:html	only in an UnsupportedError message string
-image@4.12.0	lib/src/formats/webp/vp8_types.dart	amplitude	WebP dithering amplitude field, not analytics
-media_kit@1.2.6	lib/src/player/web/player/real.dart	XMLHttpRequest	web-only player, never compiled into the Linux app
-media_kit@1.2.6	lib/src/player/web/utils/hls.dart	XMLHttpRequest	web-only HLS loader, never compiled into the Linux app
-package_info_plus@10.2.2	lib/src/package_info_plus_web.dart	package:http/	web-only code; http is the empty stand-in anyway
 win32@6.4.0	lib/src/constants.g.dart	telemetry	Windows IOCTL constant names, Windows-only package

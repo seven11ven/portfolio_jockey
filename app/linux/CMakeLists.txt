@@ -70,12 +70,6 @@ set_target_properties(${BINARY_NAME}
 )
 
 
-# media_kit_video only builds its native code when this is set. It is normally
-# set by media_kit_libs_linux, which we don't use because its CMake downloads
-# mimalloc from GitHub at build time. We link the system libmpv instead
-# (libmpv-dev, installed by .devcontainer/setup.sh).
-set(MEDIA_KIT_LIBS_AVAILABLE ON CACHE BOOL "Use the system libmpv for media_kit_video" FORCE)
-
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
 include(flutter/generated_plugins.cmake)

@@ -33,15 +33,11 @@ Portfolio Jockey v2 is a fully local, offline, encrypted project tracker built w
   - `ui/preview/`: the preview screen, its content views, and the edit dialogs and banner. `app/edit_session.dart` holds the one active edit.
   - `ui/export/` (export and import dialogs) and `ui/settings/` (settings, storage move, change passphrase). `services/export_service.dart` and `services/archive/` (our own streaming ZIP/TAR writers and the strict tar reader) do the work; `vault/export_format.dart` is the locked `.pjx` format.
   - Every menu item is built; the phase 3–6 "Coming in a later version" placeholder was removed in phase 7. "Export a readable copy…" of one file is `ui/export/readable_copy_dialog.dart` (no lock option, PM decision).
-- **Readable copies:** audio/video copies go only in the private memory folder below. "Edit in another app" copies do too, except inside the Flatpak: there they go in the memory folder Flatpak shares with the desktop (`$XDG_RUNTIME_DIR/app/$FLATPAK_ID/`, `PrivateFolders.forEditing`), because the portal can't hand a file in the sandbox's own folder to another app (PM decision after testing, 2026-10-23; the edit dialog warns every time). Both are checked to be private and in memory, and `services/private_folder.dart`'s memory-only folder: `$XDG_RUNTIME_DIR/portfolio_jockey/`, mode 0700, on tmpfs. If that isn't available the app refuses; it never falls back to a disk folder. Images, text, Markdown and PDF are decrypted into memory only. Details and known limits are in `docs/dependencies.md` ("Readable copies").
-- **media_kit rules** (see `docs/dependencies.md`):
-  - Load media with `NativePlayer.command(['loadfile', path])`. Never use `Player.open()`, `Media.memory()` or subtitle data tracks: they write temporary files to `/tmp`.
-  - Always apply `lockedDownMpvOptions`, and call `ensureMediaReady()` first.
-  - Never add `media_kit_libs_linux`: its build downloads mimalloc.
-  - Keep `setlocale(LC_NUMERIC, "C")` in `app/linux/runner/my_application.cc` (after GTK's startup). libmpv refuses to start otherwise, and `media_kit_libs_linux` would normally do it. `test/linux_runner_test.dart` checks it.
+- **Readable copies:** audio/video copies and "Edit in another app" copies go in `EditSessions.editFolders`: inside the Flatpak, the memory folder Flatpak shares with the desktop (`$XDG_RUNTIME_DIR/app/$FLATPAK_ID/`, `PrivateFolders.forEditing`), because the portal can't hand a file in the sandbox's own folder to another app (PM decisions after testing, 2026-10-23; the edit dialog and the media preview warn every time). Outside it, `services/private_folder.dart`'s memory-only folder: `$XDG_RUNTIME_DIR/portfolio_jockey/`, mode 0700, on tmpfs. Both are checked to be private and in memory. If neither is available the app refuses; it never falls back to a disk folder. Images, text, Markdown and PDF are decrypted into memory only. Details and known limits are in `docs/dependencies.md` ("Readable copies").
+- **Audio and video play in the desktop's own player** (PM decision, 2026-10-23, after media_kit's in-app player kept freezing; see `docs/dependencies.md`):
+  - `MediaHandoff` (`ui/preview/preview_views.dart`) makes the copy only when Play is pressed (`EditSessions.mediaCopy`), opens it with `AppLauncher.openToView`, and wipes it when the preview closes.
+  - There's no in-app player and no media library. Don't add one without a full review, including the package's issue tracker for open Linux desktop bugs on our Flutter version.
   - Inside the Flatpak, open files and folders for other apps only through `services/native/portal.dart` (the OpenURI portal, synchronous, with `ask`/`writable`). GLib's `g_app_info_launch_default_for_uri` silently does nothing from a worker isolate there.
-  - Video playback settings (`hwdec`) go through `videoPlaybackOptions` and `SharedPlayer.open(options:)`. A video filter can't shrink the picture: media_kit sizes it from the size before filters.
-  - Play audio and video only through `SharedPlayer` (`ui/preview/shared_player.dart`), and never dispose a player or VideoController: media_kit_video's CPU (S/W) path frees its frame buffer on dispose while Flutter may still be reading it, which froze the app. Previews open paused (PM decision).
 - **Markdown:** always pass an `imageBuilder` to flutter_markdown_plus. Without one, it loads images from the network or disk.
 - **Exports** (PM decision, 2026-10-22): exactly two options, everywhere. Either a **custom passphrase** (a checkbox; it must be filled in and confirmed before Export is enabled; no strength rules), making a Portfolio Jockey-only `.pjx`, or **unlocked** ZIP/TAR. The vault passphrase is never used for exports. Files stream chunk by chunk into the archive: never buffer a whole file or write a readable temp copy. Imports get new file keys and are all or nothing.
 - "Delete from device" **moves the original to the Trash** (GLib's `g_file_trash`, through the Trash portal inside a Flatpak). The encrypted project copy is still deleted permanently. This was the PM's decision on 2026-10-22.
@@ -52,7 +48,7 @@ Portfolio Jockey v2 is a fully local, offline, encrypted project tracker built w
 
 ## Toolchain
 - `bash .devcontainer/check-lockdown.sh`: checks every telemetry layer. It must pass before running `flutter` or `dart`.
-- `bash .devcontainer/setup.sh`: installs or repairs the pinned Flutter 3.47.7 and its telemetry patch. It also installs `libsodium23` (the vault), `libmpv-dev` and `libepoxy-dev` (audio/video), and `libpoppler-glib8` (PDF), which the app and its tests need. Safe to re-run.
+- `bash .devcontainer/setup.sh`: installs or repairs the pinned Flutter 3.47.7 and its telemetry patch. It also installs `libsodium23` (the vault) and `libpoppler-glib8` (PDF), which the app and its tests need. Safe to re-run.
 - To upgrade Flutter, edit `FLUTTER_VERSION` and `FLUTTER_SHA256` in `setup.sh` and confirm the patch still applies. Never run `flutter upgrade` or `flutter channel`: they overwrite the patched source.
 - Run these from `app/`:
   - Lint: `flutter analyze --fatal-infos --fatal-warnings`
@@ -68,7 +64,7 @@ Portfolio Jockey v2 is a fully local, offline, encrypted project tracker built w
 
 ## Constraints that shape the code
 - The app must never use the network. No analytics, crash-reporting or networking packages, and no local HTTP servers, which rules out the usual workaround for streaming media.
-- Every new or upgraded package needs a license, cost and telemetry check and a code review, recorded in `docs/dependencies.md`, `app/tool/allowed-packages.txt` and `app/tool/reviewed-hits.txt`. The same goes for a new native library or libc function (`app/tool/allowed-native-libs.txt`).
+- Every new or upgraded package needs a license, cost and telemetry check, a code review, and a check of its issue tracker and changelog for open bugs on our platform (Linux desktop, X11 and Wayland, our Flutter version, Flatpak), recorded in `docs/dependencies.md`, `app/tool/allowed-packages.txt` and `app/tool/reviewed-hits.txt`. The same goes for a new native library or libc function (`app/tool/allowed-native-libs.txt`).
 - Text in the UI must not rely on special characters that fonts may lack (✓ → ＋ emoji): use Material icons (`ChangeArrow`, `TagChip(icon:, check:)`).
 - `http` is replaced by the empty stand-in `app/tool/stubs/http/`, because the file picker lists it but never uses it. Never put code there.
 - Keys and the passphrase stay in `SecureBuffer` (libsodium's guarded memory), never in Dart lists or strings that outlive their use.

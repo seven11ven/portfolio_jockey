@@ -6,14 +6,11 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 import 'package:portfolio_jockey/app/theme.dart';
 import 'package:portfolio_jockey/services/native/poppler.dart';
 import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/ui/common.dart';
-import 'package:portfolio_jockey/ui/preview/shared_player.dart';
-import 'package:wakelock_plus_platform_interface/wakelock_plus_platform_interface.dart';
+import 'package:portfolio_jockey/vault/project_index.dart';
 
 /// How a file is previewed.
 enum PreviewKind {
@@ -33,6 +30,12 @@ enum PreviewKind {
   final int maxBytes;
 }
 
+const _video = {'mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v'};
+const _audioTypes = {'mp3', 'm4a', 'wav', 'flac', 'ogg', 'opus', 'aac'};
+
+/// Whether [name] is an audio file (for the player's wording and icon).
+bool isAudio(String name) => _audioTypes.contains(name.substring(name.lastIndexOf('.') + 1).toLowerCase());
+
 PreviewKind previewKind(String name) {
   final dot = name.lastIndexOf('.');
   final ext = dot < 0 ? '' : name.substring(dot + 1).toLowerCase();
@@ -42,7 +45,7 @@ PreviewKind previewKind(String name) {
     'txt', 'text', 'csv', 'tsv', 'json', 'log', 'xml', 'yaml', 'yml', 'ini', 'conf', 'toml', //
     'html', 'css', 'js', 'ts', 'dart', 'py', 'sh', 'c', 'h', 'cpp', 'java', 'kt', 'rs', 'go', 'rb', 'php', 'sql',
   };
-  const media = {'mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v', 'mp3', 'm4a', 'wav', 'flac', 'ogg', 'opus', 'aac'};
+  const media = {..._video, ..._audioTypes};
   if (images.contains(ext)) {
     return PreviewKind.image;
   }
@@ -331,129 +334,96 @@ class _PdfPreviewState extends State<PdfPreview> {
   }
 }
 
-/// A wakelock that does nothing. media_kit_video's wakelock (wakelock_plus)
-/// would talk to the desktop over D-Bus and run `stat`; the app never wants
-/// it, so this replaces it before any player exists.
-final class _NoWakelock extends WakelockPlusPlatformInterface {
-  @override
-  Future<void> toggle({required bool enable}) async {}
+/// Audio and video play in the desktop's own player (PM decision, 2026-10-23:
+/// media_kit's in-app player kept freezing; docs/dependencies.md). Nothing
+/// readable exists until Play is pressed. Then a copy goes in the memory
+/// folder other apps can be handed files from (`EditSessions.mediaCopy`),
+/// and it's wiped when this closes, which also stops the playback.
+class MediaHandoff extends StatefulWidget {
+  const MediaHandoff({required this.projectId, required this.file, super.key});
+
+  final String projectId;
+  final FileEntry file;
 
   @override
-  Future<bool> get enabled async => false;
+  State<MediaHandoff> createState() => _MediaHandoffState();
 }
 
-/// Loads the system libmpv (pinned by name, so `LIBMPV_LIBRARY_PATH` can't
-/// swap it) and replaces the wakelock. Safe to call more than once.
-void ensureMediaReady() {
-  if (WakelockPlusPlatformInterface.instance is! _NoWakelock) {
-    WakelockPlusPlatformInterface.instance = _NoWakelock();
-  }
-  MediaKit.ensureInitialized(libmpv: 'libmpv.so.2');
-}
-
-/// mpv options that keep playback local. media_kit sets `cache-on-disk=yes`
-/// and allows network protocols by default; see docs/dependencies.md.
-const Map<String, String> lockedDownMpvOptions = {
-  'cache-on-disk': 'no', // keep the demuxer cache in memory
-  'ytdl': 'no', // unload the youtube-dl hook script
-  'access-references': 'no', // don't follow references to other files inside media files
-  'load-unsafe-playlists': 'no',
-  'stream-lavf-o': 'protocol_whitelist=[file]', // FFmpeg streams: local files only
-  'sub-auto': 'no', // don't look for subtitle files next to the copy
-  'cover-art-auto': 'no',
-  'save-position-on-quit': 'no',
-  // Previews are short and read from a memory folder, so a big in-memory
-  // read-ahead cache only adds memory that keeps growing (measured
-  // 2026-10-23); mpv's defaults are 150 MiB plus a 50 MiB back buffer.
-  'demuxer-max-bytes': '32MiB',
-  'demuxer-max-back-bytes': '0',
-};
-
-/// mpv options for the next video, from Settings → Video playback.
-///
-/// `hwdec`: media_kit sets `auto` itself, which can't hand frames to its
-/// processor (S/W) drawing path, so decoding stayed on the processor.
-/// `auto-copy-safe` decodes on the graphics card and copies the frames back;
-/// with no working driver, mpv decodes on the processor as before.
-Map<String, String> videoPlaybackOptions({required bool hardwareDecoding}) => {'hwdec': hardwareDecoding ? 'auto-copy-safe' : 'no'};
-
-/// Audio or video, played by libmpv from a readable copy in a private
-/// memory-only folder. The copy is wiped when this closes.
-class MediaPreview extends StatefulWidget {
-  const MediaPreview({required this.copy, this.onDuration, super.key});
-
-  final File copy;
-  final void Function(Duration duration)? onDuration;
-
-  @override
-  State<MediaPreview> createState() => _MediaPreviewState();
-}
-
-class _MediaPreviewState extends State<MediaPreview> {
-  Future<SharedPlayer>? _shared;
-  VideoController? _video;
-  StreamSubscription<Duration>? _duration;
+class _MediaHandoffState extends State<MediaHandoff> {
+  static const int _noSpace = 28; // ENOSPC: the memory folder is full
+  File? _copy;
+  bool _busy = false;
   String? _error;
 
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_start());
-  }
+  bool get _audio => isAudio(widget.file.name);
 
-  Future<void> _start() async {
+  Future<void> _play() async {
+    final controller = AppScope.read(context);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    String? error;
     try {
-      final shared = SharedPlayer.instance(prepare: ensureMediaReady, lockedDownOptions: lockedDownMpvOptions);
-      _shared = shared;
-      final player = await shared;
+      final copy = _copy ?? await controller.edits.mediaCopy(controller.projects, widget.projectId, widget.file);
       if (!mounted) {
+        await PrivateFolders.wipe(copy.parent);
         return;
       }
-      // Read once: a change applies to the next video, not this one.
-      final settings = context.getInheritedWidgetOfExactType<AppScope>()!.notifier!;
-      await player.open(widget.copy, options: videoPlaybackOptions(hardwareDecoding: settings.hardwareDecoding));
-      if (!mounted) {
-        return;
-      }
-      _duration = player.player?.stream.duration.listen((d) {
-        if (d > Duration.zero) {
-          widget.onDuration?.call(d);
-        }
-      });
-      setState(() => _video = player.video);
-    } on PlayerStuck catch (e) {
-      if (mounted) {
-        setState(() => _error = e.toString());
-      }
+      _copy = copy;
+      await controller.edits.play(copy);
+    } on NoPrivateFolder catch (e) {
+      error = "This file can't be played: there's no memory-only folder to put a readable copy in ($e).";
+    } on FileSystemException catch (e) {
+      error = e.osError?.errorCode == _noSpace
+          ? 'This file is too big to play from memory (${formatBytes(widget.file.size)}). Use “Export a readable copy…” to play it from a folder you choose.'
+          : e.message;
     } on Object catch (e) {
-      if (mounted) {
-        setState(() => _error = "This file can't be played: $e");
-      }
+      error = "This file can't be played. It may be damaged. ($e)";
+    }
+    if (mounted) {
+      setState(() {
+        _busy = false;
+        _error = error;
+      });
     }
   }
 
   @override
   void dispose() {
-    unawaited(_duration?.cancel());
-    final shared = _shared;
-    final copy = widget.copy;
-    // The shared player is only stopped, never disposed (see SharedPlayer).
-    unawaited(() async {
-      await (await shared)?.close(copy);
-      await PrivateFolders.wipe(copy.parent);
-    }());
+    if (_copy case final copy?) {
+      unawaited(PrivateFolders.wipe(copy.parent));
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_error case final error?) {
-      return Center(child: Padding(padding: const EdgeInsets.all(24), child: Notice(error)));
-    }
-    final video = _video;
-    if (video == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return Video(controller: video, wakelock: false, controls: MaterialDesktopVideoControls);
+    final playing = _copy != null && _error == null;
+    final player = _audio ? 'audio player' : 'video player';
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 14,
+            children: [
+              Icon(_audio ? Icons.music_note_outlined : Icons.play_circle_outline, size: 64, color: Theme.of(context).colorScheme.primary),
+              Text(playing ? "Playing in your desktop's $player." : "Plays in your desktop's $player.", textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
+              const Notice('While it plays, other apps can read the readable copy. Closing this preview deletes it and stops playback.'),
+              if (_error case final error?) Notice(error, danger: true),
+              FilledButton.icon(
+                key: const Key('media-play'),
+                onPressed: _busy ? null : () => unawaited(_play()),
+                icon: _busy ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.play_arrow),
+                label: Text(playing ? 'Play again' : 'Play'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

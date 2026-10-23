@@ -90,13 +90,14 @@ final class EditNotReady implements Exception {
 /// saving and discarding both wipe the folder. Edits are never wiped
 /// silently: one left by a crash is found by [findLeftovers] after unlocking,
 /// and the user decides. Media copies (`view-*`) are wiped whenever a preview
-/// closes, when the vault locks, and at unlock.
+/// closes, when the vault locks, at start and at unlock.
 class EditSessions extends ChangeNotifier {
   EditSessions({required this.folders, PrivateFolders? editFolders, required this.launcher, this.settle = const Duration(seconds: 1)})
     : editFolders = editFolders ?? folders;
 
-  /// Where edit copies go (see [PrivateFolders.forEditing]); media copies use
-  /// [folders].
+  /// Where edit copies and media copies go (see [PrivateFolders.forEditing]):
+  /// both are handed to another app. Older media copies may still be in
+  /// [folders], so both are cleared.
   final PrivateFolders editFolders;
 
   /// How long the copy must stay unchanged before it's saved, so a save the
@@ -222,11 +223,11 @@ class EditSessions extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Makes a readable copy of [file] for the media player, in a private
-  /// memory-only folder. Wipe it with [PrivateFolders.wipe] when the preview
-  /// closes.
+  /// Makes a readable copy of [file] for the desktop's player, in the
+  /// memory-only folder other apps can be handed files from. Wipe it with
+  /// [PrivateFolders.wipe] when the preview closes.
   Future<File> mediaCopy(ProjectService service, String projectId, FileEntry file) async {
-    final folder = await folders.create(_viewPrefix);
+    final folder = await editFolders.create(_viewPrefix);
     final copy = File('${folder.path}/${file.name}');
     try {
       await service.decryptTo(projectId, file, copy);
@@ -237,14 +238,16 @@ class EditSessions extends ChangeNotifier {
     return copy;
   }
 
-  /// Wipes every media copy (none should outlive its preview).
+  /// Opens a media copy read-only in the desktop's default player.
+  Future<void> play(File copy) => launcher.openToView(copy.path);
+
   /// Clears the app's temporary files: every media copy, and every edit
   /// folder that isn't the edit in progress or an unfinished edit waiting for
   /// the user to save or discard it (those hold unsaved changes and are only
   /// ever removed by Save or Discard). Returns how many folders were wiped.
   Future<int> clearTemporaryFiles() async {
     var wiped = 0;
-    for (final folder in await folders.existing(_viewPrefix)) {
+    for (final folder in await _mediaFolders()) {
       await PrivateFolders.wipe(folder);
       wiped++;
     }
@@ -258,10 +261,19 @@ class EditSessions extends ChangeNotifier {
     return wiped;
   }
 
+  /// Wipes every media copy (none should outlive its preview).
   Future<void> wipeMediaCopies() async {
-    for (final folder in await folders.existing(_viewPrefix)) {
+    for (final folder in await _mediaFolders()) {
       await PrivateFolders.wipe(folder);
     }
+  }
+
+  Future<List<Directory>> _mediaFolders() async {
+    final seen = <String>{};
+    return [
+      for (final folder in [...await folders.existing(_viewPrefix), if (!identical(editFolders, folders)) ...await editFolders.existing(_viewPrefix)])
+        if (seen.add(folder.path)) folder,
+    ];
   }
 
   Future<void> _finish(EditSession session) async {

@@ -188,15 +188,20 @@ void main() {
     expect(await edits.hasChanges(service, session), isFalse);
   });
 
-  test('edit copies go in the edit folders, media copies stay in the private ones', () async {
+  test('edit and media copies both go in the edit folders (the ones the desktop can reach)', () async {
     final shared = await fakePrivateFolders();
     final split = EditSessions(folders: folders, editFolders: shared, launcher: launcher, settle: Duration.zero);
     addTearDown(split.dispose);
     final session = await split.start(service: service, projectId: projectId, projectName: 'Kitchen Remodel', file: notes, app: launcher.apps.first);
     expect(session.folder.path, startsWith(shared.runtimeDir!));
     final media = await split.mediaCopy(service, projectId, notes);
-    expect(media.path, startsWith(folders.runtimeDir!));
-    expect(media.path, isNot(startsWith(shared.runtimeDir!)));
+    expect(media.path, startsWith(shared.runtimeDir!));
+    await split.play(media);
+    expect(launcher.viewed, [media.path], reason: 'opened read-only in the default player');
+    final old = await folders.create('view');
+    await split.wipeMediaCopies();
+    expect(await media.parent.exists(), isFalse);
+    expect(await old.exists(), isFalse, reason: 'media copies from before the move are cleared too');
     await split.discard(session);
   });
 

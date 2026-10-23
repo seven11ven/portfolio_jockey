@@ -1,0 +1,84 @@
+# Packages allowed in app/pubspec.lock, used by tool/check-privacy.sh.
+# Format: name  version  kind  # note
+#   kind: runtime = compiled into the app; dev = tests and lints only, never shipped.
+#   SDK packages show version 0.0.0 in pubspec.lock; they come with Flutter 3.47.7.
+# Each package's code was reviewed for telemetry and tracking (2026-10-22).
+# Notes give the source repository and licence, read from each package's own files.
+# Cost and review notes: docs/dependencies.md. Add a line only after that review.
+
+# Flutter SDK
+flutter                       0.0.0    runtime  # flutter/flutter, BSD-3-Clause
+sky_engine                    0.0.0    runtime  # Dart standard library and dart:ui; LICENSE bundles the engine's third-party licenses
+flutter_test                  0.0.0    dev      # flutter/flutter, BSD-3-Clause (repo LICENSE)
+
+# Runtime dependencies of flutter, versions pinned by the Flutter SDK
+characters                    1.4.1    runtime  # dart-lang/core, BSD-3-Clause
+collection                    1.19.1   runtime  # dart-lang/core, BSD-3-Clause
+material_color_utilities      0.13.0   runtime  # material-foundation, Apache-2.0
+meta                          1.18.3   runtime  # dart-lang/sdk, BSD-3-Clause
+vector_math                   2.4.0    runtime  # flutter/core-packages, BSD-3-Clause
+
+# Lints (direct dev dependency)
+flutter_lints                 6.0.0    dev      # flutter/packages, BSD-3-Clause; lint config only
+lints                         6.1.0    dev      # dart-lang/core, BSD-3-Clause; lint config only
+
+# Dependencies of flutter_test, versions pinned by the Flutter SDK
+async                         2.13.1   dev      # dart-lang/core, BSD-3-Clause
+boolean_selector              2.1.2    dev      # dart-lang/tools, BSD-3-Clause
+clock                         1.1.3    dev      # dart-lang/tools, Apache-2.0
+fake_async                    1.3.3    dev      # dart-lang/test, Apache-2.0
+leak_tracker                  11.0.2   dev      # dart-lang/leak_tracker, BSD-3-Clause; memory-leak tracking in tests
+leak_tracker_flutter_testing  3.0.10   dev      # dart-lang/leak_tracker, BSD-3-Clause
+leak_tracker_testing          3.0.2    dev      # dart-lang/leak_tracker, BSD-3-Clause
+matcher                       0.12.20  dev      # dart-lang/test, BSD-3-Clause
+path                          1.9.1    runtime  # dart-lang/core, BSD-3-Clause; runtime since phase 6 (flutter_markdown_plus)
+source_span                   1.10.2   dev      # dart-lang/tools, BSD-3-Clause
+stack_trace                   1.12.2   dev      # dart-lang/tools, BSD-3-Clause
+stream_channel                2.1.4    dev      # dart-lang/tools, BSD-3-Clause
+string_scanner                1.4.1    dev      # dart-lang/tools, BSD-3-Clause
+term_glyph                    1.2.2    dev      # dart-lang/tools, BSD-3-Clause
+test_api                      0.7.12   dev      # dart-lang/test, BSD-3-Clause
+vm_service                    15.4.0   dev      # dart-lang/sdk, BSD-3-Clause; local Dart VM debug protocol client
+
+# File picker (plan phase 5): reviewed 2026-10-22, including the plugin's C++ code.
+file_selector_linux           0.9.4+1  runtime  # flutter/packages, BSD-3-Clause; GTK native file dialog (portal-ready)
+file_selector_platform_interface 2.7.0 runtime  # flutter/packages, BSD-3-Clause; its unused `http` dependency is replaced by tool/stubs/http
+cross_file                    0.3.5+5  runtime  # flutter/packages, BSD-3-Clause; uses its dart:io variant on Linux
+plugin_platform_interface     2.1.8    runtime  # flutter/packages, BSD-3-Clause; a 127-line token check
+web                           1.1.1    runtime  # dart-lang/web, BSD-3-Clause; browser API declarations, only compiled for web builds (never on Linux)
+http                          0.0.0-stub stub   # empty stand-in in tool/stubs/http, no code (see its README)
+
+# Markdown preview (plan phase 6): reviewed 2026-10-22. No dart:io/ffi/process/socket code in lib/ except the default image loader, which our imageBuilder always replaces.
+flutter_markdown_plus         1.0.12   runtime  # foresightmobile/flutter_markdown_plus, BSD-3-Clause; successor to the discontinued flutter_markdown
+markdown                      7.3.1    runtime  # dart-lang/tools, BSD-3-Clause; pure-Dart parser (its bin/ CLI is not compiled into the app)
+args                          2.7.0    runtime  # dart-lang/core, BSD-3-Clause; command-line parser only used by markdown's bin/ CLI, pure Dart
+
+# Audio/video preview (plan phase 6): reviewed 2026-10-22, including media_kit_video's C++ code.
+# Rules for app code (docs/dependencies.md): load with NativePlayer.command(['loadfile', path]),
+# never Player.open() or Media.memory() (both write temp files to /tmp); libmpv pinned to libmpv.so.2;
+# protocolWhitelist ['file']; cache-on-disk=no; ytdl=no; wakelock off and replaced by a no-op.
+# media_kit_libs_linux is NOT used: its CMake downloads mimalloc. linux/CMakeLists.txt sets MEDIA_KIT_LIBS_AVAILABLE.
+media_kit                     1.2.6    runtime  # media-kit/media-kit, MIT; Dart bindings to the system libmpv
+media_kit_video               2.0.1    runtime  # media-kit/media-kit, MIT; renders libmpv video into a Flutter texture (C++ reviewed: no network/process/file code)
+wakelock_plus                 1.8.1    runtime  # fluttercommunity/wakelock_plus, BSD-3-Clause; required by media_kit_video, never enabled (replaced by a no-op)
+wakelock_plus_platform_interface 1.7.0 runtime  # fluttercommunity/wakelock_plus, BSD-3-Clause
+package_info_plus             10.2.2   runtime  # fluttercommunity/plus_plugins, BSD-3-Clause; only called by wakelock_plus when enabled (runs `stat`); never reached
+package_info_plus_platform_interface 4.1.0 runtime # fluttercommunity/plus_plugins, BSD-3-Clause
+dbus                          0.8.0    runtime  # canonical/dbus.dart, MPL-2.0; used by wakelock_plus; connects lazily, only on a call, which never happens
+posix                         6.5.2    runtime  # bsutton/posix, MIT; libc bindings (dbus uses getuid)
+ffi                           2.2.0    runtime  # dart-lang/native, BSD-3-Clause; malloc/calloc helpers
+synchronized                  3.5.0    runtime  # tekartik/synchronized.dart, MIT; async locks
+safe_local_storage            2.0.6    runtime  # alexmercerind/safe_local_storage, MIT; file helpers used by media_kit's temp files, which our usage never creates
+uri_parser                    3.0.2    runtime  # alexmercerind/uri_parser, MIT; URI/path parsing, checks whether a path exists
+uuid                          4.6.0    runtime  # daegalus/dart-uuid, MIT; temp-file names in media_kit
+universal_platform            1.1.0    runtime  # gskinnerTeam/flutter-universal-platform, MIT; platform checks
+image                         4.12.0   runtime  # brendan-duncan/image, MIT; used only by media_kit's screenshot(), which we never call
+archive                       4.5.2    runtime  # brendan-duncan/archive, MIT; image's dependency; file APIs only run when called
+xml                           7.0.1    runtime  # renggli/dart-xml, MIT; image's dependency (pure Dart)
+petitparser                   7.0.2    runtime  # petitparser/dart-petitparser, MIT; xml's dependency (pure Dart)
+crypto                        3.0.7    runtime  # dart-lang/core, BSD-3-Clause; hashes (pure Dart)
+typed_data                    1.4.0    runtime  # dart-lang/core, BSD-3-Clause
+fixnum                        1.1.1    runtime  # dart-lang/core, BSD-3-Clause
+flutter_web_plugins           0.0.0    runtime  # flutter/flutter, BSD-3-Clause; SDK package, web builds only
+win32                         6.4.0    runtime  # halildurmus/win32, BSD-3-Clause; Windows-only, never compiled into the Linux app
+ffi_leak_tracker              0.1.2    runtime  # halildurmus/win32, BSD-3-Clause; win32's dependency, Windows-only

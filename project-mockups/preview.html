@@ -37,17 +37,21 @@
   </section>
 
   <section class="scene">
-    <div class="scene-title">2. Preview (video)</div>
+    <div class="scene-title">2. Preview (video): plays in the desktop's player</div>
+    <div class="scene-note">Nothing readable exists until Play. Play puts a copy in the memory folder the desktop can reach and opens it in the default player; closing the preview deletes it. Audio is the same, with a note icon and "audio player".</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">walkthrough.mp4</h3><span class="icon-btn">‹</span><span class="icon-btn">›</span><span class="icon-btn">⋯</span></header>
       <div class="preview-wrap">
-        <div class="preview-stage" style="background:#111;color:#fff;position:relative">
-          <span style="font-size:40px">▶</span>
-          <div style="position:absolute;left:14px;right:14px;bottom:12px;display:flex;gap:10px;align-items:center;font-size:12px"><span>0:42</span><div class="meter" style="flex:1;background:rgba(255,255,255,.25)"><span style="width:30%;background:#fff"></span></div><span>2:18</span></div>
+        <div class="preview-stage" style="flex-direction:column;gap:12px;padding:24px;text-align:center">
+          <span style="font-size:48px;color:var(--primary,#4f46e5)">▶</span>
+          <h3 style="margin:0">Plays in your desktop's video player.</h3>
+          <div class="notice" style="max-width:420px">While it plays, other apps can read the readable copy. Closing this preview deletes it and stops playback.</div>
+          <button class="btn btn-primary">▶ Play</button>
+          <div class="small muted">After Play: "Playing in your desktop's video player." and the button becomes "Play again".</div>
         </div>
         <div class="card preview-side">
           <div><span class="label">Tags</span><div class="chips"><span class="chip">Photos</span></div></div>
-          <div><span class="label">Size</span>48 MB · 2:18</div>
+          <div><span class="label">Size</span>48 MB</div>
           <div><span class="label">Added</span>Oct 20, 2026</div>
         </div>
       </div>

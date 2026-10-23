@@ -22,12 +22,19 @@ abstract final class OpenUriPortal {
   /// Throws [PortalException] if the portal refuses.
   static Future<void> openFile(String path) => _run(path, 'OpenFile', openFileArguments, writable: true);
 
+  /// Asks the desktop to open [path] read-only in its default app for the
+  /// file's type, without a chooser (audio and video previews).
+  static Future<void> openFileToView(String path) => _run(path, 'OpenFile', openToViewArguments, writable: false);
+
   /// Asks the desktop's file manager to show the folder that contains [path].
   static Future<void> openContainingFolder(String path) => _run(path, 'OpenDirectory', openDirectoryArguments, writable: false);
 
   /// The arguments of `OpenFile`, in GVariant text format: the parent window
   /// (none), the file as fd handle 0 of the attached list, and the options.
   static const String openFileArguments = "('', handle 0, {'ask': <true>, 'writable': <true>})";
+
+  /// The arguments of `OpenFile` for viewing: no chooser, read-only.
+  static const String openToViewArguments = "('', handle 0, {'ask': <false>, 'writable': <false>})";
 
   /// The arguments of `OpenDirectory`: no parent window, fd handle 0, no options.
   static const String openDirectoryArguments = "('', handle 0, @a{sv} {})";

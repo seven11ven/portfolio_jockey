@@ -33,6 +33,11 @@ abstract interface class AppLauncher {
   /// [appId] is null. Throws [FileSystemException] if it can't be launched.
   Future<void> open(String path, {String? appId});
 
+  /// Opens [path] read-only in the desktop's default app for its type, with
+  /// no chooser (audio and video previews). Throws [FileSystemException] if
+  /// it can't be launched.
+  Future<void> openToView(String path);
+
   /// Shows the folder [path] in the desktop's file manager. Throws
   /// [FileSystemException] if it can't.
   Future<void> openFolder(String path);
@@ -69,18 +74,7 @@ final class GioAppLauncher implements AppLauncher {
   @override
   Future<void> open(String path, {String? appId}) async {
     if (usesDesktopChooser) {
-      // The portal can only hand the other app a file the desktop can reach:
-      // one in the memory folder Flatpak shares with it. Anywhere else, it
-      // fails without telling us, so refuse clearly instead.
-      final env = Platform.environment;
-      final shared = '${env['XDG_RUNTIME_DIR']}/app/${env['FLATPAK_ID']}';
-      // Inside the sandbox that folder is a link to /run/flatpak/app/<id>,
-      // and the copy's path is the resolved one, so accept either form.
-      final sharedDir = Directory(shared);
-      final resolved = sharedDir.existsSync() ? sharedDir.resolveSymbolicLinksSync() : shared;
-      if (!isInFolder(path, [shared, resolved])) {
-        throw FileSystemException("Couldn't open it in another app: the readable copy isn't in the folder the desktop can reach ($shared)", path);
-      }
+      _checkShared(path);
       // Through the portal directly: GLib's own call sends the request on a
       // main loop our worker isolate doesn't run, and can't ask for the
       // chooser or for write access (see portal.dart).
@@ -94,6 +88,38 @@ final class GioAppLauncher implements AppLauncher {
     final error = await Isolate.run(() => _launch(path, appId));
     if (error != null) {
       throw FileSystemException("Couldn't open it in another app: $error", path);
+    }
+  }
+
+  @override
+  Future<void> openToView(String path) async {
+    if (usesDesktopChooser) {
+      _checkShared(path);
+      try {
+        await OpenUriPortal.openFileToView(path);
+      } on PortalException catch (e) {
+        throw FileSystemException("Couldn't open your desktop's player: $e", path);
+      }
+      return;
+    }
+    final error = await Isolate.run(() => _launch(path, null));
+    if (error != null) {
+      throw FileSystemException("Couldn't open your desktop's player: $error", path);
+    }
+  }
+
+  /// The portal can only hand another app a file the desktop can reach: one
+  /// in the memory folder Flatpak shares with it. Anywhere else, it fails
+  /// without telling us, so this refuses clearly instead.
+  static void _checkShared(String path) {
+    final env = Platform.environment;
+    final shared = '${env['XDG_RUNTIME_DIR']}/app/${env['FLATPAK_ID']}';
+    // Inside the sandbox that folder is a link to /run/flatpak/app/<id>,
+    // and the copy's path is the resolved one, so accept either form.
+    final sharedDir = Directory(shared);
+    final resolved = sharedDir.existsSync() ? sharedDir.resolveSymbolicLinksSync() : shared;
+    if (!isInFolder(path, [shared, resolved])) {
+      throw FileSystemException("Couldn't open it in another app: the readable copy isn't in the folder the desktop can reach ($shared)", path);
     }
   }
   @override

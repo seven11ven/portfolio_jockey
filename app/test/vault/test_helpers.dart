@@ -71,6 +71,19 @@ class FakeLauncher implements AppLauncher {
   @override
   Future<void> open(String path, {String? appId}) async => opened.add((path, appId));
 
+  final List<String> viewed = [];
+
+  /// When set, [openToView] throws it (a player that won't start).
+  FileSystemException? viewError;
+
+  @override
+  Future<void> openToView(String path) async {
+    if (viewError case final error?) {
+      throw error;
+    }
+    viewed.add(path);
+  }
+
   final List<String> openedFolders = [];
 
   @override

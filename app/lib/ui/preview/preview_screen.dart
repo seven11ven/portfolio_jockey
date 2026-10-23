@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:portfolio_jockey/app/theme.dart';
-import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/ui/common.dart';
 import 'package:portfolio_jockey/ui/export/readable_copy_dialog.dart';
@@ -16,8 +14,9 @@ import 'package:portfolio_jockey/vault/project_index.dart';
 /// [files] (the project screen's current filter) and a details panel.
 ///
 /// Images, text, Markdown and PDF are decrypted fully into memory before
-/// anything is shown; audio and video play from a memory-only copy. Nothing
-/// readable is written to disk.
+/// anything is shown; audio and video are handed to the desktop's player
+/// from a memory-only copy, made only when Play is pressed ([MediaHandoff]).
+/// Nothing readable is written to disk.
 class PreviewScreen extends StatefulWidget {
   const PreviewScreen({required this.projectId, required this.projectName, required this.files, required this.initial, super.key});
 
@@ -32,7 +31,7 @@ class PreviewScreen extends StatefulWidget {
 
 class _PreviewScreenState extends State<PreviewScreen> {
   late int _at = widget.initial;
-  Object? _content; // Uint8List, File (media copy), or an error message String.
+  Object? _content; // Uint8List, [_media], or an error message String.
   String? _detail;
   int _loadToken = 0;
 
@@ -57,14 +56,13 @@ class _PreviewScreenState extends State<PreviewScreen> {
     try {
       content = switch (kind) {
         PreviewKind.none => "This type of file can't be previewed. Use “Edit in another app” to open it.",
-        PreviewKind.media => await controller.edits.mediaCopy(controller.projects, widget.projectId, file),
+        PreviewKind.media => _media,
         _ => await controller.projects.readFile(widget.projectId, file, maxBytes: kind.maxBytes),
       };
     } on TooLargeToPreview catch (e) {
       content = 'This file is too large to preview (${formatBytes(e.size)}; the limit is ${formatBytes(e.limit)}). Use “Edit in another app” to open it.';
-    } on NoPrivateFolder catch (e) {
-      content = "This file can't be played: there's no private memory-only folder on this system ($e), so a readable copy can't be made safely.";
-    } on Exception catch (e) {
+    } on Object catch (e) {
+      // Anything, not only Exceptions: an Error left the stage spinning forever.
       content = "This file can't be shown. It may be damaged. ($e)";
     }
     if (!mounted || token != _loadToken) {
@@ -74,12 +72,13 @@ class _PreviewScreenState extends State<PreviewScreen> {
     setState(() => _content = content);
   }
 
+  /// Stands for audio and video: nothing is decrypted until Play.
+  static const Object _media = Object();
+
   /// Wipes content that will never be shown.
   static Future<void> _drop(Object content) async {
     if (content is Uint8List) {
       content.fillRange(0, content.length, 0);
-    } else if (content is File) {
-      await PrivateFolders.wipe(content.parent);
     }
   }
 
@@ -109,7 +108,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
     return switch (_content) {
       null => const Center(child: CircularProgressIndicator()),
       final String message => Center(child: Padding(padding: const EdgeInsets.all(24), child: Notice(message))),
-      final File copy => MediaPreview(key: ValueKey(copy.path), copy: copy, onDuration: (d) => _setDetail(formatDuration(d))),
+      _media => MediaHandoff(key: ValueKey(file.id), projectId: widget.projectId, file: file),
       final Uint8List bytes => switch (previewKind(file.name)) {
         PreviewKind.image => ImagePreview(key: ValueKey(file.id), bytes: bytes, onSize: (w, h) => _setDetail('$w × $h')),
         PreviewKind.markdown => MarkdownPreview(key: ValueKey(file.id), bytes: bytes),
