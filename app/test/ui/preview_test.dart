@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:portfolio_jockey/app/edit_session.dart';
@@ -60,7 +61,7 @@ void main() {
   }
 
   Future<void> fileMenu(WidgetTester tester, String name, String item) async {
-    await tester.tap(find.text(name).first);
+    await tester.tap(find.text(name).first, buttons: kSecondaryButton);
     await settleUntil(tester, find.text(item));
     await tester.tap(find.text(item));
     await settle(tester);
@@ -92,6 +93,14 @@ void main() {
     await settle(tester);
     expect(find.text('Kitchen plan'), findsOneWidget, reason: 'links do nothing');
     expect(tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.chevron_right)).onPressed, isNull);
+  });
+
+  testWidgets('A single click on a file opens its preview at once; right-click opens the menu', (tester) async {
+    final (_, _) = await withFiles(tester, {'notes.txt': utf8.encode('Hello')});
+    await tester.tap(find.text('notes.txt').first);
+    await settleUntil(tester, find.text('Hello'));
+    expect(find.text('Hello'), findsOneWidget);
+    expect(find.text('Rename…'), findsNothing, reason: 'no menu on a left click');
   });
 
   testWidgets('Preview renders an image and a PDF from memory', (tester) async {

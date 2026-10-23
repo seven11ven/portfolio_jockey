@@ -362,6 +362,11 @@ const Map<String, String> lockedDownMpvOptions = {
   'sub-auto': 'no', // don't look for subtitle files next to the copy
   'cover-art-auto': 'no',
   'save-position-on-quit': 'no',
+  // Previews are short and read from a memory folder, so a big in-memory
+  // read-ahead cache only adds memory that keeps growing (measured
+  // 2026-10-23); mpv's defaults are 150 MiB plus a 50 MiB back buffer.
+  'demuxer-max-bytes': '32MiB',
+  'demuxer-max-back-bytes': '0',
 };
 
 /// Audio or video, played by libmpv from a readable copy in a private

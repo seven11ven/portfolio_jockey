@@ -283,3 +283,22 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **Full run:** 212 pass (13 skipped); analyze clean; privacy check passes.
 - **Backups:** `version-control/local-app/2026-10-23_before-inbox/` (with `journal.dart` and `project_service.dart`).
 - **Next requests from the PM:** a Settings button to clear the app's temporary files (needs a mockup), and a look at slow clicks, low video frame rate and memory leaks. **Not committed.**
+
+## Temporary files, instant clicks, and memory
+**Time:** 2026-10-23 19:13 UTC
+- **Temporary files (approved mockups, settings.html scenes 1, 4, 5):**
+  - `EditSessions.clearTemporaryFiles` (keeps the open edit and unfinished ones)
+  - media copies are wiped at `AppController.start`
+  - `prepareToExit`, and `AppLifecycleListener.onExitRequested` in `main.dart`: clear and close, or with an edit open, scene 5 (`requestExit`, which closes after Save or Discard)
+  - the Settings row, with its confirmation and "Temporary files cleared."
+- **Clicks (PM decision, option A):** a single click opens the preview, with no double-tap wait. The menu is on right-click or a long press. Tests updated to right-click for menus.
+- **Memory:** `MALLOC_ARENA_MAX=2` (manifest finish-args) and mpv `demuxer-max-bytes=32MiB`, `demuxer-max-back-bytes=0`. 30 video rounds in the release build: flat at about 350–415 MB, against about 650 MB and rising before. Images: flat, so no leak in the app's own code.
+- **Checked in the release build on the virtual screen:**
+  - the Security card with the new row (and the Lock icon)
+  - the confirmation
+  - Clear emptying the memory folder
+  - single clicks opening previews in all 30 rounds
+- **Full run:** 216 pass (13 skipped); the 10 screenshot tests pass; analyze clean.
+- **Docs:** `docs/dependencies.md`, `docs/install.md`, TESTING.md (D click note, H8).
+- **Backup:** `version-control/local-app/2026-10-23_before-temp-clear/`.
+- **Next:** the video frame rate investigation. **Not committed.**

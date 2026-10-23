@@ -146,6 +146,42 @@ void main() {
     expect(await File('${picked.path}/someone-else.txt').readAsString(), 'not ours');
     expect(await File('${source.path}/a.enc').readAsString(), 'one');
   });
+  testWidgets('Temporary files: Clear asks first, then clears', (tester) async {
+    final app = await startApp(tester, unlocked: true);
+    late File media;
+    await tester.runAsync(() async {
+      final folder = await app.controller.edits.folders.create('view');
+      media = File('${folder.path}/clip.mp4');
+      await media.writeAsString('readable');
+    });
+    await tester.tap(find.byTooltip('Settings'));
+    await settleUntil(tester, find.text('Temporary files'));
+    await tester.ensureVisible(find.text('Clear…'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Clear…'));
+    await settleUntil(tester, find.text('Clear temporary files?'));
+    await tester.tap(find.text('Cancel'));
+    await settle(tester);
+    expect(await tester.runAsync(media.exists), isTrue);
+
+    await tester.tap(find.text('Clear…'));
+    await settleUntil(tester, find.text('Clear temporary files?'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Clear'));
+    await settleUntil(tester, find.text('Temporary files cleared.'));
+    expect(await tester.runAsync(media.exists), isFalse);
+  });
+
+  testWidgets('Closing the window clears temporary files, but waits for an open edit', (tester) async {
+    final app = await startApp(tester, unlocked: true);
+    late File media;
+    await tester.runAsync(() async {
+      final folder = await app.controller.edits.folders.create('view');
+      media = File('${folder.path}/clip.mp4');
+      await media.writeAsString('readable');
+    });
+    expect(await tester.runAsync(app.controller.prepareToExit), isTrue);
+    expect(await tester.runAsync(media.exists), isFalse);
+  });
 }
 
 Future<void> unlock(WidgetTester tester, String passphrase) async {
@@ -154,4 +190,5 @@ Future<void> unlock(WidgetTester tester, String passphrase) async {
   await tester.pump();
   await tester.tap(find.text('Unlock'));
   await settleUntil(tester, find.text('Kitchen Remodel'));
+
 }

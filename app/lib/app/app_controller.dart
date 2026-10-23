@@ -117,6 +117,9 @@ class AppController extends ChangeNotifier {
   final UnlockBackoff backoff = UnlockBackoff();
 
   Future<void> start() async {
+    // On opening: no media copy should outlive the app. Edit copies stay
+    // until unlock, which offers to save or discard them.
+    await edits.wipeMediaCopies();
     final settings = await settingsStore.load();
     _settings = settings;
     _storagePath = settings.storagePath;
@@ -135,6 +138,21 @@ class AppController extends ChangeNotifier {
     await settingsStore.save(_settings);
     _storagePath = path;
     _open(vault);
+  }
+
+  /// Called when the window is about to close. False while a file is being
+  /// edited (the user decides first); otherwise clears the temporary files
+  /// and returns true.
+  Future<bool> prepareToExit() async {
+    if (edits.active != null) {
+      return false;
+    }
+    try {
+      await edits.clearTemporaryFiles();
+    } on Object catch (e) {
+      debugPrint("Couldn't clear the temporary files on exit: $e");
+    }
+    return true;
   }
 
   /// Moves the vault to [move]'s target: copies and checks everything, saves

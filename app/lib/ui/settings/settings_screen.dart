@@ -214,6 +214,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         'Lock now',
                         OutlinedButton.icon(onPressed: () => unawaited(requestLock(context)), icon: const Icon(Icons.lock_outline), label: const Text('Lock')),
                       ),
+                      row(
+                        'Temporary files',
+                        OutlinedButton(onPressed: () => unawaited(_clearTemporaryFiles(context)), child: const Text('Clear…')),
+                        detail:
+                            "Readable copies the app makes to preview audio and video and to edit files in other apps. They're kept in memory only, and cleared when the app opens and closes.",
+                      ),
                     ]),
                     section('About', [
                       row('Version', const Text(appVersion)),
@@ -425,5 +431,39 @@ class _ChangePassphraseDialogState extends WriteDialogState<ChangePassphraseDial
         ),
       ],
     );
+  }
+}
+
+/// Settings scene 4: clears the temporary files after asking. The file being
+/// edited (if any) is kept, and named, so its changes can't be lost here.
+Future<void> _clearTemporaryFiles(BuildContext context) async {
+  final controller = AppScope.read(context);
+  final editing = controller.edits.active?.info.fileName;
+  final clear = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => PjDialog(
+      title: 'Clear temporary files?',
+      content: [
+        const Text("Readable copies made for previews are overwritten with zeros and deleted. Your projects aren't touched."),
+        if (editing != null) Notice('$editing is still open in another app, so its copy is kept. Save or discard that edit to clear it too.'),
+      ],
+      actions: [
+        OutlinedButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Clear')),
+      ],
+    ),
+  );
+  if (clear != true || !context.mounted) {
+    return;
+  }
+  try {
+    await controller.edits.clearTemporaryFiles();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Temporary files cleared.')));
+    }
+  } on Exception catch (e) {
+    if (context.mounted) {
+      showError(context, "Couldn't clear the temporary files: $e");
+    }
   }
 }

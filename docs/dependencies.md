@@ -300,6 +300,20 @@ The Flatpak (`packaging/flatpak/io.github.seven11ven.portfolio_jockey.yml`) runs
   - It accepts only prehashed (`ED`) signatures, and it checks the key ID, the file signature and the trusted comment.
   - Its tests make signatures with libsodium. A changed file, a changed comment, a wrong key and a legacy signature are each refused.
 
+### Temporary files, clicks and memory (2026-10-23)
+- **Temporary files** (the readable copies in both memory folders):
+  - **When they're cleared:**
+    - at app start: media copies
+    - at unlock: media copies, plus the existing leftover check
+    - on closing the window: everything, through `AppLifecycleListener.onExitRequested` and `AppController.prepareToExit`; while an edit is open, the exit waits for Save or Discard (settings mockup scene 5)
+    - from Settings → Security → Temporary files → **Clear…**, with a confirmation (scene 4)
+  - **Never cleared:** the open edit, or an unfinished edit waiting for the user (they hold unsaved changes).
+  - **Uninstalling:** Flatpak has no uninstall hook. Nothing temporary is on disk, and the RAM folders clear at log-out or restart.
+- **Clicks:** a single click on a file opens its preview straight away; right-click or a long press opens the menu (PM decision, option A). The double-tap handler, which delayed every click by about 0.3 s, is gone.
+- **Memory** (release build, virtual screen, 30 video open/close rounds, anonymous memory):
+  - **Images:** flat. The app's own code doesn't leak.
+  - **Video:** by default it kept climbing. With `MALLOC_ARENA_MAX=2` (in the manifest's finish-args), plus mpv's demuxer cache capped (`demuxer-max-bytes=32MiB`, `demuxer-max-back-bytes=0` in `lockedDownMpvOptions`), it levels off at about 350–415 MB, against about 650 MB and rising before.
+
 ### Media time limits, the inbox, and the icon font (2026-10-23)
 - **Media can't spin forever:**
   - **Why:** media_kit 1.2.6 sends commands with `mpv_command_async` and waits for mpv's reply with no time limit, while `pause`, `play` and `stop` hold the player's lock. In the PM's test, a lost reply left every later preview spinning.

@@ -32,6 +32,9 @@ finish-args:
   - --device=dri
   # Sound for audio and video previews.
   - --socket=pulseaudio
+  # Fewer malloc arenas: mpv's decoder threads otherwise keep freed memory
+  # in reserve, so memory grew with every video preview (measured 2026-10-23).
+  - --env=MALLOC_ARENA_MAX=2
 
 cleanup:
   - /include

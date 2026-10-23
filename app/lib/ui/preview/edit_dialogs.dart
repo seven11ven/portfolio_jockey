@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:ui' show AppExitType;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:portfolio_jockey/app/edit_session.dart';
 import 'package:portfolio_jockey/app/theme.dart';
 import 'package:portfolio_jockey/services/native/gio_apps.dart';
@@ -427,6 +429,51 @@ Future<void> requestLock(BuildContext context) async {
   }
   if (await finishEdit(context, session, save: save) && controller.canLock) {
     controller.lock();
+  }
+}
+
+/// Settings scene 5: the window's close button was pressed while a file is
+/// being edited. Once the edit is saved or discarded, the app clears its
+/// temporary files and closes.
+Future<void> requestExit(BuildContext context) async {
+  final controller = AppScope.read(context);
+  final session = controller.edits.active;
+  if (session == null) {
+    if (await controller.prepareToExit()) {
+      await ServicesBinding.instance.exitApplication(AppExitType.required);
+    }
+    return;
+  }
+  final save = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => PjDialog(
+      title: 'Finish editing before closing',
+      content: [
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: session.info.fileName, style: _bold),
+              TextSpan(
+                text: session.info.appName == null
+                    ? ' is still open in another app. Save your changes into the project, or discard them, and the app then closes and clears its temporary files.'
+                    : ' is still open in ${session.info.appName}. Save your changes into the project, or discard them, and the app then closes and clears its temporary files.',
+              ),
+            ],
+          ),
+        ),
+      ],
+      actions: [
+        OutlinedButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+        OutlinedButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Discard…')),
+        FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Save changes…')),
+      ],
+    ),
+  );
+  if (save == null || !context.mounted) {
+    return;
+  }
+  if (await finishEdit(context, session, save: save) && await controller.prepareToExit()) {
+    await ServicesBinding.instance.exitApplication(AppExitType.required);
   }
 }
 

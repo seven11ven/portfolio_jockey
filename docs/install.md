@@ -79,6 +79,9 @@ flatpak info --show-permissions io.github.seven11ven.portfolio_jockey
 - **Settings** are in `~/.var/app/io.github.seven11ven.portfolio_jockey/config/`.
 - Everything in the vault is encrypted with your passphrase. **There's no way to recover a forgotten passphrase.** To keep a backup, use **Export projects…**, either locked with a passphrase or as an ordinary ZIP or TAR.
 
+## Temporary files
+To preview audio and video, and to edit files in other apps, the app makes readable copies, kept in memory only (never on disk). They're cleared when the app opens and closes, and you can clear them yourself in Settings → Security → Temporary files. Flatpak can't run anything when an app is uninstalled, but there's nothing temporary on disk to remove; the memory folders are cleared when you log out or restart.
+
 ## Updating
 Download the newer `.flatpak` file, check it as in step 3, and install it the same way. Your vault and settings are kept.
 

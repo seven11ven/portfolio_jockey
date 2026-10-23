@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart' as reference;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
@@ -163,7 +164,7 @@ void main() {
     final (app, out) = await withProjects(tester);
     await tester.tap(find.text('Kitchen Remodel'));
     await settleUntil(tester, find.text('measurements.txt'));
-    await tester.tap(find.text('measurements.txt'));
+    await tester.tap(find.text('measurements.txt'), buttons: kSecondaryButton);
     await settleUntil(tester, find.text('Export a readable copy…'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Export a readable copy…'));
@@ -176,7 +177,7 @@ void main() {
 
     final target = File('${out.path}/measurements.txt');
     await tester.runAsync(() => target.writeAsString('old'));
-    await tester.tap(find.text('measurements.txt'));
+    await tester.tap(find.text('measurements.txt'), buttons: kSecondaryButton);
     await settleUntil(tester, find.text('Export a readable copy…'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Export a readable copy…'));
@@ -189,9 +190,6 @@ void main() {
 
     // From the preview's "…" menu.
     await tester.tap(find.text('notes.md'));
-    await settleUntil(tester, find.text('Preview'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Preview'));
     await settleUntil(tester, find.text('Plan'));
     await tester.tap(find.byTooltip('More'));
     await settle(tester);

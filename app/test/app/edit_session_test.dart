@@ -200,6 +200,17 @@ void main() {
     await split.discard(session);
   });
 
+  test('clearing temporary files keeps the open edit and wipes everything else', () async {
+    final session = await start();
+    final media = await edits.mediaCopy(service, projectId, notes);
+    final stray = await folders.create('edit');
+    expect(await edits.clearTemporaryFiles(), 2, reason: 'the media copy and the stray edit folder');
+    expect(await media.exists(), isFalse);
+    expect(await stray.exists(), isFalse);
+    expect(await session.copy.exists(), isTrue, reason: 'unsaved changes are never cleared here');
+    await edits.discard(session);
+  });
+
   test('a media copy is a readable copy in its own private folder', () async {
     final copy = await edits.mediaCopy(service, projectId, notes);
     expect(copy.path, contains('/${PrivateFolders.appFolderName}/view-'));

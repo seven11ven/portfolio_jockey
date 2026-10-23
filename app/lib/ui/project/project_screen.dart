@@ -157,7 +157,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
       });
       return;
     }
-    unawaited(_openFileMenu(file, position));
+    // A single click opens the preview straight away (PM decision,
+    // 2026-10-23); the menu is on right-click or a long press.
+    unawaited(_preview(file));
   }
 
   /// Opens the preview, with previous/next through the files the current
@@ -374,7 +376,6 @@ class _ProjectScreenState extends State<ProjectScreen> {
                       selected: _selected.contains(file.id),
                       onTap: (position) => _tap(file, visible, position),
                       onMenu: (position) => unawaited(_openFileMenu(file, position)),
-                      onOpen: () => unawaited(_preview(file)),
                     ),
                 ],
               ),
@@ -386,13 +387,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
 }
 
 class _FileCard extends StatelessWidget {
-  const _FileCard({required this.file, required this.selected, required this.onTap, required this.onMenu, required this.onOpen});
+  const _FileCard({required this.file, required this.selected, required this.onTap, required this.onMenu});
 
   final FileEntry file;
   final bool selected;
   final void Function(Offset position) onTap;
   final void Function(Offset position) onMenu;
-  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -405,10 +405,11 @@ class _FileCard extends StatelessWidget {
         shape: selected
             ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: scheme.primary, width: 2))
             : null,
+        // No double-tap handler: it made every single click wait about 0.3 s
+        // to rule out a double click.
         child: InkWell(
           onTapUp: (d) => onTap(d.globalPosition),
           onTap: () {},
-          onDoubleTap: onOpen,
           child: Padding(
             padding: const EdgeInsets.all(10),
             child: Column(

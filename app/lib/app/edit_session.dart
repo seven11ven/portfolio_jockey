@@ -238,6 +238,26 @@ class EditSessions extends ChangeNotifier {
   }
 
   /// Wipes every media copy (none should outlive its preview).
+  /// Clears the app's temporary files: every media copy, and every edit
+  /// folder that isn't the edit in progress or an unfinished edit waiting for
+  /// the user to save or discard it (those hold unsaved changes and are only
+  /// ever removed by Save or Discard). Returns how many folders were wiped.
+  Future<int> clearTemporaryFiles() async {
+    var wiped = 0;
+    for (final folder in await folders.existing(_viewPrefix)) {
+      await PrivateFolders.wipe(folder);
+      wiped++;
+    }
+    final keep = {?_active?.folder.path, for (final s in _leftovers) s.folder.path};
+    for (final folder in await editFolders.existing(_editPrefix)) {
+      if (!keep.contains(folder.path)) {
+        await PrivateFolders.wipe(folder);
+        wiped++;
+      }
+    }
+    return wiped;
+  }
+
   Future<void> wipeMediaCopies() async {
     for (final folder in await folders.existing(_viewPrefix)) {
       await PrivateFolders.wipe(folder);

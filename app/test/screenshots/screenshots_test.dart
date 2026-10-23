@@ -316,7 +316,7 @@ void main() {
       await tester.tap(find.text('Kitchen Remodel'));
       await settleUntil(tester, find.text('countertop-after.png'));
 
-      await tester.tap(find.text('countertop-after.png'));
+      await tester.tap(find.text('countertop-after.png'), buttons: kSecondaryButton);
       await settleUntil(tester, find.text('Preview'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Preview'));
@@ -411,7 +411,7 @@ void main() {
       await tester.tap(find.text('Kitchen Remodel'));
       await settleUntil(tester, find.text('measurements.txt'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('measurements.txt'));
+      await tester.tap(find.text('measurements.txt'), buttons: kSecondaryButton);
       await settleUntil(tester, find.text('Edit in another app…'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Edit in another app…'));
@@ -438,7 +438,7 @@ void main() {
       await settleUntil(tester, find.text('Kitchen Remodel'));
       await tester.tap(find.text('Kitchen Remodel'));
       await settleUntil(tester, find.text('measurements.txt'));
-      await tester.tap(find.text('measurements.txt'));
+      await tester.tap(find.text('measurements.txt'), buttons: kSecondaryButton);
       await settleUntil(tester, find.text('Edit in another app…'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Edit in another app…'));
