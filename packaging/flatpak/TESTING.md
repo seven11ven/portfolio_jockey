@@ -53,7 +53,7 @@ Open each type with **Preview**. Audio and video open **paused**: press Play.
 - [ ] **D2.** A text file and a Markdown file.
 - [ ] **D3.** A PDF (go to the next and previous page).
 - [ ] **D4. Audio** (test item 10). It plays through your speakers.
-- [ ] **D5. Video** (test items 9 and 10). An MP4 (H.264) plays, with sound. If you have one, try a WebM too. Then close the preview **while it's playing**, a few times. The app must stay responsive every time; it must not freeze or show "not responding". Do the same with an audio file.
+- [ ] **D5. Video** (test items 9 and 10). An MP4 (H.264) plays, with sound. If you have one, try a WebM too. Then close the preview **while it's playing**, a few times. The app must stay responsive every time; it must not freeze or show "not responding". Do the same with an audio file. Open and close audio and video **10 times** in a row: a preview must never stay stuck on a spinner. If one ever does, it should say "The player stopped responding" within a few seconds; note that, and send the terminal output.
 - [ ] **D5b. Play on a second file.** Close a video, open another one (or the same again), and press Play once. It must start on the first click.
 - [ ] **D6. Readable copies are cleaned up.** This looks inside the running app, so keep it open.
       1. Find the app's instance number: `flatpak ps --columns=instance,application`
@@ -94,6 +94,7 @@ Open each type with **Preview**. Audio and video open **paused**: press Play.
 - [ ] **H3. Storage location → Move…** to a new folder you pick (for example `~/Documents/PJ test`). The move finishes. After a restart, the vault opens from the new place.
 - [ ] **H4.** **Light**, **Dark** and **System** themes all look right.
 - [ ] **H5.** **Show licenses** opens the list of licenses.
+- [ ] **H7. Inbox.** After a J test, the inbox icon (next to the folder button) shows a red number. Opening it lists the notice, with an ✕ to dismiss it, and the number goes away. **Clear all** asks first.
 - [ ] **H6. Open vault folder.** On the home screen, the folder button (first icon in the top bar) opens your file manager at the vault's folder. You'll see only folders with long random names and a hidden `.pj` folder; nothing in it is readable.
 
 ## J. Pull the plug
@@ -121,7 +122,7 @@ These check that a crash or power cut never loses data or leaves a readable file
 | E1–E8 | | |
 | F1–F5 | | |
 | G1–G7 | | |
-| H1–H6 | | |
+| H1–H7 | | |
 | J1–J5 | | |
 
 Also include:

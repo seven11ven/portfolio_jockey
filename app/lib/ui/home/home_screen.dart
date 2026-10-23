@@ -10,6 +10,7 @@ import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/ui/common.dart';
 import 'package:portfolio_jockey/ui/export/export_dialog.dart';
 import 'package:portfolio_jockey/ui/export/import_dialog.dart';
+import 'package:portfolio_jockey/ui/home/inbox_screen.dart';
 import 'package:portfolio_jockey/ui/home/project_dialogs.dart';
 import 'package:portfolio_jockey/ui/preview/edit_dialogs.dart';
 import 'package:portfolio_jockey/ui/project/project_screen.dart';
@@ -28,7 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _loadError;
   String _search = '';
   late final EditSessions _edits = AppScope.read(context).edits;
-  late final AppController _controller = AppScope.read(context);
   bool _askingLeftovers = false;
 
   @override
@@ -36,28 +36,13 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     unawaited(_reload());
     _edits.addListener(_leftoversChanged);
-    _controller.addListener(_showRecoveryNotices);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _leftoversChanged();
-      _showRecoveryNotices();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _leftoversChanged());
   }
 
   @override
   void dispose() {
     _edits.removeListener(_leftoversChanged);
-    _controller.removeListener(_showRecoveryNotices);
     super.dispose();
-  }
-
-  /// Says what was tidied up after a crash or power cut, once each.
-  void _showRecoveryNotices() {
-    if (!mounted) {
-      return;
-    }
-    for (final notice in _controller.takeRecoveryNotices()) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(notice), duration: const Duration(seconds: 10)));
-    }
   }
 
   void _leftoversChanged() {
@@ -175,6 +160,16 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: 'Open vault folder',
             onPressed: () => unawaited(_openVaultFolder()),
             icon: const Icon(Icons.folder_open_outlined),
+          ),
+          Builder(
+            builder: (context) {
+              final unread = AppScope.of(context).unreadCount;
+              return IconButton(
+                tooltip: unread == 0 ? 'Inbox' : 'Inbox ($unread unread)',
+                onPressed: () => unawaited(Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const InboxScreen()))),
+                icon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: const Icon(Icons.inbox_outlined)),
+              );
+            },
           ),
           IconButton(
             tooltip: 'Import a locked export',

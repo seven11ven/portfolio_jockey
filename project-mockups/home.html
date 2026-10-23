@@ -129,6 +129,56 @@
       </div>
     </div>
   </section>
+  <section class="scene">
+    <div class="scene-title">6. Inbox button with unread notices</div>
+    <div class="scene-note">After the app tidies up something left unfinished (for example after a crash or power cut), it adds a notice to the inbox instead of popping up a message. The number shows how many notices haven't been read. With none unread, the icon shows no number.</div>
+    <div class="screen" hidden>
+      <header class="topbar">
+        <span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span>
+        <div class="search">Search projects…</div>
+        <span class="icon-btn" title="Open vault folder">🗁</span>
+        <span class="icon-btn" title="Inbox (2 unread)" style="position:relative">✉<span style="position:absolute;top:2px;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;line-height:1">2</span></span>
+        <span class="icon-btn" title="Import project">⤓</span>
+        <span class="icon-btn" title="Lock">🔒</span>
+        <span class="icon-btn" title="Settings">⚙</span>
+      </header>
+      <div class="content">
+        <div class="project-grid">
+          <div class="card project-card"><div class="cover c1">🏠</div><div class="name-row"><h3>Kitchen Remodel</h3><span class="icon-btn">⋯</span></div><p>Contractor quotes, receipts and before/after photos.</p><span class="small muted">24 files · Opened today</span></div>
+          <div class="card project-card"><div class="cover c2">🎵</div><div class="name-row"><h3>Album Artwork</h3><span class="icon-btn">⋯</span></div><p>Cover drafts and reference images for the EP.</p><span class="small muted">58 files · Yesterday</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">7. Inbox</div>
+    <div class="scene-note">Opening the inbox marks its notices as read. Each notice can be dismissed with ✕; "Clear all" dismisses them all. Notices are kept, encrypted in the vault, until dismissed.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Inbox</h3><button class="btn">Clear all</button></header>
+      <div class="content">
+        <div class="stack" style="display:grid;gap:10px">
+          <div class="card" style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px">
+            <span style="flex:1"><strong>An edit wasn't saved</strong><br><span class="small">An edit of measurements.txt in Kitchen Remodel was open when the app closed. Its changes weren't saved; the project still has the previous version.</span><br><span class="small muted">Today, 9:41</span></span>
+            <span class="icon-btn" title="Dismiss">✕</span>
+          </div>
+          <div class="card" style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px">
+            <span style="flex:1"><strong>Export cleaned up</strong><br><span class="small">An export was interrupted. Its unfinished file was removed.</span><br><span class="small muted">Today, 9:41</span></span>
+            <span class="icon-btn" title="Dismiss">✕</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">8. Inbox, empty</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Inbox</h3></header>
+      <div class="content"><p class="muted" style="text-align:center;padding:40px 0">No notices. If the app ever has to tidy up after a crash or power cut, it says so here.</p></div>
+    </div>
+  </section>
+
 </main>
 <script src="mockup.js"></script>
 </body>

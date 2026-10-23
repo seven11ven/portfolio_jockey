@@ -152,6 +152,9 @@ class EditSessions extends ChangeNotifier {
       await launcher.open(session.copy.path, appId: app?.id);
     } on Object {
       await PrivateFolders.wipe(folder);
+      // Otherwise the next unlock would report an edit "open when the app
+      // closed" that never started.
+      await journal?.journalRemove(session.journalId);
       rethrow;
     }
     _active = session;

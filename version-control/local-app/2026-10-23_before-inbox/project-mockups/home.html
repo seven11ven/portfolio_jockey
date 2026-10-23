@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home and projects · Portfolio Jockey mockup</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="mock-bar">
+  <span>Design mockup · fake data</span><a href="index.html">All mockups</a>
+  <span class="seg"><button data-set-theme="light">Light</button><button data-set-theme="dark">Dark</button></span>
+  <span class="seg"><button data-set-view="both">Both</button><button data-set-view="desktop">Desktop</button><button data-set-view="phone">Phone</button></span>
+</div>
+<main class="mock-page">
+  <header>
+    <h1>Home and project actions</h1>
+    <p class="muted">The project grid, creating a project, and the "…" menu next to each project's name (rename, export, delete).</p>
+  </header>
+
+  <section class="scene">
+    <div class="scene-title">1. Home</div>
+    <div class="scene-note">Projects are sorted by most recently opened. On a phone, "New project" is the round + button. The folder button (first icon, "Open vault folder") opens the folder where the encrypted projects are stored in the desktop's file manager; it only holds encrypted files with random names.</div>
+    <div class="screen" hidden>
+      <header class="topbar">
+        <span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span>
+        <div class="search">Search projects…</div>
+        <span class="icon-btn" title="Open vault folder">🗁</span>
+        <span class="icon-btn" title="Import project">⤓</span>
+        <span class="icon-btn" title="Lock">🔒</span>
+        <span class="icon-btn" title="Settings">⚙</span>
+      </header>
+      <div class="content">
+        <div class="row" style="margin-bottom:14px"><h1>Projects</h1><span class="spacer"></span><button class="btn btn-primary hide-phone">＋ New project</button></div>
+        <div class="grid">
+          <div class="card project-card"><div class="cover c1">🏠</div><div class="name-row"><h3>Kitchen Remodel</h3><span class="icon-btn">⋯</span></div><p>Contractor quotes, receipts and before/after photos.</p><span class="small muted">24 files · Opened today</span></div>
+          <div class="card project-card"><div class="cover c2">🎵</div><div class="name-row"><h3>Album Artwork</h3><span class="icon-btn">⋯</span></div><p>Cover drafts and reference images for the EP.</p><span class="small muted">58 files · Yesterday</span></div>
+          <div class="card project-card"><div class="cover c3">📚</div><div class="name-row"><h3>Thesis Research</h3><span class="icon-btn">⋯</span></div><p>Papers, interview audio and chapter drafts.</p><span class="small muted">112 files · Oct 19</span></div>
+          <div class="card project-card"><div class="cover c4">🌱</div><div class="name-row"><h3>Garden Planner</h3><span class="icon-btn">⋯</span></div><p>Bed layouts and seed receipts.</p><span class="small muted">9 files · Oct 12</span></div>
+          <div class="card project-card"><div class="cover c5">🚲</div><div class="name-row"><h3>Bike Restoration</h3><span class="icon-btn">⋯</span></div><p>Parts list and progress photos.</p><span class="small muted">31 files · Sep 30</span></div>
+          <div class="new-card">＋ New project</div>
+        </div>
+      </div>
+      <span class="fab">＋</span>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">2. New project</div>
+    <div class="scene-note">Name is required. Cover art and description are optional and can be changed later from the "…" menu.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>New project</h2>
+          <div><label class="label">Name</label><input class="input" value="Wedding Album"></div>
+          <div>
+            <span class="label">Cover art</span>
+            <div class="row" style="flex-wrap:nowrap">
+              <div class="cover c4" style="width:120px">💍</div>
+              <div class="stack" style="gap:6px"><button class="btn">Choose image…</button><span class="small muted">The image is encrypted along with the project.</span></div>
+            </div>
+          </div>
+          <div><label class="label">Description</label><textarea class="input">Photos, vendor contracts and the seating plan.</textarea></div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Create project</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">3. The project "…" menu</div>
+    <div class="scene-note">Clicked (desktop) or tapped (phone) next to the project's name. On a phone it opens as a bottom sheet.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
+      <div class="content">
+        <div class="grid">
+          <div class="card project-card"><div class="cover c1">🏠</div><div class="name-row"><h3>Kitchen Remodel</h3><span class="icon-btn" style="background:var(--surface-2)">⋯</span></div><p>Contractor quotes, receipts and before/after photos.</p><span class="small muted">24 files · Opened today</span></div>
+          <div class="card project-card"><div class="cover c2">🎵</div><div class="name-row"><h3>Album Artwork</h3><span class="icon-btn">⋯</span></div><p>Cover drafts and reference images for the EP.</p><span class="small muted">58 files · Yesterday</span></div>
+        </div>
+      </div>
+      <div class="overlay light" style="display:block">
+        <div class="menu" style="left:200px;top:250px">
+          <div class="menu-title">Kitchen Remodel</div>
+          <button class="menu-item">✎ Rename</button>
+          <button class="menu-item">🖼 Change cover art and description</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item">⇪ Export as ZIP…</button>
+          <button class="menu-item">⇪ Export as TAR…</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item danger">🗑 Delete project…</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">4. Rename: confirmation</div>
+    <div class="scene-note">Every change that writes to disk gets a Confirm / Cancel step. For small edits it's built into the dialog: the Confirm button names the change.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Rename project</h2>
+          <div><label class="label">New name</label><input class="input" value="Kitchen &amp; Dining Remodel"></div>
+          <div class="summary-box">“Kitchen Remodel” → “Kitchen &amp; Dining Remodel”</div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Confirm rename</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5. Delete project: confirmation</div>
+    <div class="scene-note">The project's name must be typed before Delete is enabled. Original files elsewhere on the device are not touched.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Delete “Kitchen Remodel”?</h2></div>
+          <p>This permanently deletes the project and its <strong>24 encrypted files</strong> (412 MB) from this device. It can't be undone.</p>
+          <p class="small muted">Tip: export the project first if you might want it later.</p>
+          <div><label class="label">Type “<strong>Kitchen Remodel</strong>” to confirm</label><input class="input" value="Kitchen Remodel"></div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn">Export first…</button><button class="btn btn-danger">Delete project</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="mockup.js"></script>
+</body>
+</html>

@@ -300,6 +300,13 @@ The Flatpak (`packaging/flatpak/io.github.seven11ven.portfolio_jockey.yml`) runs
   - It accepts only prehashed (`ED`) signatures, and it checks the key ID, the file signature and the trusted comment.
   - Its tests make signatures with libsodium. A changed file, a changed comment, a wrong key and a legacy signature are each refused.
 
+### Media time limits, the inbox, and the icon font (2026-10-23)
+- **Media can't spin forever:**
+  - **Why:** media_kit 1.2.6 sends commands with `mpv_command_async` and waits for mpv's reply with no time limit, while `pause`, `play` and `stop` hold the player's lock. In the PM's test, a lost reply left every later preview spinning.
+  - **Now:** every `SharedPlayer` step has a 5 s limit. If it runs out, the player is marked stuck and set aside (never disposed), the next preview gets a fresh player, and the preview says "The player stopped responding. Close this preview and open it again." The log gets `SharedPlayer: <step> timed out`.
+- **The inbox:** `.pj/inbox.enc`, a sealed JSON file (`lib/vault/sealed_json.dart`, shared with the journal; magic `PJIB`). It holds notices (title, text, time, read) until they're dismissed, and replaces the pop-up messages after unlock. **PM decision:** dismissing one notice and marking notices as read need no confirmation; "Clear all" asks first.
+- **Icons:** release builds keep the whole Material icon font (`--no-tree-shake-icons`, 1.6 MB). Icon tree shaking had dropped the "Open vault folder" icon in the PM's release build. It was only checked in the release build on the virtual screen after that.
+
 ### Edit safeguards (2026-10-23)
 - **Where edit copies go** (PM decision after testing, 2026-10-23):
   - **First:** readable copies stayed in the sandbox's private memory folder.

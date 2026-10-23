@@ -403,6 +403,10 @@ class _MediaPreviewState extends State<MediaPreview> {
         }
       });
       setState(() => _video = player.video);
+    } on PlayerStuck catch (e) {
+      if (mounted) {
+        setState(() => _error = e.toString());
+      }
     } on Object catch (e) {
       if (mounted) {
         setState(() => _error = "This file can't be played: $e");

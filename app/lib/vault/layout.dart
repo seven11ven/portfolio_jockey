@@ -19,6 +19,9 @@ final class VaultLayout {
 
   /// Unfinished multi-step work, for clean-up after a crash (journal.dart).
   File get journalFile => File('${metadataDir.path}/journal.enc');
+
+  /// Notices for the user until they're dismissed (inbox.dart).
+  File get inboxFile => File('${metadataDir.path}/inbox.enc');
   File get vaultFile => File('${metadataDir.path}/vault');
 
   Directory projectDir(String projectId) {

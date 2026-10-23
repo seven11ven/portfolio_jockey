@@ -53,7 +53,10 @@ flutter analyze --fatal-infos --fatal-warnings
 flutter test
 
 echo "== Release build"
-flutter build linux --release
+# Keep every icon: release builds otherwise shrink the icon font to the
+# icons they detect, and that dropped the "Open vault folder" icon (blank in
+# the PM's test, 2026-10-23). It costs about 1.5 MB.
+flutter build linux --release --no-tree-shake-icons
 built="$app/build/linux/x64/release/bundle"
 [ -x "$built/portfolio_jockey" ] || { echo "No release bundle at $built" >&2; exit 1; }
 

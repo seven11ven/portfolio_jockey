@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -11,8 +12,14 @@ class FakeMpv {
   bool fail = false;
   bool neverIdle = false;
 
-  SharedPlayer player({Duration timeout = const Duration(seconds: 2)}) => SharedPlayer(
+  /// Steps that never finish, like a media_kit call whose mpv reply is lost.
+  final Set<String> hang = {};
+
+  SharedPlayer player({Duration timeout = const Duration(seconds: 2), Duration stepLimit = const Duration(seconds: 5)}) => SharedPlayer(
     command: (command) async {
+      if (hang.contains(command.first)) {
+        await Completer<void>().future;
+      }
       if (fail) {
         throw StateError('mpv gone');
       }
@@ -21,8 +28,16 @@ class FakeMpv {
         path = command[1];
       }
     },
-    pause: () async => calls.add('pause'),
+    pause: () async {
+      if (hang.contains('pause')) {
+        await Completer<void>().future;
+      }
+      calls.add('pause');
+    },
     stop: () async {
+      if (hang.contains('stop')) {
+        await Completer<void>().future;
+      }
       if (fail) {
         throw StateError('mpv gone');
       }
@@ -35,6 +50,7 @@ class FakeMpv {
       _ => '',
     },
     timeout: timeout,
+    stepLimit: stepLimit,
     interval: Duration.zero,
     settle: Duration.zero,
   );
@@ -83,5 +99,38 @@ void main() {
     await player.open(a);
     mpv.fail = true;
     await expectLater(player.close(a), completes);
+  });
+
+  group('a player that stops responding', () {
+    const limit = Duration(milliseconds: 100);
+
+    test('open gives up within the limit, and the player is set aside', () async {
+      final mpv = FakeMpv()..hang.add('pause');
+      final player = mpv.player(stepLimit: limit);
+      final watch = Stopwatch()..start();
+      await expectLater(player.open(a), throwsA(isA<PlayerStuck>()));
+      expect(watch.elapsed, lessThan(const Duration(seconds: 2)));
+      expect(player.stuck, isTrue);
+      await expectLater(player.open(b), throwsA(isA<PlayerStuck>()), reason: 'a stuck player is not used again');
+    });
+
+    test('a stuck stop during close still lets the copy be wiped, and marks the player stuck', () async {
+      final mpv = FakeMpv();
+      final player = mpv.player(stepLimit: limit);
+      await player.open(a);
+      mpv.hang.add('stop');
+      await expectLater(player.close(a), completes);
+      expect(player.stuck, isTrue);
+    });
+
+    test('loadfile that never returns is caught too', () async {
+      final mpv = FakeMpv()..hang.add('loadfile');
+      final player = mpv.player(stepLimit: limit);
+      await expectLater(player.open(a), throwsA(isA<PlayerStuck>()));
+    });
+
+    test('the message says what to do', () {
+      expect(const PlayerStuck().toString(), 'The player stopped responding. Close this preview and open it again.');
+    });
   });
 }

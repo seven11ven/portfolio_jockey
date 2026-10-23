@@ -7,6 +7,7 @@ import 'package:portfolio_jockey/vault/atomic_write.dart';
 import 'package:portfolio_jockey/vault/blob_stream.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
 import 'package:portfolio_jockey/vault/ids.dart';
+import 'package:portfolio_jockey/vault/inbox.dart';
 import 'package:portfolio_jockey/vault/journal.dart';
 import 'package:portfolio_jockey/vault/kdf.dart';
 import 'package:portfolio_jockey/vault/layout.dart';
@@ -163,6 +164,30 @@ final class UnlockedVault {
     await layout.blobDir(projectId).create(recursive: true);
     await writeIndex(projectId, index);
     return projectId;
+  }
+
+  /// The notices in the inbox, oldest first; empty if there are none.
+  Future<List<InboxNotice>> readInbox() async {
+    _checkUnlocked();
+    final file = layout.inboxFile;
+    if (!await file.exists()) {
+      return [];
+    }
+    return decryptInbox(await file.readAsBytes(), masterKey: _masterKey);
+  }
+
+  /// Replaces the inbox, atomically. An empty inbox removes the file.
+  Future<void> writeInbox(List<InboxNotice> notices) async {
+    _checkUnlocked();
+    final file = layout.inboxFile;
+    if (notices.isEmpty) {
+      if (await file.exists()) {
+        await file.delete();
+        Libc.instance.syncDirectory(file.parent.path);
+      }
+      return;
+    }
+    await writeBytesAtomically(file, encryptInbox(notices, masterKey: _masterKey));
   }
 
   /// The unfinished work listed in the journal; empty if there's none.

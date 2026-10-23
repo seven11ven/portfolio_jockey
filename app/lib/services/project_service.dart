@@ -8,6 +8,7 @@ import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/services/tag_changes.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
 import 'package:portfolio_jockey/vault/ids.dart';
+import 'package:portfolio_jockey/vault/inbox.dart';
 import 'package:portfolio_jockey/vault/journal.dart';
 import 'package:portfolio_jockey/vault/native/libc.dart';
 import 'package:portfolio_jockey/vault/native/sodium.dart';
@@ -106,6 +107,23 @@ final class ProjectService {
   /// Removes the entry [id] once its work has finished or been tidied up.
   Future<void> journalRemove(String id) => _journal((entries) => [...entries.where((e) => e.id != id)]);
 
+  /// The inbox's notices, oldest first.
+  Future<List<InboxNotice>> inbox() async {
+    await _journalQueue;
+    return vault.readInbox();
+  }
+
+  /// Changes the inbox, one change at a time (shares the journal's queue).
+  Future<List<InboxNotice>> changeInbox(List<InboxNotice> Function(List<InboxNotice> notices) change) {
+    final next = _journalQueue.then((_) async {
+      final changed = change(await vault.readInbox());
+      await vault.writeInbox(changed);
+      return changed;
+    });
+    _journalQueue = next.then((_) {}, onError: (Object _) {});
+    return next;
+  }
+
   /// The unfinished work listed in the journal.
   Future<List<JournalEntry>> journalEntries() async {
     await _journalQueue;
@@ -122,9 +140,9 @@ final class ProjectService {
   /// nothing is half done or left readable. Call after unlocking, once
   /// [EditSessions.findLeftovers] has run. [openEditIds] are the edit folders
   /// that still exist (they're offered to the user as usual). Returns one
-  /// plain-language notice per thing that was tidied up.
-  Future<List<String>> recoverJournal({required Set<String> openEditIds}) async {
-    final notices = <String>[];
+  /// plain-language notice (a title and a text) per thing that was tidied up.
+  Future<List<({String title, String text})>> recoverJournal({required Set<String> openEditIds}) async {
+    final notices = <({String title, String text})>[];
     final currentRoot = vault.layout.root.absolute.path;
     for (final entry in await journalEntries()) {
       try {
@@ -134,7 +152,7 @@ final class ProjectService {
             if (await temp.exists()) {
               await PrivateFolders.overwriteWithZeros(temp);
               await temp.delete();
-              notices.add('An export was interrupted. Its unfinished file was removed.');
+              notices.add((title: 'Export cleaned up', text: 'An export was interrupted. Its unfinished file was removed.'));
             }
           case ImportStarted(:final projectIds):
             var removed = 0;
@@ -145,7 +163,7 @@ final class ProjectService {
               }
             }
             if (removed > 0) {
-              notices.add('An import was interrupted, so it was undone. Nothing from it was kept.');
+              notices.add((title: 'Import undone', text: 'An import was interrupted, so it was undone. Nothing from it was kept.'));
             }
           case MoveStarted(:final source, :final target):
             if (target == currentRoot && source != currentRoot) {
@@ -153,7 +171,7 @@ final class ProjectService {
               final old = Directory(source);
               if (await File('$source/.pj/vault').exists()) {
                 await old.delete(recursive: true);
-                notices.add('Moving the storage location was interrupted at the end. The move is complete, and the old folder was removed.');
+                notices.add((title: 'Storage move finished', text: 'Moving the storage location was interrupted at the end. The move is complete, and the old folder was removed.'));
               }
             } else if (source == currentRoot && target != currentRoot) {
               // Cut off before the switch: the copy at the target is unfinished.
@@ -162,21 +180,23 @@ final class ProjectService {
                 await for (final child in copy.list(followLinks: false)) {
                   await child.delete(recursive: true);
                 }
-                notices.add('Moving the storage location was interrupted. Your projects stay where they were, and the unfinished copy was removed.');
+                notices.add((title: 'Storage move undone', text: 'Moving the storage location was interrupted. Your projects stay where they were, and the unfinished copy was removed.'));
               }
             }
           case EditStarted(:final projectName, :final fileName):
             if (openEditIds.contains(entry.id)) {
               continue; // still there: it's offered to save or discard as usual
             }
-            notices.add(
-              "An edit of $fileName in $projectName was open when the app closed. Its changes weren't saved; "
-              'the project still has the previous version.',
-            );
+            notices.add((
+              title: "An edit wasn't saved",
+              text:
+                  "An edit of $fileName in $projectName was open when the app closed. Its changes weren't saved; "
+                  'the project still has the previous version.',
+            ));
         }
         await journalRemove(entry.id);
       } on Object catch (e) {
-        notices.add("Couldn't tidy up after an interrupted task: $e");
+        notices.add((title: "Couldn't tidy up", text: "Couldn't tidy up after an interrupted task: $e"));
       }
     }
     return notices;

@@ -88,21 +88,73 @@ void main() {
     expect(app.controller.backoff.failures, 0);
   });
 
-  testWidgets('After a crash, unlocking tidies up and says what it did', (tester) async {
+  testWidgets('After a crash, unlocking tidies up and puts a notice in the inbox', (tester) async {
     final app = await startApp(tester, unlocked: true);
     final temp = File('${app.storage.parent.path}/.Kitchen.zip.tmp-crash');
-    await tester.runAsync(() async {
-      await temp.writeAsString('readable export content');
-      await app.controller.projects.journalPut(ExportStarted('e1', tempPath: temp.path));
+    final temp2 = File('${app.storage.parent.path}/.Garden.zip.tmp-crash');
+    // What a crash mid-export leaves: the temp file, and its journal entry.
+    // Written straight to the vault, as the test's real-time section can't
+    // wait on the service's queue, which runs on the test's simulated clock.
+    Future<void> crashedExport(File file, String id) => tester.runAsync(() async {
+      await file.writeAsString('readable export content');
+      final vault = app.controller.projects.vault;
+      await vault.writeJournal([...await vault.readJournal(), ExportStarted(id, tempPath: file.path)]);
     });
-    await tester.tap(find.byTooltip('Lock'));
-    await settle(tester);
+    Future<void> lockAndUnlock() async {
+      await tester.tap(find.byTooltip('Lock'));
+      await settle(tester);
+      await tester.enterText(find.byKey(const Key('unlock-passphrase')), 'test passphrase');
+      await tester.pump();
+      await tester.tap(find.text('Unlock'));
+      await settleUntil(tester, find.text('Projects'));
+    }
 
-    await tester.enterText(find.byKey(const Key('unlock-passphrase')), 'test passphrase');
-    await tester.pump();
-    await tester.tap(find.text('Unlock'));
-    await settleUntil(tester, find.textContaining('export was interrupted'));
-    expect(find.text('An export was interrupted. Its unfinished file was removed.'), findsOneWidget);
+    expect(find.byTooltip('Inbox'), findsOneWidget, reason: 'no number when nothing is unread');
+    await crashedExport(temp, 'e1');
+    await lockAndUnlock();
+    await settleUntil(tester, find.byTooltip('Inbox (1 unread)'));
+    expect(find.byTooltip('Inbox (1 unread)'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget, reason: 'the badge');
+    expect(find.byType(SnackBar), findsNothing, reason: 'no pop-ups');
     expect(await tester.runAsync(temp.exists), isFalse);
+
+    await tester.tap(find.byTooltip('Inbox (1 unread)'));
+    await settleUntil(tester, find.text('Export cleaned up'));
+    expect(find.text('An export was interrupted. Its unfinished file was removed.'), findsOneWidget);
+    for (var i = 0; i < 50 && app.controller.unreadCount > 0; i++) {
+      await settle(tester, rounds: 1);
+    }
+    expect(app.controller.unreadCount, 0, reason: 'opening the inbox marks it read');
+
+    // Kept across lock and unlock until dismissed.
+    await tester.pageBack();
+    await settle(tester);
+    expect(find.byTooltip('Inbox'), findsOneWidget);
+    await lockAndUnlock();
+    await tester.tap(find.byTooltip('Inbox'));
+    await settleUntil(tester, find.text('Export cleaned up'));
+    await tester.tap(find.byTooltip('Dismiss'));
+    await settleUntil(tester, find.textContaining('No notices.'));
+    expect(app.controller.inbox, isEmpty);
+
+    // Clear all asks first.
+    await tester.pageBack();
+    await settle(tester);
+    await crashedExport(temp, 'e2');
+    await crashedExport(temp2, 'e3');
+    await lockAndUnlock();
+    await settleUntil(tester, find.byTooltip('Inbox (2 unread)'));
+    await tester.tap(find.byTooltip('Inbox (2 unread)'));
+    await settleUntil(tester, find.text('Clear all'));
+    await tester.tap(find.text('Clear all'));
+    await settleUntil(tester, find.text('Clear all notices?'));
+    await tester.tap(find.text('Cancel'));
+    await settle(tester);
+    expect(app.controller.inbox, hasLength(2));
+    await tester.tap(find.text('Clear all'));
+    await settleUntil(tester, find.text('Clear all notices?'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Clear all'));
+    await settleUntil(tester, find.textContaining('No notices.'));
+    expect(app.controller.inbox, isEmpty);
   });
 }

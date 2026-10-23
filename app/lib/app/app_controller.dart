@@ -16,6 +16,7 @@ import 'package:portfolio_jockey/services/sandbox.dart';
 import 'package:portfolio_jockey/services/storage_move.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
 import 'package:portfolio_jockey/vault/ids.dart';
+import 'package:portfolio_jockey/vault/inbox.dart';
 import 'package:portfolio_jockey/vault/journal.dart';
 import 'package:portfolio_jockey/vault/kdf.dart';
 import 'package:portfolio_jockey/vault/vault.dart';
@@ -215,6 +216,7 @@ class AppController extends ChangeNotifier {
     _projects?.vault.lock();
     _projects = null;
     edits.journal = null;
+    _inbox = const [];
     _stage = AppStage.locked;
     notifyListeners();
   }
@@ -228,31 +230,62 @@ class AppController extends ChangeNotifier {
     unawaited(_afterUnlock(projects));
   }
 
-  /// Notices about work tidied up after a crash or power cut, for the home
-  /// screen to show once ([takeRecoveryNotices]).
-  final List<String> _recoveryNotices = [];
+  List<InboxNotice> _inbox = const [];
 
-  /// The notices not shown yet; each is returned once.
-  List<String> takeRecoveryNotices() {
-    final notices = [..._recoveryNotices];
-    _recoveryNotices.clear();
-    return notices;
+  /// The inbox's notices, newest first, while unlocked.
+  List<InboxNotice> get inbox => _inbox.reversed.toList();
+
+  /// How many notices haven't been read yet (the number on the inbox icon).
+  int get unreadCount => _inbox.where((n) => !n.read).length;
+
+  /// Marks every notice as read (opening the inbox does this).
+  Future<void> markAllRead() => _changeInbox((notices) => [for (final n in notices) n.asRead()]);
+
+  /// Dismisses the notice [id].
+  Future<void> dismiss(String id) => _changeInbox((notices) => [...notices.where((n) => n.id != id)]);
+
+  /// Dismisses every notice.
+  Future<void> clearInbox() => _changeInbox((_) => const []);
+
+  Future<void> _changeInbox(List<InboxNotice> Function(List<InboxNotice> notices) change) async {
+    final projects = _projects;
+    if (projects == null) {
+      return;
+    }
+    final changed = await projects.changeInbox(change);
+    if (identical(_projects, projects)) {
+      _inbox = changed;
+      notifyListeners();
+    }
   }
 
   /// Finds unfinished edits, then tidies up what the journal still lists
   /// (exports, imports, a storage move, an edit whose copy is gone), then
-  /// removes leftovers inside projects.
+  /// removes leftovers inside projects. What was tidied up goes to the inbox.
   Future<void> _afterUnlock(ProjectService projects) async {
+    final found = <({String title, String text})>[];
     try {
       await edits.findLeftovers();
       final open = {for (final s in edits.leftovers) s.journalId};
-      _recoveryNotices.addAll(await projects.recoverJournal(openEditIds: open));
+      found.addAll(await projects.recoverJournal(openEditIds: open));
       await projects.cleanUp();
     } on Object catch (e) {
-      _recoveryNotices.add("Couldn't check for work left unfinished last time: $e");
+      found.add((title: "Couldn't check for unfinished work", text: "Couldn't check for work left unfinished last time: $e"));
     }
-    if (identical(_projects, projects)) {
-      notifyListeners();
+    try {
+      final now = DateTime.now();
+      final inbox = found.isEmpty
+          ? await projects.inbox()
+          : await projects.changeInbox((notices) => [
+              ...notices,
+              for (final f in found) InboxNotice(id: newId(), title: f.title, text: f.text, at: now),
+            ]);
+      if (identical(_projects, projects)) {
+        _inbox = inbox;
+        notifyListeners();
+      }
+    } on Object catch (e) {
+      debugPrint("Couldn't read the inbox: $e");
     }
   }
 

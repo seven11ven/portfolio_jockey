@@ -249,3 +249,37 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **Tests:** `test/services/private_folder_edit_test.dart` (3), and an edit-versus-media folder test.
 - **Backup:** `version-control/local-app/2026-10-23_before-shared-edit-folder/`.
 - **Impact:** to confirm with E1–E5 on the PM's PC. **Not committed.**
+
+## The edit path check, and the missing folder icon
+**Time:** 2026-10-23 17:34 UTC
+- **"Edit in another app" refused with my own new error.** Inside the sandbox, `$XDG_RUNTIME_DIR/app/<id>` is a link to `/run/flatpak/app/<id>`, and the copy's path is the resolved one. The check now accepts both forms (`isInFolder` in `gio_apps.dart`; `test/services/gio_apps_test.dart`, including a look-alike name that's still refused).
+- **The "Open vault folder" icon was blank** in the PM's build. Reproduced with the release build on the virtual screen: the button and its tooltip were there, but not the glyph. Another folder icon was blank too, and `--no-tree-shake-icons` showed it, so the release build's icon-font shrinking dropped it. `package-bundle.sh` now builds with `--no-tree-shake-icons` (about 1.5 MB more) so no icon can disappear this way.
+- **Audio and video "stuck loading" after a few opens** (PM's D4/D5): not reproducible outside the Flatpak (6 rounds loaded fine here). Waiting for the PM's terminal log.
+- **Backup:** `version-control/local-app/2026-10-23_before-edit-path-fix/`. **Not committed.**
+
+## PM decision: inbox dismissals need no confirmation
+**Time:** 2026-10-23 17:54 UTC
+- The brief asks for a confirmation screen before anything that changes files. **PM decision:** in the inbox, dismissing one notice (✕) and marking notices as read go without one; they only change the inbox's own small encrypted file. "Clear all" still asks first.
+
+## Stuck media, the inbox, the false notice, icons
+**Time:** 2026-10-23 18:11 UTC
+- **Stuck media (PM's D4/D5):** the screenshot showed the app's own spinner, and the log showed one player with every file loaded. The cause is media_kit's unlimited wait for mpv's async replies, while holding the player's lock.
+  - `SharedPlayer` now has a 5 s limit per step (`stepLimit`), and a stuck player is set aside for a fresh one (`PlayerStuck`, with a clear message). Each timeout is logged.
+  - Tests: 4 new, covering a hung pause, a hung stop during close, and a hung loadfile.
+- **The false "edit was open" notice:** a failed edit start now removes its journal entry. Tested.
+- **The inbox (approved mockups, home.html scenes 6–8):**
+  - storage: `lib/vault/inbox.dart` and `.pj/inbox.enc`, through the new shared `sealed_json.dart` (the journal's file format is unchanged)
+  - `ProjectService.inbox/changeInbox`, and `AppController.inbox/unreadCount/markAllRead/dismiss/clearInbox`
+  - recovery notices go to the inbox, with titles; the pop-ups are removed
+  - the UI: `ui/home/inbox_screen.dart`, and the top bar's `Icons.inbox_outlined` with a `Badge`
+  - PM decision: no confirmation for ✕ or mark-as-read; Clear all confirms
+  - A UI test covers the badge, opening, ✕, keeping notices across lock and unlock, and Clear all.
+- **Icons:** `--no-tree-shake-icons` in `package-bundle.sh`.
+- **Checked in the release build on the virtual screen** (as the kit builds it):
+  - the top bar with all five icons (folder, inbox, import, lock, settings), with no badge and with a red 1
+  - a **real kill** mid-export: the 4.6 MB readable temp file was removed at unlock, and the notice appeared
+  - the inbox with the notice and its ✕; dismissing it; the empty inbox
+  - 8 media open/close rounds: no timeouts, and the copies were wiped
+- **Full run:** 212 pass (13 skipped); analyze clean; privacy check passes.
+- **Backups:** `version-control/local-app/2026-10-23_before-inbox/` (with `journal.dart` and `project_service.dart`).
+- **Next requests from the PM:** a Settings button to clear the app's temporary files (needs a mockup), and a look at slow clicks, low video frame rate and memory leaks. **Not committed.**

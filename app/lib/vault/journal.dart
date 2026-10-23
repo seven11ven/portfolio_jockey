@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:portfolio_jockey/vault/aead.dart';
 import 'package:portfolio_jockey/vault/errors.dart';
-import 'package:portfolio_jockey/vault/native/sodium.dart';
+import 'package:portfolio_jockey/vault/sealed_json.dart';
 import 'package:portfolio_jockey/vault/secure_buffer.dart';
 
 /// One piece of work that touches the disk in several steps and must be
@@ -78,73 +76,20 @@ final class EditStarted extends JournalEntry {
   Map<String, Object?> toJson() => {'id': id, 'kind': 'edit', 'project': projectName, 'file': fileName};
 }
 
-// journal.enc layout (in the vault's .pj folder):
-//    0   4  magic "PJJN"
-//    4   1  format version (1)
-//    5   3  reserved, zero
-//    8  24  nonce
-//   32   …  the entries as UTF-8 JSON, XChaCha20-Poly1305 encrypted (+ 16-byte tag)
-// The associated data is bytes 0–7 plus "journal", so the journal can't be
-// swapped with an index (whose associated data ends in a project ID).
-const List<int> _magic = [0x50, 0x4a, 0x4a, 0x4e]; // "PJJN"
-const int _formatVersion = 1;
-const int _prefixLength = 8;
-
-Uint8List encryptJournal(List<JournalEntry> entries, {required SecureBuffer masterKey}) {
-  final sodium = Sodium.instance;
-  final prefix = Uint8List(_prefixLength)
-    ..setAll(0, _magic)
-    ..[4] = _formatVersion;
-  final nonce = sodium.randomBytes(sodium.aeadNonceBytes);
-  final plaintext = utf8.encode(jsonEncode([for (final e in entries) e.toJson()]));
-  try {
-    final ciphertext = aeadEncrypt(plaintext, ad: _associatedData(prefix), nonce: nonce, key: masterKey);
-    return Uint8List(_prefixLength + nonce.length + ciphertext.length)
-      ..setAll(0, prefix)
-      ..setAll(_prefixLength, nonce)
-      ..setAll(_prefixLength + nonce.length, ciphertext);
-  } finally {
-    plaintext.fillRange(0, plaintext.length, 0);
-  }
-}
+// journal.enc: a sealed JSON file (sealed_json.dart), magic "PJJN", label
+// "journal".
+Uint8List encryptJournal(List<JournalEntry> entries, {required SecureBuffer masterKey}) =>
+    sealJson([for (final e in entries) e.toJson()], magic: 'PJJN', label: 'journal', masterKey: masterKey);
 
 /// Throws [VaultFormatError] if it isn't a journal, and [TamperedData] if it
 /// was changed.
 List<JournalEntry> decryptJournal(Uint8List bytes, {required SecureBuffer masterKey}) {
-  final sodium = Sodium.instance;
-  final headerLength = _prefixLength + sodium.aeadNonceBytes;
-  if (bytes.length < headerLength + sodium.aeadTagBytes) {
-    throw const VaultFormatError('Journal file is too short');
-  }
-  for (var i = 0; i < _magic.length; i++) {
-    if (bytes[i] != _magic[i]) {
-      throw const VaultFormatError('Not a journal file');
-    }
-  }
-  if (bytes[4] != _formatVersion) {
-    throw VaultFormatError('Unsupported journal format version ${bytes[4]}');
-  }
-  final prefix = Uint8List.sublistView(bytes, 0, _prefixLength);
-  final plaintext = aeadDecrypt(
-    Uint8List.sublistView(bytes, headerLength),
-    ad: _associatedData(prefix),
-    nonce: Uint8List.sublistView(bytes, _prefixLength, headerLength),
-    key: masterKey,
-  );
-  if (plaintext == null) {
-    throw const TamperedData('Journal failed its integrity check');
-  }
+  final json = openSealedJson(bytes, magic: 'PJJN', label: 'journal', masterKey: masterKey);
   try {
-    final list = jsonDecode(utf8.decode(plaintext)) as List<Object?>;
-    return [for (final e in list) JournalEntry.fromJson((e! as Map).cast<String, Object?>())];
+    return [for (final e in json! as List<Object?>) JournalEntry.fromJson((e! as Map).cast<String, Object?>())];
+  } on VaultFormatError {
+    rethrow;
   } on Object catch (e) {
-    if (e is VaultFormatError) {
-      rethrow;
-    }
     throw VaultFormatError('Journal is not valid: $e');
-  } finally {
-    plaintext.fillRange(0, plaintext.length, 0);
   }
 }
-
-Uint8List _associatedData(Uint8List prefix) => Uint8List.fromList([...prefix, ...ascii.encode('journal')]);

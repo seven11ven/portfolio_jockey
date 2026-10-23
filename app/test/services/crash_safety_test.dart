@@ -114,7 +114,7 @@ void main() {
 
       final notices = await (await restart()).recoverJournal(openEditIds: {});
       expect(await temp.exists(), isFalse);
-      expect(notices.single, contains('export was interrupted'));
+      expect(notices.single.text, contains('export was interrupted'));
       expect(await (await restart()).journalEntries(), isEmpty);
     });
 
@@ -125,7 +125,7 @@ void main() {
 
       final after = await restart();
       final notices = await after.recoverJournal(openEditIds: {});
-      expect(notices.single, contains('import was interrupted'));
+      expect(notices.single.text, contains('import was interrupted'));
       final ids = [for (final p in (await after.listProjects()).projects) p.id];
       expect(ids, [keep]);
       expect(half, isNot(keep));
@@ -137,7 +137,7 @@ void main() {
       await service.journalPut(MoveStarted('m1', source: root.absolute.path, target: target.absolute.path));
 
       final notices = await (await restart()).recoverJournal(openEditIds: {});
-      expect(notices.single, contains('stay where they were'));
+      expect(notices.single.text, contains('stay where they were'));
       expect(target.listSync(), isEmpty);
       expect(await File('${root.path}/.pj/vault').exists(), isTrue);
     });
@@ -149,7 +149,7 @@ void main() {
       await service.journalPut(MoveStarted('m2', source: old.absolute.path, target: root.absolute.path));
 
       final notices = await (await restart()).recoverJournal(openEditIds: {});
-      expect(notices.single, contains('move is complete'));
+      expect(notices.single.text, contains('move is complete'));
       expect(await old.exists(), isFalse);
       expect(await File('${root.path}/.pj/vault').exists(), isTrue);
     });
@@ -160,7 +160,7 @@ void main() {
 
       final after = await restart();
       final notices = await after.recoverJournal(openEditIds: {'edit-here'});
-      expect(notices.single, contains('notes.txt in Kitchen was open when the app closed'));
+      expect(notices.single.text, contains('notes.txt in Kitchen was open when the app closed'));
       expect([for (final e in await after.journalEntries()) e.id], ['edit-here']);
     });
 
@@ -198,4 +198,18 @@ void main() {
       expect(await contents(await restart(), id), 'kept');
     });
   });
+
+  test('a failed edit start leaves no journal entry, so no false notice', () async {
+    final (id, _) = await projectWithFile('text');
+    final edits = EditSessions(folders: await fakePrivateFolders(), launcher: _FailingLauncher(), settle: Duration.zero)..journal = service;
+    addTearDown(edits.dispose);
+    final file = (await service.readProject(id)).files.single;
+    await expectLater(edits.start(service: service, projectId: id, projectName: 'P', file: file), throwsA(isA<FileSystemException>()));
+    expect(await service.journalEntries(), isEmpty);
+  });
+}
+
+class _FailingLauncher extends FakeLauncher {
+  @override
+  Future<void> open(String path, {String? appId}) async => throw FileSystemException("Couldn't open it", path);
 }

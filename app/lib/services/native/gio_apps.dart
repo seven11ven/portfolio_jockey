@@ -73,8 +73,12 @@ final class GioAppLauncher implements AppLauncher {
       // one in the memory folder Flatpak shares with it. Anywhere else, it
       // fails without telling us, so refuse clearly instead.
       final env = Platform.environment;
-      final shared = '${env['XDG_RUNTIME_DIR']}/app/${env['FLATPAK_ID']}/';
-      if (!path.startsWith(shared)) {
+      final shared = '${env['XDG_RUNTIME_DIR']}/app/${env['FLATPAK_ID']}';
+      // Inside the sandbox that folder is a link to /run/flatpak/app/<id>,
+      // and the copy's path is the resolved one, so accept either form.
+      final sharedDir = Directory(shared);
+      final resolved = sharedDir.existsSync() ? sharedDir.resolveSymbolicLinksSync() : shared;
+      if (!isInFolder(path, [shared, resolved])) {
         throw FileSystemException("Couldn't open it in another app: the readable copy isn't in the folder the desktop can reach ($shared)", path);
       }
       // Through the portal directly: GLib's own call sends the request on a
@@ -301,3 +305,7 @@ String? _fromC(Pointer<Uint8> chars) {
   }
   return utf8.decode(chars.asTypedList(length), allowMalformed: true);
 }
+
+/// Whether [path] is inside one of [folders] (each given without a trailing
+/// slash), and not merely a name that starts the same way.
+bool isInFolder(String path, List<String> folders) => folders.any((f) => path.startsWith('$f/'));
