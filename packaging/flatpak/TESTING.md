@@ -48,12 +48,13 @@ Run these in a terminal. They don't change anything.
 - [ ] **C5.** **Rename**, **Edit tags…**, **Change cover art and description**, and **Delete from project** each work. Their **Cancel** changes nothing.
 
 ## D. Previews
-Open each type with **Preview**:
+Open each type with **Preview**. Audio and video open **paused**: press Play.
 - [ ] **D1.** An image (zoom in and out).
 - [ ] **D2.** A text file and a Markdown file.
 - [ ] **D3.** A PDF (go to the next and previous page).
 - [ ] **D4. Audio** (test item 10). It plays through your speakers.
 - [ ] **D5. Video** (test items 9 and 10). An MP4 (H.264) plays, with sound. If you have one, try a WebM too. Then close the preview **while it's playing**, a few times. The app must stay responsive every time; it must not freeze or show "not responding". Do the same with an audio file.
+- [ ] **D5b. Play on a second file.** Close a video, open another one (or the same again), and press Play once. It must start on the first click.
 - [ ] **D6. Readable copies are cleaned up.** This looks inside the running app, so keep it open.
       1. Find the app's instance number: `flatpak ps --columns=instance,application`
       2. With a video preview **open**, run `flatpak enter <instance> sh -c 'ls -la "$XDG_RUNTIME_DIR/portfolio_jockey"'`. A readable copy should be listed.
@@ -61,11 +62,14 @@ Open each type with **Preview**:
       If `flatpak enter` asks for permission, add `sudo` in front of it.
 
 ## E. "Edit in another app" (test item 8)
-- [ ] **E1.** On a text file, choose **Edit in another app…**. Your desktop's app chooser appears. Pick a text editor.
+- [ ] **E1.** On a text file, choose **Edit in another app…**, then **Open**. Your desktop's "Open With…" chooser appears **every time**, even if you picked an app before. Pick a text editor. If nothing appears, or the app shows an error, note the exact message.
 - [ ] **E2.** The editor opens the file and **can save it**. Make a small change and save. If the editor says the file is read-only, note the exact message.
 - [ ] **E3.** Back in Portfolio Jockey, the edit banner shows. **Save changes…** stores the edit, and the preview shows the new text.
 - [ ] **E4.** Repeat with **Discard…**: the project copy stays as it was.
 - [ ] **E5.** Try an image editor such as GIMP, if you have one. Some editors save by replacing the file; check that the edit still arrives.
+- [ ] **E6. Saving too early.** In the editor, start saving a large change, and press **Save changes** in Portfolio Jockey right away. If the editor is still writing, the app says "The other app is still saving this file…" and writes nothing. **Try again** then works.
+- [ ] **E7. Empty file.** In the editor, delete all the text and save. **Save changes** shows "The edited copy is empty" and only saves after **Save the empty file**. Cancel keeps the old version.
+- [ ] **E8. Save As.** In the editor, use **Save As** to a different place, then **Save changes** in the app. It says there are no changes and that the editor may have saved to a different place.
 
 ## F. Moving originals to the Trash (test items 2, 4, 6)
 - [ ] **F1.** On a file you added, open the menu and choose **Move to Trash**. The dialog shows the **real** location (not a portal path). Cancel changes nothing.
@@ -89,6 +93,7 @@ Open each type with **Preview**:
 - [ ] **H3. Storage location → Move…** to a new folder you pick (for example `~/Documents/PJ test`). The move finishes. After a restart, the vault opens from the new place.
 - [ ] **H4.** **Light**, **Dark** and **System** themes all look right.
 - [ ] **H5.** **Show licenses** opens the list of licenses.
+- [ ] **H6. Open vault folder.** On the home screen, the folder button (first icon in the top bar) opens your file manager at the vault's folder. You'll see only folders with long random names and a hidden `.pj` folder; nothing in it is readable.
 
 ## I. Clean up
 - [ ] **I1.** Remove the test data: `flatpak uninstall --user --delete-data io.github.seven11ven.portfolio_jockey`. Only do this if you won't keep using this build. It deletes the vault in the app's own data folder; a storage folder moved elsewhere (H3) stays.
@@ -104,10 +109,10 @@ Open each type with **Preview**:
 | B1–B6 | | |
 | C1–C5 | | |
 | D1–D6 | | |
-| E1–E5 | | |
+| E1–E8 | | |
 | F1–F5 | | |
 | G1–G7 | | |
-| H1–H5 | | |
+| H1–H6 | | |
 
 Also include:
 - your distribution and version (`cat /etc/os-release | head -3`)

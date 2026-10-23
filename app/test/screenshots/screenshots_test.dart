@@ -118,6 +118,7 @@ void main() {
       await tester.tap(find.text('Change…'));
       await settle(tester);
       await tester.enterText(find.byKey(const Key('passphrase')), 'correct horse battery');
+      await tester.pump(); // the confirm field appears once the strength reaches Fair
       await tester.enterText(find.byKey(const Key('confirm')), 'correct horse battery');
       await tester.tap(find.byKey(const Key('understood')));
       await _shot(tester, '01-first-run-$theme');

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:portfolio_jockey/app/app_controller.dart';
@@ -73,6 +74,22 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Shows the vault's folder in the desktop's file manager. It holds only
+  /// encrypted files with random names, and nothing is written.
+  Future<void> _openVaultFolder() async {
+    final path = AppScope.read(context).storagePath;
+    if (path == null) {
+      return;
+    }
+    try {
+      await _edits.launcher.openFolder(path);
+    } on FileSystemException catch (e) {
+      if (mounted) {
+        showError(context, e.message);
+      }
+    }
+  }
+
   Future<void> _reload() async {
     final controller = AppScope.read(context);
     if (controller.stage != AppStage.unlocked) {
@@ -138,6 +155,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Open vault folder',
+            onPressed: () => unawaited(_openVaultFolder()),
+            icon: const Icon(Icons.folder_open_outlined),
+          ),
           IconButton(
             tooltip: 'Import a locked export',
             onPressed: () async {

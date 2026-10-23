@@ -5,8 +5,9 @@ import 'dart:typed_data';
 
 /// The few C library functions the app needs: plain memory for buffers that
 /// hold no keys, syncing a folder after a rename, and creating a private
-/// folder whose permissions are right from the start, free disk space, and
-/// the real location of a file handed over by the document portal.
+/// folder whose permissions are right from the start, free disk space, the
+/// real location of a file handed over by the document portal, and file
+/// descriptors to hand files to the desktop's portal.
 ///
 /// Only the symbols listed in tool/allowed-native-libs.txt may be looked up
 /// here; tool/check-privacy.sh enforces that.
@@ -36,6 +37,8 @@ final class Libc {
   final int Function(Pointer<Char>, Pointer<Char>, Pointer<Uint8>, int) _getxattr;
 
   static const int _readOnly = 0; // O_RDONLY, the same on every Linux architecture.
+  static const int _readWrite = 2; // O_RDWR, the same on every Linux architecture.
+  static const int _closeOnExec = 0x80000; // O_CLOEXEC on x86-64 and arm64.
 
   /// Allocates [size] bytes of ordinary native memory. Free it with [free].
   Pointer<Uint8> malloc(int size) {
@@ -64,6 +67,30 @@ final class Libc {
       }
       _fsync(fd);
       _close(fd);
+    } finally {
+      free(cPath);
+    }
+  }
+
+  /// Opens [path] for reading (a folder works too) and returns the file
+  /// descriptor, or -1. Close it with [closeFd]. Used to hand a file to the
+  /// desktop's portal; the descriptor isn't inherited by launched programs.
+  int openReadOnly(String path) => _openFd(path, _readOnly | _closeOnExec);
+
+  /// Like [openReadOnly], for reading and writing.
+  int openReadWrite(String path) => _openFd(path, _readWrite | _closeOnExec);
+
+  /// Closes a descriptor from [openReadOnly] or [openReadWrite].
+  void closeFd(int fd) {
+    if (fd >= 0) {
+      _close(fd);
+    }
+  }
+
+  int _openFd(String path, int flags) {
+    final cPath = _cString(path);
+    try {
+      return _open(cPath.cast(), flags, 0);
     } finally {
       free(cPath);
     }

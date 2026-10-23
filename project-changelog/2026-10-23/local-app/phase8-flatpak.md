@@ -159,3 +159,50 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **PM decisions:** previews open paused; Flatpak only for now, with a `.deb` as an open idea.
 - **Backup:** `version-control/local-app/2026-10-23_before-shared-player/`.
 - **Impact:** to confirm on the PM's PC: TESTING.md D4–D6, and Play on a second file.
+
+## "Edit in another app" through the portal, and the "Open vault folder" button
+**Time:** 2026-10-23 15:17 UTC
+- **PM's second test round:** the shared player works; closing a playing video no longer freezes the app.
+- **"Edit in another app" showed no chooser** in the Flatpak.
+  - The PM's checks: `flatpak run --command=gio … open <file>` **did** show the desktop's "Open With…" chooser, and the portal backends are `gtk`, `xapp`, `gnome-keyring` and `xapp-gnome-keyring`. So the portal works; the app's way of calling it didn't.
+  - **Likely cause:** GLib's `g_app_info_launch_default_for_uri` in a sandbox sends the request asynchronously on the calling thread's main loop, which our worker isolate doesn't run.
+- **Fix:** new `app/lib/services/native/portal.dart`, a synchronous D-Bus call to `org.freedesktop.portal.OpenURI.OpenFile` with the copy's fd (read/write) and `{ask: true, writable: true}`. Errors are shown. `GioAppLauncher` uses it inside a Flatpak.
+  - New allowlist line (8 GLib/GIO functions); `Libc` gains `openReadOnly`, `openReadWrite` and `closeFd` (O_CLOEXEC).
+  - Negative check: an unlisted D-Bus function fails the privacy check.
+- **PM request, approved mockup:** an "Open vault folder" button (`Icons.folder_open_outlined`) first in the home top bar.
+  - Inside a Flatpak: `OpenDirectory` with the vault's `.pj` folder. Outside: GIO's default handler for the folder.
+  - Errors show as a message. It writes nothing, so there's no confirm step.
+  - Mockup: `project-mockups/home.html`, scene 1.
+- **Found along the way:** the screenshot test (which only runs with `SCREENSHOT_DIR`) had failed since the confirm-at-Fair change. It typed into the confirm field before the redraw that shows it. Fixed with one `pump()`; all 10 screenshot tests pass (78 images, not committed).
+- **Tests:**
+  - `test/services/portal_test.dart`: GLib parses both requests, and the options are present
+  - a widget test: the button opens the vault folder
+- **Still to confirm on the PM's PC:**
+  - the chooser appears every time
+  - the chosen editor can save (`writable`)
+  - the folder button opens the file manager
+  - **Open risk:** readable copies live in the sandbox's own memory-only folder, and the host may not be able to reach it. The portal should still pass the file by its fd. If not, the copies need to go somewhere the host can see, which needs the PM's decision.
+- **TESTING.md:** D notes previews open paused; new D5b (Play on a second file) and H6 (folder button); E1 says the chooser appears every time.
+- **Backup:** `version-control/local-app/2026-10-23_before-portal-open/`.
+- **Impact:** app code and packaging docs. **Not committed.**
+
+## Edit safeguards (readable copies stay private)
+**Time:** 2026-10-23 15:57 UTC
+- **PM decision, after discussing the shared Flatpak folder:** readable copies stay in the sandbox's private memory folder, so no other app can read them by path. Instead, the edit flow handles mishaps.
+- **`edit_session.dart`:** `save()` first waits `settle` (1 s; tests pass zero) and throws `EditNotReady`:
+  - `stillWriting` if the copy changed meanwhile
+  - `empty` for a 0-byte copy over a non-empty file, unless `allowEmpty`
+  - It also refuses a copy that's no longer a file.
+  - Failures keep the project version and leave the edit open.
+- **`edit_dialogs.dart`:**
+  - the banner's help line
+  - Save: scene 5c (still saving, with Try again) and 5d (empty, with a red "Save the empty file"); 5b adds the different-place hint; the close-it-first line
+  - Discard: the close-it-first line
+  - `AppController` takes `editSettle` (zero in the UI tests).
+- **Mockups:** `project-mockups/preview.html` (scenes 4, 5, 5b, 5c, 5d, 9), approved by the PM.
+- **Tests:**
+  - `test/app/edit_session_test.dart`, 4 new: still writing, empty needs confirmation, a folder in the copy's place, and an unreadable copy keeps the old version and the open edit
+  - `test/ui/preview_test.dart`: new texts, and a new empty-copy flow
+- **TESTING.md:** E6–E8.
+- **Backup:** `version-control/local-app/2026-10-23_before-edit-safeguards/`.
+- **Impact:** wording and save checks in the edit flow. **Not committed.**

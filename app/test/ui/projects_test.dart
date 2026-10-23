@@ -59,6 +59,13 @@ void main() {
     expect(find.text('Kitchen & Dining Remodel'), findsOneWidget);
   });
 
+  testWidgets('Open vault folder shows the storage folder in the file manager', (tester) async {
+    final (app, _) = await withProject(tester);
+    await tester.tap(find.byTooltip('Open vault folder'));
+    await settle(tester);
+    expect((app.controller.edits.launcher as FakeLauncher).openedFolders, [app.storage.path]);
+  });
+
   testWidgets('Delete project stays disabled until the exact name is typed', (tester) async {
     final (app, id) = await withProject(tester);
     final before = await snapshot(tester, app.storage);

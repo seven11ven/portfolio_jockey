@@ -56,6 +56,29 @@ final class EditSession {
   Future<DateTime?> lastChanged() async => await copy.exists() ? copy.lastModified() : null;
 }
 
+/// Why an edited copy can't be saved yet. Nothing is written in either case.
+enum EditNotReadyReason {
+  /// The copy changed during the check: the other app is still saving it.
+  stillWriting,
+
+  /// The copy is empty but the project's version isn't, which usually means
+  /// the other app failed partway. Saving needs the user's confirmation.
+  empty,
+}
+
+/// Thrown by [EditSessions.save] when the copy isn't ready to be saved.
+final class EditNotReady implements Exception {
+  const EditNotReady(this.reason);
+
+  final EditNotReadyReason reason;
+
+  @override
+  String toString() => switch (reason) {
+    EditNotReadyReason.stillWriting => "The other app is still saving this file. Wait until it's done, then try again. Nothing has been changed.",
+    EditNotReadyReason.empty => "The edited copy is empty. If you didn't mean to clear the file, cancel and check it in the other app.",
+  };
+}
+
 /// "Edit in another app", and the readable copies audio and video play from.
 ///
 /// Only one edit at a time. Saving re-encrypts the copy into the project;
@@ -64,7 +87,11 @@ final class EditSession {
 /// and the user decides. Media copies (`view-*`) are wiped whenever a preview
 /// closes, when the vault locks, and at unlock.
 class EditSessions extends ChangeNotifier {
-  EditSessions({required this.folders, required this.launcher});
+  EditSessions({required this.folders, required this.launcher, this.settle = const Duration(seconds: 1)});
+
+  /// How long the copy must stay unchanged before it's saved, so a save the
+  /// other app is still writing isn't encrypted half-done.
+  final Duration settle;
 
   static const String _editPrefix = 'edit';
   static const String _viewPrefix = 'view';
@@ -127,7 +154,24 @@ class EditSessions extends ChangeNotifier {
   Future<FileEntry?> entryFor(ProjectService service, EditSession session) => _entry(service, session);
 
   /// Encrypts the edited copy into the project, then wipes the folder.
-  Future<void> save(ProjectService service, EditSession session) async {
+  /// First waits [settle] and throws [EditNotReady] if the copy is still
+  /// changing, or if it's empty while the project's version isn't (unless
+  /// [allowEmpty]). If anything fails, the project's version is kept and the
+  /// edit stays open.
+  Future<void> save(ProjectService service, EditSession session, {bool allowEmpty = false}) async {
+    final before = await session.copy.stat();
+    await Future<void>.delayed(settle);
+    final after = await session.copy.stat();
+    if (after.type != FileSystemEntityType.file) {
+      throw FileSystemException('The edited copy is gone or not a file', session.copy.path);
+    }
+    if (before.size != after.size || before.modified != after.modified) {
+      throw const EditNotReady(EditNotReadyReason.stillWriting);
+    }
+    final current = await _entry(service, session);
+    if (!allowEmpty && after.size == 0 && current != null && current.size > 0) {
+      throw const EditNotReady(EditNotReadyReason.empty);
+    }
     await service.replaceContent(session.info.projectId, session.info.fileId, session.copy);
     await _finish(session);
   }

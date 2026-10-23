@@ -202,6 +202,9 @@ class _SaveEditDialogState extends WriteDialogState<SaveEditDialog> {
   bool? _changed;
   bool _missing = false;
 
+  /// Set when a save was refused because the copy isn't ready (scenes 5c, 5d).
+  EditNotReadyReason? _notReady;
+
   @override
   void initState() {
     super.initState();
@@ -238,6 +241,7 @@ class _SaveEditDialogState extends WriteDialogState<SaveEditDialog> {
     final name = session.info.fileName;
     final changed = _changed;
     final current = _current;
+    final notReady = _notReady;
     return PjDialog(
       title: changed == false && !_missing ? 'No changes to $name' : 'Save your changes to $name?',
       content: [
@@ -250,6 +254,8 @@ class _SaveEditDialogState extends WriteDialogState<SaveEditDialog> {
                 : 'The edited copy is gone (the other app may have moved or deleted it), so there is nothing to save. You can only discard it.',
             danger: true,
           )
+        else if (notReady == EditNotReadyReason.stillWriting)
+          Notice(const EditNotReady(EditNotReadyReason.stillWriting).toString())
         else ...[
           SummaryBox(
             children: [
@@ -262,10 +268,18 @@ class _SaveEditDialogState extends WriteDialogState<SaveEditDialog> {
               ),
             ],
           ),
-          if (changed!)
-            const Text('The edited version is encrypted and replaces the current one. The temporary readable copy is then wiped.')
-          else
+          if (notReady == EditNotReadyReason.empty)
+            Notice(const EditNotReady(EditNotReadyReason.empty).toString())
+          else if (changed!) ...[
+            const Text('The edited version is encrypted and replaces the current one. The temporary readable copy is then wiped.'),
+            const Muted(_closeItFirst),
+          ] else ...[
             const Text('The edited copy is the same as the current version. Finishing the edit wipes the temporary readable copy.'),
+            const Muted(
+              'If you did save in the other app, it may have saved to a different place, or it wasn\'t allowed to save this file. '
+              'Save it there again with its normal Save, not "Save As".',
+            ),
+          ],
         ],
         ?errorNotice(),
       ],
@@ -275,12 +289,56 @@ class _SaveEditDialogState extends WriteDialogState<SaveEditDialog> {
           confirmButton('Discard', danger: true, enabled: true, onConfirm: () => controller.edits.discard(session))
         else if (changed == false)
           confirmButton('Finish editing', enabled: true, onConfirm: () => controller.edits.discard(session))
+        else if (notReady == EditNotReadyReason.empty)
+          _saveButton('Save the empty file', danger: true, allowEmpty: true)
+        else if (notReady == EditNotReadyReason.stillWriting)
+          _saveButton('Try again')
         else
-          confirmButton('Encrypt and replace', enabled: changed == true, onConfirm: () => controller.edits.save(controller.projects, session)),
+          _saveButton('Encrypt and replace', enabled: changed == true),
       ],
     );
   }
+
+  /// Saves, unless the copy isn't ready: then it stays open in scene 5c or 5d
+  /// instead of showing a generic error.
+  Widget _saveButton(String label, {bool enabled = true, bool danger = false, bool allowEmpty = false}) {
+    final controller = AppScope.read(context);
+    return FilledButton(
+      style: danger ? dangerButtonStyle(context) : null,
+      onPressed: enabled && !busy
+          ? () async {
+              setState(() {
+                busy = true;
+                error = null;
+              });
+              try {
+                await controller.edits.save(controller.projects, widget.session, allowEmpty: allowEmpty);
+                if (mounted) {
+                  Navigator.of(context).pop(true);
+                }
+              } on EditNotReady catch (e) {
+                if (mounted) {
+                  setState(() {
+                    busy = false;
+                    _notReady = e.reason;
+                  });
+                }
+              } on Exception catch (e) {
+                if (mounted) {
+                  setState(() {
+                    busy = false;
+                    error = 'Nothing was changed. $e';
+                  });
+                }
+              }
+            }
+          : null,
+      child: busy ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Text(label),
+    );
+  }
 }
+
+const String _closeItFirst = "Close the file in the other app first. Changes it makes later won't be saved.";
 
 /// Scene 9: discard the edited copy. Pops true when discarded.
 class DiscardEditDialog extends StatefulWidget {
@@ -309,6 +367,7 @@ class _DiscardEditDialogState extends WriteDialogState<DiscardEditDialog> {
             ],
           ),
         ),
+        const Muted(_closeItFirst),
         ?errorNotice(),
       ],
       actions: [
@@ -451,7 +510,16 @@ class _EditBannerState extends State<EditBanner> {
               spacing: 8,
               children: [
                 Icon(Icons.edit_outlined, size: 18, color: colors.warn),
-                Flexible(child: Text('Editing ${info.fileName}$where. $when.', style: TextStyle(color: colors.warn, fontWeight: FontWeight.w600))),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Editing ${info.fileName}$where. $when.', style: TextStyle(color: colors.warn, fontWeight: FontWeight.w600)),
+                      const Muted("If the other app couldn't open or save the file, choose Discard. The project still has its own copy."),
+                    ],
+                  ),
+                ),
               ],
             ),
             OutlinedButton(onPressed: widget.onDiscard, child: const Text('Discard')),

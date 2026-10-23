@@ -285,6 +285,26 @@ The Flatpak (`packaging/flatpak/io.github.seven11ven.portfolio_jockey.yml`) runs
   - It accepts only prehashed (`ED`) signatures, and it checks the key ID, the file signature and the trusted comment.
   - Its tests make signatures with libsodium. A changed file, a changed comment, a wrong key and a legacy signature are each refused.
 
+### Edit safeguards (2026-10-23)
+- **PM decision:** readable copies stay in the app's private memory folder inside the sandbox. The Flatpak's shared per-app folder isn't used, so no other app can reach a copy by path.
+- **Instead, the edit flow handles misbehaving editors** (`app/lib/app/edit_session.dart`, `ui/preview/edit_dialogs.dart`):
+  - **Still writing:** `EditSessions.save` waits 1 s and refuses (`EditNotReady.stillWriting`) if the copy's size or time changed.
+  - **Empty file:** a 0-byte copy over a non-empty file needs an explicit "Save the empty file" (`EditNotReady.empty`).
+  - **Not a file any more:** a copy replaced by a folder is refused.
+  - **Unreadable copy:** an error, the project version is kept, and the edit stays open.
+- **The dialogs say what to do:** a banner help line, a "close the file in the other app first" line in Save and Discard, and a "may have saved to a different place" line when there are no changes.
+- **Mockups:** `project-mockups/preview.html`, scenes 4, 5, 5b, 5c, 5d and 9 (approved).
+
+### The desktop's OpenURI portal (2026-10-23)
+`lib/services/native/portal.dart` calls `org.freedesktop.portal.OpenURI` directly over the session D-Bus, which Flatpak always provides to apps. It's local only: no network, and no extra sandbox permission.
+- **Why not GLib's call:** `g_app_info_launch_default_for_uri` inside a Flatpak sends the portal request asynchronously, on the calling thread's main loop. Our launch runs in a short-lived worker isolate with no main loop, so in the PM's test no chooser appeared. The PM's `gio open` from inside the sandbox did show it.
+- **`OpenFile`** ("Edit in another app") passes the readable copy as an fd opened read/write, with `ask: true` (always show the chooser) and `writable: true` (the editor can save back).
+- **`OpenDirectory`** ("Open vault folder") passes the vault's `.pj` folder, so the file manager opens the vault folder that contains it.
+- **Bound functions** (allowlisted): `g_bus_get_sync`, `g_dbus_connection_call_with_unix_fd_list_sync`, `g_unix_fd_list_new`, `g_unix_fd_list_append`, `g_variant_parse`, `g_variant_unref`, `g_error_free`, `g_object_unref`. Requests are written in GVariant text format, so no variadic calls are needed; a test parses both with GLib.
+- **libc:** `open` is now also used with `O_RDWR` and `O_CLOEXEC`, so the descriptor isn't inherited by launched apps. No new libc function.
+- **Negative check:** binding `g_dbus_connection_new_for_address_sync` in `portal.dart` fails the privacy check.
+- **Outside a Flatpak, nothing changes:** the app's own app list, and `g_app_info_launch_default_for_uri` for the folder.
+
 ### Licenses and source for the Flatpak
 *This section is not legal advice.*
 

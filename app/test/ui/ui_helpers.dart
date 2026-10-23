@@ -79,6 +79,7 @@ Future<TestApp> startApp(
       sandboxed: sandboxed,
       hostPathOf: hostPathOf,
       kdf: fastKdf,
+      editSettle: Duration.zero,
     );
     if (unlocked) {
       await controller.createVault(storage.path, 'test passphrase');

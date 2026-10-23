@@ -139,11 +139,13 @@ void main() {
     await tester.tap(find.text('Decrypt and open'));
     await settleUntil(tester, find.textContaining('Editing measurements.txt in Text Editor.'));
     expect(launcher.opened.single.$2, 'org.example.Editor.desktop');
+    expect(find.textContaining("couldn't open or save the file, choose Discard"), findsOneWidget);
     final copy = File(launcher.opened.single.$1);
 
     // Unchanged: nothing to save.
     await tester.tap(find.text('Save changes'));
     await settleUntil(tester, find.text('No changes to measurements.txt'));
+    expect(find.textContaining('it may have saved to a different place'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await settle(tester);
     expect(find.textContaining('Editing measurements.txt'), findsOneWidget);
@@ -152,12 +154,35 @@ void main() {
     await tester.tap(find.text('Save changes'));
     await settleUntil(tester, find.textContaining('is encrypted and replaces'));
     expect(find.text('Save your changes to measurements.txt?'), findsOneWidget);
+    expect(find.textContaining('Close the file in the other app first.'), findsOneWidget);
     await tester.tap(find.text('Encrypt and replace'));
     await settleUntilGone(tester, find.textContaining('Editing measurements.txt'));
     expect(find.textContaining('Editing measurements.txt'), findsNothing);
     expect(await tester.runAsync(() => copy.parent.parent.exists()), isFalse);
     final saved = await entry(tester, app, id, 'measurements.txt');
     expect(saved.size, 27);
+  });
+
+  testWidgets('An empty edited copy is only saved after a second, explicit confirmation', (tester) async {
+    final launcher = FakeLauncher();
+    final (app, id) = await withFiles(tester, {'measurements.txt': utf8.encode('Counter: 240 cm')}, launcher: launcher);
+    await fileMenu(tester, 'measurements.txt', 'Edit in another app…');
+    await settleUntil(tester, find.text('Text Editor'));
+    await tester.tap(find.text('Decrypt and open'));
+    await settleUntil(tester, find.textContaining('Editing measurements.txt'));
+    await tester.runAsync(() => File(launcher.opened.single.$1).writeAsString(''));
+
+    await tester.tap(find.text('Save changes'));
+    await settleUntil(tester, find.textContaining('is encrypted and replaces'));
+    await tester.tap(find.text('Encrypt and replace'));
+    await settleUntil(tester, find.text('Save the empty file'));
+    expect(find.text('Save the empty file'), findsOneWidget);
+    expect(find.textContaining('The edited copy is empty.', findRichText: true), findsOneWidget);
+    expect((await entry(tester, app, id, 'measurements.txt')).size, 15, reason: 'nothing written yet');
+
+    await tester.tap(find.text('Save the empty file'));
+    await settleUntilGone(tester, find.textContaining('Editing measurements.txt'));
+    expect((await entry(tester, app, id, 'measurements.txt')).size, 0);
   });
 
   testWidgets('Discard asks first; locking waits for the edit to finish', (tester) async {
@@ -170,6 +195,7 @@ void main() {
     await tester.tap(find.text('Discard'));
     await settleUntil(tester, find.text('Keep editing'));
     expect(find.text('Discard your changes to measurements.txt?'), findsOneWidget);
+    expect(find.textContaining('Close the file in the other app first.'), findsOneWidget);
     await tester.tap(find.text('Keep editing'));
     await settle(tester);
     expect(app.controller.edits.active, isNotNull);

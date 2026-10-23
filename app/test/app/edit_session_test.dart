@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -26,7 +27,7 @@ void main() {
     service = ProjectService(vault, trasher: FakeTrash(await tempFolder()));
     folders = await fakePrivateFolders();
     launcher = FakeLauncher();
-    edits = EditSessions(folders: folders, launcher: launcher);
+    edits = EditSessions(folders: folders, launcher: launcher, settle: Duration.zero);
     addTearDown(edits.dispose);
     projectId = await service.createProject(name: 'Kitchen Remodel');
     final original = File('${(await tempFolder()).path}/measurements.txt');
@@ -101,6 +102,47 @@ void main() {
     expect(saved.id, notes.id);
     expect(saved.size, 28);
     expect(utf8.decode(await service.readFile(projectId, saved, maxBytes: 1000)), 'Counter: 245 cm\nSink: 60 cm\n');
+  });
+
+  group('save refuses a copy that is not ready, and keeps the project version', () {
+    Future<String> projectText() async => utf8.decode(await service.readFile(projectId, (await service.readProject(projectId)).files.single, maxBytes: 1000));
+
+    test('while the other app is still writing', () async {
+      final slow = EditSessions(folders: folders, launcher: launcher, settle: const Duration(milliseconds: 400));
+      addTearDown(slow.dispose);
+      final session = await slow.start(service: service, projectId: projectId, projectName: 'Kitchen Remodel', file: notes, app: launcher.apps.first);
+      Timer(const Duration(milliseconds: 100), () => session.copy.writeAsStringSync('Counter: 260 cm, half writ'));
+      await expectLater(slow.save(service, session), throwsA(isA<EditNotReady>().having((e) => e.reason, 'reason', EditNotReadyReason.stillWriting)));
+      expect(await projectText(), 'Counter: 240 cm\n');
+      expect(await session.folder.exists(), isTrue, reason: 'the edit stays open');
+    });
+
+    test('an empty copy needs confirmation', () async {
+      final session = await start();
+      await session.copy.writeAsString('');
+      await expectLater(edits.save(service, session), throwsA(isA<EditNotReady>().having((e) => e.reason, 'reason', EditNotReadyReason.empty)));
+      expect(await projectText(), 'Counter: 240 cm\n');
+      await edits.save(service, session, allowEmpty: true);
+      expect((await service.readProject(projectId)).files.single.size, 0);
+    });
+
+    test('a copy replaced by a folder is refused', () async {
+      final session = await start();
+      await session.copy.delete();
+      await Directory(session.copy.path).create();
+      await expectLater(edits.save(service, session), throwsA(isA<FileSystemException>()));
+      expect(await projectText(), 'Counter: 240 cm\n');
+    });
+
+    test('an unreadable copy fails partway: the old version is kept and the edit stays open', () async {
+      final session = await start();
+      await session.copy.writeAsString('Counter: 999 cm\n');
+      await Process.run('chmod', ['000', session.copy.path]);
+      addTearDown(() => Process.run('chmod', ['600', session.copy.path]));
+      await expectLater(edits.save(service, session), throwsA(isA<Exception>()));
+      expect(await projectText(), 'Counter: 240 cm\n');
+      expect(await session.folder.exists(), isTrue);
+    });
   });
 
   test('same-length edits are detected too', () async {

@@ -78,11 +78,11 @@
 
   <section class="scene">
     <div class="scene-title">4. While editing</div>
-    <div class="scene-note">The banner stays on every screen until the edit is saved or discarded. Only one file can be edited at a time.</div>
+    <div class="scene-note">The banner stays on every screen until the edit is saved or discarded. Only one file can be edited at a time. New: a second line says what to do if the other app couldn't open or save the file.</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
       <div class="edit-banner">
-        <span>✎ Editing <strong>measurements.txt</strong> in Text Editor. Changed 2 min ago.</span>
+        <span>✎ Editing <strong>measurements.txt</strong> in Text Editor. Changed 2 min ago.<br><span class="small muted">If the other app couldn't open or save the file, choose Discard. The project still has its own copy.</span></span>
         <span class="spacer"></span>
         <button class="btn">Discard</button><button class="btn btn-primary">Save changes</button>
       </div>
@@ -109,7 +109,61 @@
             <div class="list-row"><span style="flex:1">Edited version</span><span class="muted small">2.4 KB · just now</span></div>
           </div>
           <p class="small muted">The edited version is encrypted and replaces the current one. The temporary readable copy is then wiped.</p>
+          <p class="small muted">Close the file in the other app first. Changes it makes later won't be saved.</p>
           <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Encrypt and replace</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5b. Save changes: no changes found</div>
+    <div class="scene-note">The copy is the same as the project's version, for example because the other app saved somewhere else ("Save As") or couldn't save at all.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>No changes to measurements.txt</h2>
+          <p>The edited copy is the same as the current version. Finishing the edit wipes the temporary readable copy.</p>
+          <p class="small muted">If you did save in the other app, it may have saved to a different place, or it wasn't allowed to save this file. Save it there again with its normal Save, not "Save As".</p>
+          <div class="dialog-actions"><button class="btn">Keep editing</button><button class="btn btn-primary">Finish editing</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5c. Save changes: the other app is still saving</div>
+    <div class="scene-note">Before encrypting, the app checks for 1 second that the copy has stopped changing. Nothing is written while it's still changing.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Save your changes to measurements.txt?</h2>
+          <div class="notice">The other app is still saving this file. Wait until it's done, then try again. Nothing has been changed.</div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Try again</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5d. Save changes: the edited copy is empty</div>
+    <div class="scene-note">Shown when the copy is 0 bytes but the project's version isn't, which usually means the other app failed partway. The current version is kept unless you confirm.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Save your changes to measurements.txt?</h2>
+          <div class="summary-box">
+            <div class="list-row"><span style="flex:1">Current version</span><span class="muted small">2.1 KB · Oct 19</span></div>
+            <div class="list-row"><span style="flex:1"><strong>Edited version</strong></span><span class="muted small">0 bytes · just now</span></div>
+          </div>
+          <div class="notice">The edited copy is empty. If you didn't mean to clear the file, cancel and check it in the other app.</div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Save the empty file</button></div>
         </div>
       </div>
     </div>
@@ -179,6 +233,7 @@
         <div class="sheet-handle"></div>
         <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Discard your changes to measurements.txt?</h2></div>
         <p>The edited copy is wiped. The version in <strong>Kitchen Remodel</strong> stays as it was.</p>
+        <p class="small muted">Close the file in the other app first. Changes it makes later won't be saved.</p>
         <div class="dialog-actions"><button class="btn">Keep editing</button><button class="btn btn-danger">Discard changes</button></div>
       </div></div>
     </div>

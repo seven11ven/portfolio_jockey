@@ -31,3 +31,8 @@ lib/services/native/gio_apps.dart   libgio-2.0.so.0,libgobject-2.0.so.0,libglib-
 # libsodium for tool/verify_minisign.dart: checks release downloads against
 # their minisign signatures (phase 8). A build-time tool, not part of the app.
 tool/verify_minisign.dart   libsodium.so.23   sodium_init,sodium_malloc,sodium_free,crypto_generichash,crypto_sign_verify_detached,crypto_sign_seed_keypair,crypto_sign_detached
+
+# The desktop's OpenURI portal over the session D-Bus (phase 8): "Edit in
+# another app" and "Open vault folder" inside the Flatpak. Local D-Bus only;
+# no network functions are bound.
+lib/services/native/portal.dart   libgio-2.0.so.0,libgobject-2.0.so.0,libglib-2.0.so.0   g_bus_get_sync,g_dbus_connection_call_with_unix_fd_list_sync,g_unix_fd_list_new,g_unix_fd_list_append,g_variant_parse,g_variant_unref,g_error_free,g_object_unref

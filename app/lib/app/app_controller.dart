@@ -32,8 +32,9 @@ class AppController extends ChangeNotifier {
     bool? sandboxed,
     this.hostPathOf,
     this.kdf,
+    Duration editSettle = const Duration(seconds: 1),
   }) : sandboxed = sandboxed ?? runningInFlatpak(),
-       edits = EditSessions(folders: privateFolders ?? PrivateFolders.standard(), launcher: launcher);
+       edits = EditSessions(folders: privateFolders ?? PrivateFolders.standard(), launcher: launcher, settle: editSettle);
 
   final SettingsStore settingsStore;
   final FilePicker filePicker;

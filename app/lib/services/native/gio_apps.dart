@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:portfolio_jockey/services/native/portal.dart';
 import 'package:portfolio_jockey/services/sandbox.dart';
 import 'package:portfolio_jockey/vault/native/libc.dart';
 
@@ -31,6 +32,10 @@ abstract interface class AppLauncher {
   /// Opens [path] in the app [appId], or through the desktop's chooser when
   /// [appId] is null. Throws [FileSystemException] if it can't be launched.
   Future<void> open(String path, {String? appId});
+
+  /// Shows the folder [path] in the desktop's file manager. Throws
+  /// [FileSystemException] if it can't.
+  Future<void> openFolder(String path);
 }
 
 /// GLib's app-info functions (GIO).
@@ -63,11 +68,40 @@ final class GioAppLauncher implements AppLauncher {
 
   @override
   Future<void> open(String path, {String? appId}) async {
+    if (usesDesktopChooser) {
+      // Through the portal directly: GLib's own call sends the request on a
+      // main loop our worker isolate doesn't run, and can't ask for the
+      // chooser or for write access (see portal.dart).
+      try {
+        await OpenUriPortal.openFile(path);
+      } on PortalException catch (e) {
+        throw FileSystemException("Couldn't open it in another app: $e", path);
+      }
+      return;
+    }
     final error = await Isolate.run(() => _launch(path, appId));
     if (error != null) {
       throw FileSystemException("Couldn't open it in another app: $error", path);
     }
   }
+  @override
+  Future<void> openFolder(String path) async {
+    if (usesDesktopChooser) {
+      // OpenDirectory shows the folder that contains the file it's given, so
+      // it's given the vault's own .pj folder, which every vault has.
+      try {
+        await OpenUriPortal.openContainingFolder('$path/.pj');
+      } on PortalException catch (e) {
+        throw FileSystemException("Couldn't open the folder: $e", path);
+      }
+      return;
+    }
+    final error = await Isolate.run(() => _launch(path, null));
+    if (error != null) {
+      throw FileSystemException("Couldn't open the folder: $error", path);
+    }
+  }
+
 }
 
 final class _GError extends Struct {
