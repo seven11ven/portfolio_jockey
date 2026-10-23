@@ -92,7 +92,12 @@ final class EditNotReady implements Exception {
 /// and the user decides. Media copies (`view-*`) are wiped whenever a preview
 /// closes, when the vault locks, and at unlock.
 class EditSessions extends ChangeNotifier {
-  EditSessions({required this.folders, required this.launcher, this.settle = const Duration(seconds: 1)});
+  EditSessions({required this.folders, PrivateFolders? editFolders, required this.launcher, this.settle = const Duration(seconds: 1)})
+    : editFolders = editFolders ?? folders;
+
+  /// Where edit copies go (see [PrivateFolders.forEditing]); media copies use
+  /// [folders].
+  final PrivateFolders editFolders;
 
   /// How long the copy must stay unchanged before it's saved, so a save the
   /// other app is still writing isn't encrypted half-done.
@@ -131,7 +136,7 @@ class EditSessions extends ChangeNotifier {
     if (_active != null) {
       throw StateError('Another file is being edited');
     }
-    final folder = await folders.create(_editPrefix);
+    final folder = await editFolders.create(_editPrefix);
     final session = EditSession(
       folder,
       EditInfo(projectId: projectId, projectName: projectName, fileId: file.id, fileName: file.name, startedAt: DateTime.now(), appName: app?.name),
@@ -199,7 +204,7 @@ class EditSessions extends ChangeNotifier {
   Future<void> findLeftovers() async {
     await wipeMediaCopies();
     final found = <EditSession>[];
-    for (final folder in await folders.existing(_editPrefix)) {
+    for (final folder in await editFolders.existing(_editPrefix)) {
       if (folder.path == _active?.folder.path) {
         continue;
       }

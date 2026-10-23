@@ -234,3 +234,18 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **Not verified here:** a real process kill. The tests recreate the disk state a crash leaves; the real kill is TESTING.md J1–J5 on the PM's PC. J5 also settles whether Flatpak keeps the memory folder across a restart.
 - **Backup:** `version-control/local-app/2026-10-23_before-crash-safety/`.
 - **Impact:** an index format addition (backward compatible), a new journal file, and messages after unlock. **Not committed.**
+
+## Edit copies in Flatpak's shared memory folder
+**Time:** 2026-10-23 17:04 UTC
+- **The PM's test E1:** no chooser appeared. The PM's checks:
+  - `gio open "$XDG_RUNTIME_DIR/t.txt"` inside the sandbox: **"Launch failed"**
+  - the same in `$XDG_RUNTIME_DIR/app/$FLATPAK_ID/`: the "Open With…" chooser appeared
+  - The portal can't hand another app a file in the sandbox's private memory folder.
+- **Agreed fallback (PM decision):** inside the Flatpak, edit copies only go in the shared folder; media copies stay private.
+  - New `PrivateFolders.forEditing`, with the same private and in-memory checks, and no disk fallback.
+  - `EditSessions.editFolders` and `AppController(editFolders:)`.
+- **The notice (approved mockup, preview.html scene 8):** inside the Flatpak, the edit dialog says other apps on the device can read the copy while it's open, that it's never on disk, and that it's wiped at Save or Discard.
+- **`GioAppLauncher`** refuses clearly if a copy is outside the shared folder. Listening for the portal's late "Response" is an open item.
+- **Tests:** `test/services/private_folder_edit_test.dart` (3), and an edit-versus-media folder test.
+- **Backup:** `version-control/local-app/2026-10-23_before-shared-edit-folder/`.
+- **Impact:** to confirm with E1–E5 on the PM's PC. **Not committed.**

@@ -148,7 +148,12 @@ class _EditInDialogState extends State<EditInDialog> {
         ],
         Notice(
           chooser
-              ? "While you edit, a readable copy of this file exists in a private memory-only folder. It's wiped when you save or discard your changes. The other app may keep its own history of the file."
+              // Inside the Flatpak the copy is in the memory folder Flatpak
+              // shares with the desktop: the other app can't open it otherwise.
+              ? 'While you edit, a readable copy of this file is kept in memory where other apps on this device can read it. '
+                    'Your desktop needs that to let the other app open it. '
+                    "The copy is never written to disk, and it's wiped when you save or discard your changes. "
+                    'The other app may keep its own history of the file.'
               : "While you edit, a readable copy of this file exists in a private memory-only folder. It's wiped when you save or discard your changes.",
         ),
         if (_error case final error?) Notice(error, danger: true),

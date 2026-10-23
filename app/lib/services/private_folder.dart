@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:portfolio_jockey/services/sandbox.dart';
 import 'package:portfolio_jockey/vault/ids.dart';
 import 'package:portfolio_jockey/vault/native/libc.dart';
 
@@ -29,6 +30,22 @@ final class PrivateFolders {
 
   /// The real session folder, from `$XDG_RUNTIME_DIR`.
   factory PrivateFolders.standard() => PrivateFolders(runtimeDir: Platform.environment['XDG_RUNTIME_DIR']);
+
+  /// Where "Edit in another app" copies go. Outside a Flatpak, the same as
+  /// [PrivateFolders.standard]. Inside one, the memory folder Flatpak shares
+  /// with the desktop (`$XDG_RUNTIME_DIR/app/$FLATPAK_ID`): the desktop's
+  /// portal can't hand the other app a file in the sandbox's own memory folder
+  /// ("Launch failed", found in testing, 2026-10-23). Same checks: private,
+  /// in memory, never a disk fallback. Media copies stay in [standard].
+  factory PrivateFolders.forEditing({bool? sandboxed, Map<String, String>? environment}) {
+    final env = environment ?? Platform.environment;
+    final runtime = env['XDG_RUNTIME_DIR'];
+    final appId = env['FLATPAK_ID'];
+    if ((sandboxed ?? runningInFlatpak()) && runtime != null && appId != null && appId.isNotEmpty && !appId.contains('/')) {
+      return PrivateFolders(runtimeDir: '$runtime/app/$appId');
+    }
+    return PrivateFolders(runtimeDir: runtime);
+  }
 
   static const String appFolderName = 'portfolio_jockey';
   static const int _privateMode = 0x1C0; // 0700

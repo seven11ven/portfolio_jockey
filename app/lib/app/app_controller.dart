@@ -31,12 +31,18 @@ class AppController extends ChangeNotifier {
     this.trasher = const GioTrash(),
     AppLauncher launcher = const GioAppLauncher(),
     PrivateFolders? privateFolders,
+    PrivateFolders? editFolders,
     bool? sandboxed,
     this.hostPathOf,
     this.kdf,
     Duration editSettle = const Duration(seconds: 1),
   }) : sandboxed = sandboxed ?? runningInFlatpak(),
-       edits = EditSessions(folders: privateFolders ?? PrivateFolders.standard(), launcher: launcher, settle: editSettle);
+       edits = EditSessions(
+         folders: privateFolders ?? PrivateFolders.standard(),
+         editFolders: editFolders ?? privateFolders ?? PrivateFolders.forEditing(sandboxed: sandboxed),
+         launcher: launcher,
+         settle: editSettle,
+       );
 
   final SettingsStore settingsStore;
   final FilePicker filePicker;

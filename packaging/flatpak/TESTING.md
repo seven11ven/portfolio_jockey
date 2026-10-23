@@ -60,6 +60,7 @@ Open each type with **Preview**. Audio and video open **paused**: press Play.
       2. With a video preview **open**, run `flatpak enter <instance> sh -c 'ls -la "$XDG_RUNTIME_DIR/portfolio_jockey"'`. A readable copy should be listed.
       3. Close the preview and run the same command again. The copy should be gone: the folder is empty, or "No such file or directory".
       If `flatpak enter` asks for permission, add `sudo` in front of it.
+      **Edit copies** ("Edit in another app") are in the shared memory folder instead: `ls -la /run/user/$(id -u)/app/io.github.seven11ven.portfolio_jockey/portfolio_jockey/` shows an `edit-…` folder while an edit is open, and nothing after Save or Discard.
 
 ## E. "Edit in another app" (test item 8)
 - [ ] **E1.** On a text file, choose **Edit in another app…**, then **Open**. Your desktop's "Open With…" chooser appears **every time**, even if you picked an app before. Pick a text editor. If nothing appears, or the app shows an error, note the exact message.

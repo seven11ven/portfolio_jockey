@@ -301,7 +301,12 @@ The Flatpak (`packaging/flatpak/io.github.seven11ven.portfolio_jockey.yml`) runs
   - Its tests make signatures with libsodium. A changed file, a changed comment, a wrong key and a legacy signature are each refused.
 
 ### Edit safeguards (2026-10-23)
-- **PM decision:** readable copies stay in the app's private memory folder inside the sandbox. The Flatpak's shared per-app folder isn't used, so no other app can reach a copy by path.
+- **Where edit copies go** (PM decision after testing, 2026-10-23):
+  - **First:** readable copies stayed in the sandbox's private memory folder.
+  - **The PM's test:** `gio open` of a file there failed ("Launch failed"), and the same file in Flatpak's shared per-app memory folder (`$XDG_RUNTIME_DIR/app/$FLATPAK_ID`) opened the chooser.
+  - **So, inside the Flatpak:** edit copies go in that shared folder (`PrivateFolders.forEditing`), and the edit dialog says every time that other apps on the device can read the copy while it's open. It's in memory only, and it's wiped when the edit ends.
+  - **Media copies stay private.**
+  - **`GioAppLauncher` refuses clearly** if a copy isn't in the shared folder, instead of the portal failing silently. Listening for the portal's later "Response" message is an open item.
 - **Instead, the edit flow handles misbehaving editors** (`app/lib/app/edit_session.dart`, `ui/preview/edit_dialogs.dart`):
   - **Still writing:** `EditSessions.save` waits 1 s and refuses (`EditNotReady.stillWriting`) if the copy's size or time changed.
   - **Empty file:** a 0-byte copy over a non-empty file needs an explicit "Save the empty file" (`EditNotReady.empty`).

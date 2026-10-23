@@ -69,6 +69,14 @@ final class GioAppLauncher implements AppLauncher {
   @override
   Future<void> open(String path, {String? appId}) async {
     if (usesDesktopChooser) {
+      // The portal can only hand the other app a file the desktop can reach:
+      // one in the memory folder Flatpak shares with it. Anywhere else, it
+      // fails without telling us, so refuse clearly instead.
+      final env = Platform.environment;
+      final shared = '${env['XDG_RUNTIME_DIR']}/app/${env['FLATPAK_ID']}/';
+      if (!path.startsWith(shared)) {
+        throw FileSystemException("Couldn't open it in another app: the readable copy isn't in the folder the desktop can reach ($shared)", path);
+      }
       // Through the portal directly: GLib's own call sends the request on a
       // main loop our worker isolate doesn't run, and can't ask for the
       // chooser or for write access (see portal.dart).
