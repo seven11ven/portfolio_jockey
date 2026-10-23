@@ -50,5 +50,6 @@ local.properties
 # Flatpak packaging (phase 8): the app bundle, build kit and build output
 /packaging/flatpak/dist/
 /packaging/flatpak/build-dir/
+/packaging/flatpak/repo/
 .flatpak-builder/
 *.flatpak

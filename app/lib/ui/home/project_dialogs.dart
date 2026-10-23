@@ -368,7 +368,7 @@ class _DeleteProjectDialogState extends WriteDialogState<DeleteProjectDialog> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            FieldLabel('Type $name to confirm'),
+            FieldLabel('Type “$name” to confirm'),
             TextField(controller: _typed, key: const Key('confirm-name')),
           ],
         ),

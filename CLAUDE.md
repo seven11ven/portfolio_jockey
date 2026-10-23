@@ -38,6 +38,8 @@ Portfolio Jockey v2 is a fully local, offline, encrypted project tracker built w
   - Load media with `NativePlayer.command(['loadfile', path])`. Never use `Player.open()`, `Media.memory()` or subtitle data tracks: they write temporary files to `/tmp`.
   - Always apply `lockedDownMpvOptions`, and call `ensureMediaReady()` first.
   - Never add `media_kit_libs_linux`: its build downloads mimalloc.
+  - Keep `setlocale(LC_NUMERIC, "C")` in `app/linux/runner/my_application.cc` (after GTK's startup). libmpv refuses to start otherwise, and `media_kit_libs_linux` would normally do it. `test/linux_runner_test.dart` checks it.
+  - Play audio and video only through `SharedPlayer` (`ui/preview/shared_player.dart`), and never dispose a player or VideoController: media_kit_video's CPU (S/W) path frees its frame buffer on dispose while Flutter may still be reading it, which froze the app. Previews open paused (PM decision).
 - **Markdown:** always pass an `imageBuilder` to flutter_markdown_plus. Without one, it loads images from the network or disk.
 - **Exports** (PM decision, 2026-10-22): exactly two options, everywhere. Either a **custom passphrase** (a checkbox; it must be filled in and confirmed before Export is enabled; no strength rules), making a Portfolio Jockey-only `.pjx`, or **unlocked** ZIP/TAR. The vault passphrase is never used for exports. Files stream chunk by chunk into the archive: never buffer a whole file or write a readable temp copy. Imports get new file keys and are all or nothing.
 - "Delete from device" **moves the original to the Trash** (GLib's `g_file_trash`, through the Trash portal inside a Flatpak). The encrypted project copy is still deleted permanently. This was the PM's decision on 2026-10-22.

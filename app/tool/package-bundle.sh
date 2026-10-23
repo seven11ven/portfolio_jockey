@@ -8,11 +8,16 @@
 #    flutter analyze and the full test suite. Any failure stops here.
 # 2. flutter build linux --release, then packs the bundle as a tarball with
 #    its SHA-256. Packing adds no differences (sorted names, fixed owner and
-#    date), but Flutter's own build output can differ between builds, so each
-#    run gives a new checksum.
+#    date), but Flutter's own build output isn't guaranteed to be identical
+#    between builds, so a rebuild may give a new checksum.
 # 3. Writes that SHA-256 into a copy of the manifest and packs the build kit:
-#    the manifest, desktop file, metainfo, icon, bundle, build.sh and
-#    TESTING.md (when present).
+#    the manifest, desktop file, metainfo, icon, LICENSE, bundle, build.sh,
+#    TESTING.md, docs/install.md (as INSTALL.md) and SOURCE_COMMIT.
+# 4. Writes the app's own source (git archive of the commit it was built
+#    from), which the AGPL requires offering with every release.
+#
+# It refuses to run with uncommitted changes, so the source archive matches
+# the build exactly.
 #
 # Everything it makes goes in packaging/flatpak/dist/, which is git-ignored.
 # Nothing is downloaded and nothing leaves this machine.
@@ -27,6 +32,13 @@ version=$(sed -nE "s/^const String appVersion = '([^']+)';/\1/p" "$app/lib/app/v
 [ -n "$version" ] || { echo "Could not read appVersion from lib/app/version.dart" >&2; exit 1; }
 bundle_name="portfolio-jockey-bundle-$version-x86_64.tar.gz"
 kit_name="portfolio-jockey-build-kit-$version"
+
+if [ -n "$(git -C "$repo" status --porcelain)" ]; then
+  echo "There are uncommitted changes. Commit them first, so the source archive matches the build:" >&2
+  git -C "$repo" status --short >&2
+  exit 1
+fi
+commit=$(git -C "$repo" rev-parse HEAD)
 
 if [ "$(uname -m)" != x86_64 ]; then
   echo "The first release is x64 only; this machine is $(uname -m)." >&2
@@ -56,10 +68,15 @@ echo "== Build kit"
 kit="$dist/$kit_name"
 cp "$dist/$bundle_name" "$kit/"
 cp "$pkg/$id.desktop" "$pkg/$id.metainfo.xml" "$pkg/$id.svg" "$pkg/build.sh" "$kit/"
-[ -f "$pkg/TESTING.md" ] && cp "$pkg/TESTING.md" "$kit/"
+cp "$pkg/TESTING.md" "$kit/"
+cp "$repo/docs/install.md" "$kit/INSTALL.md"
+cp "$repo/LICENSE" "$kit/"
+echo "$commit" > "$kit/SOURCE_COMMIT"
 grep -q '@BUNDLE_SHA256@' "$pkg/$id.yml" || { echo "The manifest has no @BUNDLE_SHA256@ placeholder" >&2; exit 1; }
 sed -e "s/@BUNDLE_SHA256@/$bundle_sha/" -e "s/@BUNDLE_NAME@/$bundle_name/" "$pkg/$id.yml" > "$kit/$id.yml"
 (cd "$kit" && sha256sum -- * > SHA256SUMS)
+source_name="portfolio-jockey-source-$version"
+git -C "$repo" archive --format=tar --prefix="$source_name/" "$commit" | gzip -n -9 > "$dist/$source_name.tar.gz"
 tar --sort=name --owner=0 --group=0 --numeric-owner --mtime='2026-01-01 00:00:00Z' \
   -C "$dist" -cf - "$kit_name" | gzip -n -9 > "$dist/$kit_name.tar.gz"
 
@@ -68,4 +85,6 @@ echo "App bundle: $dist/$bundle_name"
 echo "  SHA-256:  $bundle_sha"
 echo "Build kit:  $dist/$kit_name.tar.gz"
 echo "  SHA-256:  $(sha256sum "$dist/$kit_name.tar.gz" | cut -d' ' -f1)"
+echo "App source: $dist/$source_name.tar.gz (commit $commit)"
+echo "  SHA-256:  $(sha256sum "$dist/$source_name.tar.gz" | cut -d' ' -f1)"
 echo "Download the build kit through VS Code (right-click it in the Explorer, then Download)."

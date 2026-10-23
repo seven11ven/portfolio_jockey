@@ -11,10 +11,17 @@
 #     installs the freedesktop 26.08 Platform and Sdk from it. These, and the
 #     library sources the manifest lists (each pinned by SHA-256), are the only
 #     downloads. The app itself never gets network access.
-#  4. Builds the app with flatpak-builder and installs it for your user.
-#  5. Makes portfolio-jockey-<version>-x86_64.flatpak, a single file that can
-#     be installed elsewhere, and prints its SHA-256.
-#  6. Prints the app's sandbox permissions, so you can see there's no network.
+#  4. Builds the app with flatpak-builder into a local repo (./repo), together
+#     with the exact sources of every module.
+#  5. Makes two single files and prints their SHA-256:
+#     - portfolio-jockey-<version>-x86_64.flatpak, the app
+#     - portfolio-jockey-<version>-sources.flatpak, the sources of the
+#       libraries inside it. The GPL requires offering these with every copy
+#       of the app, so a release always publishes both.
+#     Then installs the app for your user from that very .flatpak file, so
+#     you test what other people will get. Your vault and settings are kept.
+#  6. Prints the app's sandbox permissions, so you can see there's no network,
+#     and checks that the license files were installed.
 #
 # Nothing needs sudo except installing flatpak itself (step 1 tells you how).
 set -euo pipefail
@@ -24,6 +31,8 @@ id=io.github.seven11ven.portfolio_jockey
 manifest="$id.yml"
 version=$(sed -nE 's/.*portfolio-jockey-bundle-([0-9][^-]*)-x86_64\.tar\.gz.*/\1/p' "$manifest" | head -n1)
 bundle_file="portfolio-jockey-$version-x86_64.flatpak"
+sources_file="portfolio-jockey-$version-sources.flatpak"
+flathub_repo=https://dl.flathub.org/repo/flathub.flatpakrepo
 
 say() { printf '\n== %s\n' "$1"; }
 
@@ -38,7 +47,11 @@ command -v flatpak-builder >/dev/null || missing+=(flatpak-builder)
 if [ ${#missing[@]} -gt 0 ]; then
   echo "Missing: ${missing[*]}. Install them with:"
   echo "  sudo apt install ${missing[*]}"
-  echo "then log out and back in once, and run this script again."
+  if [[ " ${missing[*]} " == *" flatpak "* ]]; then
+    echo "then log out and back in once (Flatpak needs that the first time), and run this script again."
+  else
+    echo "then run this script again."
+  fi
   exit 1
 fi
 echo "flatpak $(flatpak --version | awk '{print $2}'), flatpak-builder $(flatpak-builder --version | awk '{print $2}')"
@@ -47,16 +60,20 @@ say "2. Kit files"
 sha256sum --check --strict SHA256SUMS
 
 say "3. Runtime from Flathub"
-flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+flatpak remote-add --user --if-not-exists flathub "$flathub_repo"
 flatpak install --user --noninteractive flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08
 
-say "4. Build and install"
-flatpak-builder --user --install --force-clean --install-deps-from=flathub build-dir "$manifest"
+say "4. Build"
+flatpak-builder --force-clean --bundle-sources --repo=repo --install-deps-from=flathub build-dir "$manifest"
 
-say "5. Single-file bundle"
-flatpak build-bundle ~/.local/share/flatpak/repo "$bundle_file" "$id" --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+say "5. Single files, then install"
+flatpak build-bundle repo "$bundle_file" "$id" --runtime-repo="$flathub_repo"
+flatpak build-bundle --runtime repo "$sources_file" "$id.Sources"
 echo "Made $bundle_file"
-echo "SHA-256: $(sha256sum "$bundle_file" | cut -d' ' -f1)"
+echo "  SHA-256: $(sha256sum "$bundle_file" | cut -d' ' -f1)"
+echo "Made $sources_file"
+echo "  SHA-256: $(sha256sum "$sources_file" | cut -d' ' -f1)"
+flatpak install --user --reinstall --noninteractive "$bundle_file"
 
 say "6. Checks"
 echo "Sandbox permissions (there must be no 'network' under [Context] shared=):"
@@ -65,6 +82,14 @@ if flatpak info --user --show-permissions "$id" | grep -E '^shared=' | grep -q n
   echo "WARNING: the app has network access. Don't use this build; report it." >&2
   exit 1
 fi
+licenses=$(flatpak run --command=ls "$id" "/app/share/licenses/$id" 2>/dev/null | tr '\n' ' ')
+echo "License files installed for: ${licenses:-none}"
+for module in libsodium libass libplacebo libmpv poppler portfolio_jockey; do
+  if [[ " $licenses " != *" $module "* ]]; then
+    echo "WARNING: no license files for $module. Don't share this build; report it." >&2
+    exit 1
+  fi
+done
 if flatpak list --runtime --columns=application | grep -qx org.freedesktop.Platform.codecs-extra; then
   echo "codecs-extra (H.264/HEVC video) is installed."
 else
@@ -81,4 +106,6 @@ fi
 echo
 echo "Done. Start the app from your applications menu, or with:"
 echo "  flatpak run $id"
+echo "If it isn't in the menu yet, log out and back in once: the menu only sees"
+echo "apps installed for your user after Flatpak has set that up at login."
 echo "Then work through TESTING.md."

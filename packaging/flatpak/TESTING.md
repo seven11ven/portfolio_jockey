@@ -26,7 +26,11 @@ Run these in a terminal. They don't change anything.
 - [ ] **A4. The video codecs are installed.**
       `flatpak list --runtime | grep -i codecs-extra`
       There should be one line with `org.freedesktop.Platform.codecs-extra`.
-- [ ] **A5. The app is in the menu,** with the stacked-cards icon and the name "Portfolio Jockey".
+- [ ] **A5. The app is in the menu,** with the stacked-cards icon and the name "Portfolio Jockey". If it's missing after your first install, log out and back in once, then check again. The menu only finds apps installed for your user after Flatpak has set that up at login. Only count it as a fail if it's still missing after that.
+
+- [ ] **A6. License files are installed.**
+      `flatpak run --command=ls io.github.seven11ven.portfolio_jockey /app/share/licenses/io.github.seven11ven.portfolio_jockey`
+      It should list `libass  libmpv  libplacebo  libsodium  poppler  portfolio_jockey`.
 
 ## B. First run and unlocking
 - [ ] **B1.** Start the app from the menu. The first-run screen appears.
@@ -49,7 +53,7 @@ Open each type with **Preview**:
 - [ ] **D2.** A text file and a Markdown file.
 - [ ] **D3.** A PDF (go to the next and previous page).
 - [ ] **D4. Audio** (test item 10). It plays through your speakers.
-- [ ] **D5. Video** (test items 9 and 10). An MP4 (H.264) plays, with sound. If you have one, try a WebM too.
+- [ ] **D5. Video** (test items 9 and 10). An MP4 (H.264) plays, with sound. If you have one, try a WebM too. Then close the preview **while it's playing**, a few times. The app must stay responsive every time; it must not freeze or show "not responding". Do the same with an audio file.
 - [ ] **D6. Readable copies are cleaned up.** This looks inside the running app, so keep it open.
       1. Find the app's instance number: `flatpak ps --columns=instance,application`
       2. With a video preview **open**, run `flatpak enter <instance> sh -c 'ls -la "$XDG_RUNTIME_DIR/portfolio_jockey"'`. A readable copy should be listed.
@@ -96,7 +100,7 @@ Open each type with **Preview**:
 
 | Item | Pass / Fail | Notes (error text, what you expected) |
 |---|---|---|
-| A1–A5 | | |
+| A1–A6 | | |
 | B1–B6 | | |
 | C1–C5 | | |
 | D1–D6 | | |

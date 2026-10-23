@@ -67,12 +67,16 @@ void main() {
     await tester.tap(find.text('Delete project…'));
     await tester.pumpAndSettle();
     expect(find.text('Delete “Kitchen Remodel”?'), findsOneWidget);
+    expect(find.text('Type “Kitchen Remodel” to confirm'), findsOneWidget, reason: 'the name is quoted, so spaces in it are visible');
     bool canDelete() => filledButton(tester, 'Delete project').onPressed != null;
     expect(canDelete(), isFalse);
 
     await tester.enterText(find.byKey(const Key('confirm-name')), 'kitchen remodel');
     await tester.pump();
     expect(canDelete(), isFalse);
+    await tester.enterText(find.byKey(const Key('confirm-name')), 'KitchenRemodel');
+    await tester.pump();
+    expect(canDelete(), isFalse, reason: 'a missing space is still a different name');
     await tester.enterText(find.byKey(const Key('confirm-name')), 'Kitchen Remodel');
     await tester.pump();
     expect(canDelete(), isTrue);

@@ -12,6 +12,7 @@ import 'package:portfolio_jockey/app/theme.dart';
 import 'package:portfolio_jockey/services/native/poppler.dart';
 import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/ui/common.dart';
+import 'package:portfolio_jockey/ui/preview/shared_player.dart';
 import 'package:wakelock_plus_platform_interface/wakelock_plus_platform_interface.dart';
 
 /// How a file is previewed.
@@ -376,7 +377,7 @@ class MediaPreview extends StatefulWidget {
 }
 
 class _MediaPreviewState extends State<MediaPreview> {
-  Player? _player;
+  Future<SharedPlayer>? _shared;
   VideoController? _video;
   StreamSubscription<Duration>? _duration;
   String? _error;
@@ -389,25 +390,19 @@ class _MediaPreviewState extends State<MediaPreview> {
 
   Future<void> _start() async {
     try {
-      ensureMediaReady();
-      final player = Player(configuration: const PlayerConfiguration(title: 'Portfolio Jockey', protocolWhitelist: ['file']));
-      _player = player;
-      final native = player.platform! as NativePlayer;
-      for (final MapEntry(:key, :value) in lockedDownMpvOptions.entries) {
-        await native.setProperty(key, value);
+      final shared = SharedPlayer.instance(prepare: ensureMediaReady, lockedDownOptions: lockedDownMpvOptions);
+      _shared = shared;
+      final player = await shared;
+      await player.open(widget.copy);
+      if (!mounted) {
+        return;
       }
-      final video = VideoController(player);
-      _duration = player.stream.duration.listen((d) {
+      _duration = player.player?.stream.duration.listen((d) {
         if (d > Duration.zero) {
           widget.onDuration?.call(d);
         }
       });
-      // Player.open() would write a playlist file with this path to /tmp, so
-      // the file is loaded with mpv's own command instead.
-      await native.command(['loadfile', widget.copy.path, 'replace']);
-      if (mounted) {
-        setState(() => _video = video);
-      }
+      setState(() => _video = player.video);
     } on Object catch (e) {
       if (mounted) {
         setState(() => _error = "This file can't be played: $e");
@@ -418,11 +413,12 @@ class _MediaPreviewState extends State<MediaPreview> {
   @override
   void dispose() {
     unawaited(_duration?.cancel());
-    final player = _player;
-    final folder = widget.copy.parent;
+    final shared = _shared;
+    final copy = widget.copy;
+    // The shared player is only stopped, never disposed (see SharedPlayer).
     unawaited(() async {
-      await player?.dispose();
-      await PrivateFolders.wipe(folder);
+      await (await shared)?.close(copy);
+      await PrivateFolders.wipe(copy.parent);
     }());
     super.dispose();
   }

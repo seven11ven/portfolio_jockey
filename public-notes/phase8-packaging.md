@@ -18,6 +18,7 @@ Flatpak can't run in this Codespace, because the sandbox it needs isn't allowed 
 - **Runtime (2026-10-22):** `org.freedesktop.Platform//26.08` (GTK 3, GLib, cairo, epoxy and glibc 2.44 are included, and it's supported until about 08/2028).
 - **Video codecs (2026-10-22):** mpv uses the runtime's FFmpeg. H.264/HEVC come from Flathub's `org.freedesktop.Platform.codecs-extra` extension, which is installed automatically, so the app never ships patent-restricted decoders itself. The runtime's FFmpeg has network code, but it's unreachable: the sandbox has no network, and the app whitelists only `file`.
 - **Built as modules:** mpv 0.41.0 (libmpv only, with Lua, JavaScript, Blu-ray, DVD, CD audio and libarchive off), libplacebo, libass, Poppler 26.10.0 (GLib binding only, with NSS, GPGME and libcurl off), and libsodium 1.0.22 (minisign signature checked).
+- **Media previews open paused (2026-10-23):** the user presses Play. It was a side effect of loading files with mpv's `loadfile`; the PM kept it as a decision.
 - **License (2026-10-22):** `AGPL-3.0-or-later`, in the metainfo and the README.
 - **App icon (2026-10-22):** the locked card stack (option C), shipped as an **SVG only** for now (`hicolor/scalable`). Flathub would also want PNGs (128 and 256 px).
 - **Where it's built and tested (2026-10-22):** on the PM's own Ubuntu-family PC. This Codespace blocks the user namespaces Flatpak needs. Everything is prepared here (manifest, app bundle, `build.sh`, test checklist), and the PM runs the build and tests.
@@ -68,6 +69,19 @@ Flatpak can't run in this Codespace, because the sandbox it needs isn't allowed 
   - mpv 0.41.0's meson option names
   - that the Poppler build check passes
   - the metainfo and desktop file validators, which `build.sh` runs if they're installed
+
+## Open ideas
+- **A `.deb` package** (asked 2026-10-23), after the Flatpak release. It wouldn't be sandboxed, and it would use the system's libmpv and Poppler (Ubuntu's are built with network protocols and Lua), so it needs its own decision and review. For now: Flatpak only.
+
+## Release checklist
+Every release on GitHub publishes these together. Never publish the `.flatpak` without the other two.
+1. Commit everything, run `bash app/tool/package-bundle.sh` (it refuses to run with uncommitted changes), and build with the kit's `build.sh`.
+2. Tag the commit in `SOURCE_COMMIT` (for example `v0.1.0`) and push the tag.
+3. Upload:
+   - `portfolio-jockey-<version>-x86_64.flatpak`
+   - `portfolio-jockey-<version>-sources.flatpak`, the library sources (GPL and LGPL)
+   - `portfolio-jockey-source-<version>.tar.gz`, the app's own source (AGPL)
+4. List the SHA-256 of each file in the release notes, with a link to `docs/install.md`.
 
 ## Still open
 - **Distribution testing:** check the distributions listed in `linux-support.md`.
