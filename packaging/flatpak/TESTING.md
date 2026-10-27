@@ -50,15 +50,15 @@ Open each type by **clicking it once** (right-click or a long press opens the fi
 - [x] **D1.** An image (zoom in and out).
 - [x] **D2.** A text file and a Markdown file.
 - [x] **D3.** A PDF (go to the next and previous page).
-- [ ] **D4. Audio.** Open an audio file (MP3 or M4A). The preview shows a note icon, "Plays in your desktop's audio player.", the warning that other apps can read the copy while it plays, and a **Play** button. Press Play: your default audio player opens and plays it. The text changes to "Playing in…" and the button to **Play again**.
-- [ ] **D5. Video.** The same with an MP4 (and a WebM if you have one): your default video player opens and plays it, with sound. Portfolio Jockey stays responsive the whole time.
-- [ ] **D5b. Play again.** Close the player window, then press **Play again** in the preview. The player opens again with the same file.
-- [ ] **D5c. Closing stops it.** Start a video, then close the preview in Portfolio Jockey (back arrow). The readable copy is deleted, so the player stops or shows an error. That's expected. Portfolio Jockey must not freeze.
-- [ ] **D6. Readable copies are cleaned up.** Keep the app open.
+- [x] **D4. Audio.** Open an audio file (MP3 or M4A). The preview shows a note icon, "Plays in your desktop's audio player.", the warning that other apps can read the copy while it plays, and a **Play** button. Press Play: your default audio player opens and plays it. The text changes to "Playing in…" and the button to **Play again**.
+- [x] **D5. Video.** The same with an MP4 (and a WebM if you have one): your default video player opens and plays it, with sound. Portfolio Jockey stays responsive the whole time.
+- [x] **D5b. Play again.** Close the player window, then press **Play again** in the preview. The player opens again with the same file.
+- [x] **D5c. Closing stops it.** Start a video, then close the preview in Portfolio Jockey (back arrow). The readable copy is deleted, so the player stops or shows an error. That's expected. Portfolio Jockey must not freeze.
+- [x] **D6. Readable copies are cleaned up.** Keep the app open.
       1. Open a video preview and press **Play**.
       2. Run `ls -la "$XDG_RUNTIME_DIR/app/io.github.seven11ven.portfolio_jockey/portfolio_jockey"` in a normal terminal (outside the app). A `view-…` folder with the copy should be listed.
       3. Close the preview and run the same command again. The `view-…` folder should be gone.
-- [ ] **D7. Nothing before Play.** Open a video preview, but don't press Play. Run the command from D6: no `view-…` folder is there.
+- [x] **D7. Nothing before Play.** Open a video preview, but don't press Play. Run the command from D6: no `view-…` folder is there.
 
 ## E. "Edit in another app" (test item 8)
 - [x] **E1.** On a text file, choose **Edit in another app…**, then **Open**. Your desktop's "Open With…" chooser appears **every time**, even if you picked an app before. Pick a text editor. If nothing appears, or the app shows an error, note the exact message.
@@ -106,15 +106,15 @@ These check that a crash or power cut never loses data or leaves a readable file
 
 ## K. Folders and the file-explorer view
 Use throwaway files. In a Flatpak, files you add and archives you export go through your desktop's own file dialogs.
-- [ ] **K1. Old vault.** A project made before folders opens as before: every file is at the top level, with nothing missing and no error.
-- [ ] **K2. New folder.** **New folder** asks for a name and says where it will be created. It then appears under FOLDERS, among the files. A name you already used (even in other capitals) is refused with a message, and so is a name with a `/`. **Cancel** changes nothing.
-- [ ] **K3. Nesting.** Open a folder (single click). The path row shows `Project > Folder`, and **New folder** there creates a folder inside it. Click any part of the path to go back up. **Add files here** puts the files you pick in that folder (they arrive through the file dialog), and the folder's card, back at the top level, shows the right count and size.
-- [ ] **K4. Views and sorting.** The grid is the default. The list toggle shows Name, Size and Date added; a folder shows its total size and the date it was created. Sort by name, size and date added, both directions, from the menu and from the column headings. Folders always stay above files. Leave a project and open another: the choice is still there. Close the app: it's back to the grid.
-- [ ] **K5. Search and tags.** Typing in the search bar lists matches from every folder, each with its folder path. A tag chip does the same. **Show in folder** (right-click a result) opens its folder. Clearing the search returns to the folder you were in.
-- [ ] **K6. Drag and drop.** Drag a file onto a folder: a confirmation appears, **Cancel** changes nothing, and **Move** moves it. Select several (**Select**) and drag one of them: they all move. Drag a folder onto another folder, and drag a folder onto a part of the path row to move it up. A folder can't be dropped on itself. If the target has the same name, the moved item gets "(2)" and the message says so.
-- [ ] **K7. Move to…, Rename, Delete.** **Move to…** (file menu, folder menu, selection bar) greys out a folder's own contents. **Rename** works. **Delete folder…** shows how many files and folders are inside and their size; **Cancel** changes nothing; confirming deletes it all, and the originals on your device are untouched.
-- [ ] **K8. Export and import with folders.** Export a project with nested folders as ZIP: in your archive manager the folders are real folders. Export it locked (`.pjx`), then **Import** it: the folders, who is in which, and the empty folders come back. On a folder's menu, **Export a readable copy…** has no lock option and saves a ZIP or TAR of just that folder.
-- [ ] **K9. Pull the plug.** Delete a folder with a large file in it and kill the app (`flatpak kill io.github.seven11ven.portfolio_jockey`) right away. After unlocking, the project opens, and the folder is either gone with its files or still whole, never half there.
+- [x] **K1. Old vault.** A project made before folders opens as before: every file is at the top level, with nothing missing and no error.
+- [x] **K2. New folder.** **New folder** asks for a name and says where it will be created. It then appears under FOLDERS, among the files. A name you already used (even in other capitals) is refused with a message, and so is a name with a `/`. **Cancel** changes nothing.
+- [x] **K3. Nesting.** Open a folder (single click). The path row shows `Project > Folder`, and **New folder** there creates a folder inside it. Click any part of the path to go back up. **Add files here** puts the files you pick in that folder (they arrive through the file dialog), and the folder's card, back at the top level, shows the right count and size.
+- [x] **K4. Views and sorting.** The grid is the default. The list toggle shows Name, Size and Date added; a folder shows its total size and the date it was created. Sort by name, size and date added, both directions, from the menu and from the column headings. Folders always stay above files. Leave a project and open another: the choice is still there. Close the app: it's back to the grid.
+- [x] **K5. Search and tags.** Typing in the search bar lists matches from every folder, each with its folder path. A tag chip does the same. **Show in folder** (right-click a result) opens its folder. Clearing the search returns to the folder you were in.
+- [x] **K6. Drag and drop.** Drag a file onto a folder: a confirmation appears, **Cancel** changes nothing, and **Move** moves it. Select several (**Select**) and drag one of them: they all move. Drag a folder onto another folder, and drag a folder onto a part of the path row to move it up. A folder can't be dropped on itself. If the target has the same name, the moved item gets "(2)" and the message says so.
+- [x] **K7. Move to…, Rename, Delete.** **Move to…** (file menu, folder menu, selection bar) greys out a folder's own contents. **Rename** works. **Delete folder…** shows how many files and folders are inside and their size; **Cancel** changes nothing; confirming deletes it all, and the originals on your device are untouched.
+- [x] **K8. Export and import with folders.** Export a project with nested folders as ZIP: in your archive manager the folders are real folders. Export it locked (`.pjx`), then **Import** it: the folders, who is in which, and the empty folders come back. On a folder's menu, **Export a readable copy…** has no lock option and saves a ZIP or TAR of just that folder.
+- [x] **K9. Pull the plug.** Delete a folder with a large file in it and kill the app (`flatpak kill io.github.seven11ven.portfolio_jockey`) right away. After unlocking, the project opens, and the folder is either gone with its files or still whole, never half there.
 
 ## I. Clean up
 - [ ] **I1.** Remove the test data: `flatpak uninstall --user --delete-data io.github.seven11ven.portfolio_jockey`. Only do this if you won't keep using this build. It deletes the vault in the app's own data folder; a storage folder moved elsewhere (H3) stays.
@@ -130,13 +130,13 @@ Use throwaway files. In a Flatpak, files you add and archives you export go thro
 | B1–B6 | Pass | PM, 2026-10-23 |
 | C1–C5 | Pass | PM, 2026-10-23 |
 | D1–D3 | Pass | PM, 2026-10-23 |
-| D4–D7 | | (retest: now plays in the desktop's player) |
+| D4–D7 | Pass | PM, 2026-10-27 |
 | E1–E8 | Pass | PM, 2026-10-23 |
 | F1–F5 | Pass | PM, 2026-10-23 |
 | G1–G7 | Pass | PM, 2026-10-23 |
 | H1–H8 | Pass | PM, 2026-10-23 |
 | J1–J5 | Pass | PM, 2026-10-23 |
-| K1–K9 | | (new: folders) |
+| K1–K9 | Pass | PM, 2026-10-27 |
 
 Also include:
 - your distribution and version (`cat /etc/os-release | head -3`)
