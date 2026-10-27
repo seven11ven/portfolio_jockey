@@ -111,7 +111,8 @@ void main() {
     expect(find.byType(ImagePreview), findsOneWidget);
     expect(find.textContaining('2 × 1'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Next file'));
+    // The screen lists files by name, so quote.pdf comes before swatch.png.
+    await tester.tap(find.byTooltip('Previous file'));
     await settleUntil(tester, find.text('Page 1 of 2'));
     expect(find.byType(RawImage), findsOneWidget);
     expect(find.textContaining('2 pages'), findsOneWidget);

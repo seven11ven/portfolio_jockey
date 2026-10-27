@@ -4,7 +4,9 @@ import 'dart:typed_data';
 
 import 'package:archive/archive.dart' as reference;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:portfolio_jockey/services/archive/archive_entry.dart';
 import 'package:portfolio_jockey/services/archive/tar_reader.dart';
+import 'package:portfolio_jockey/services/archive/tar_writer.dart';
 import 'package:portfolio_jockey/services/export_service.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/services/tag_changes.dart';
@@ -216,6 +218,159 @@ void main() {
       final zip = File('${out.path}/not.pjx');
       await exports.export(projectIds: [garden], target: zip, lock: const Unlocked(ArchiveFormat.zip));
       await expectLater(exports.openLocked(zip, 'anything'), throwsA(isA<VaultFormatError>()));
+    });
+  });
+
+  group('with folders', () {
+    late String office;
+    late String invoices;
+    late String year;
+
+    Future<void> addFile(String name, String text, {String? folderId}) async {
+      final file = File('${(await tempFolder()).path}/$name')..writeAsStringSync(text);
+      await service.addFiles(office, [file.path], folderId: folderId);
+    }
+
+    setUp(() async {
+      office = await service.createProject(name: 'Office');
+      invoices = (await service.createFolder(office, name: 'Invoices')).id;
+      year = (await service.createFolder(office, name: '2026', parentId: invoices)).id;
+      await service.createFolder(office, name: 'Empty');
+      await addFile('a.txt', 'in invoices', folderId: invoices);
+      await addFile('b.txt', 'in 2026', folderId: year);
+      await addFile('top.txt', 'at the top');
+      await addFile('Invoices', 'a file named like a folder');
+    });
+
+    Map<String, List<int>> decode(File file, ArchiveFormat format) {
+      final bytes = file.readAsBytesSync();
+      final archive = format == ArchiveFormat.zip ? reference.ZipDecoder().decodeBytes(bytes, verify: true) : reference.TarDecoder().decodeBytes(bytes);
+      return {for (final f in archive.files) f.name: f.content as List<int>};
+    }
+
+    Future<File> craft(Map<String, Object?> manifest, {Map<String, List<int>> files = const {}}) async {
+      final json = utf8.encode(jsonEncode(manifest));
+      final target = File('${out.path}/crafted-${DateTime.now().microsecondsSinceEpoch}.pjx');
+      ArchiveEntry entry(String path, List<int> bytes) => ArchiveEntry(path: path, size: bytes.length, modified: DateTime.utc(2026), open: () => Stream.value(bytes));
+      await writeLockedExport(target, 'pw', tarStream(Stream.fromIterable([entry('manifest.json', json), for (final e in files.entries) entry(e.key, e.value)])), kdf: fastKdf);
+      return target;
+    }
+
+    Map<String, Object?> manifest(int format, List<Map<String, Object?>> folders, List<Map<String, Object?>> files) => {
+      'app': 'Portfolio Jockey',
+      'format': format,
+      'createdAt': '2026-10-26T00:00:00.000Z',
+      'projects': [
+        {'name': 'Crafted', 'description': '', 'tags': <String>[], 'cover': null, 'folders': folders, 'files': files},
+      ],
+    };
+    Map<String, Object?> manifestFile(int n, {int? folder}) => {'path': 'files/0/$n', 'name': 'f$n.txt', 'size': 3, 'addedAt': '2026-01-01T00:00:00.000Z', 'tags': <String>[], 'folder': folder};
+    Map<String, Object?> manifestFolder(String name, int? parent) => {'name': name, 'parent': parent, 'createdAt': '2026-02-03T04:05:06.000Z'};
+
+    for (final format in ArchiveFormat.values) {
+      test('${format.name}: folders become real folders, names that clash are numbered, project.json lists them all', () async {
+        final target = File('${out.path}/office.${format.extension}');
+        await exports.export(projectIds: [office], target: target, lock: Unlocked(format));
+        final files = decode(target, format);
+        expect(files.keys, unorderedEquals([
+          'Office/project.json',
+          'Office/files/Invoices/a.txt',
+          'Office/files/Invoices/2026/b.txt',
+          'Office/files/top.txt',
+          'Office/files/Invoices (2)',
+        ]));
+        expect(utf8.decode(files['Office/files/Invoices/2026/b.txt']!), 'in 2026');
+        final json = jsonDecode(utf8.decode(files['Office/project.json']!)) as Map<String, Object?>;
+        expect(json['folders'], unorderedEquals(['Invoices', 'Invoices/2026', 'Empty']), reason: 'an empty folder is listed, though it holds no file');
+        expect((json['files']! as List<Object?>).map((f) => (f! as Map<String, Object?>)['file']), contains('files/Invoices/2026/b.txt'));
+      });
+
+      test('${format.name}: one folder exported on its own, with only what is inside it', () async {
+        final target = File('${out.path}/folder.${format.extension}');
+        await exports.exportFolder(projectId: office, folderId: invoices, target: target, format: format);
+        final files = decode(target, format);
+        expect(files.keys, unorderedEquals(['Invoices/a.txt', 'Invoices/2026/b.txt']));
+        expect(utf8.decode(files['Invoices/a.txt']!), 'in invoices');
+        expect(await out.list().map((e) => e.uri.pathSegments.last).toList(), ['folder.${format.extension}'], reason: 'no temporary file left');
+      });
+    }
+
+    test('exporting a folder can be cancelled, and leaves nothing behind', () async {
+      final cancel = CancelToken();
+      await expectLater(
+        exports.exportFolder(projectId: office, folderId: invoices, target: File('${out.path}/f.zip'), format: ArchiveFormat.zip, cancel: cancel, onProgress: (_) => cancel.cancel()),
+        throwsA(isA<Cancelled>()),
+      );
+      expect(await out.list().toList(), isEmpty);
+      await expectLater(exports.exportFolder(projectId: office, folderId: '0' * 32, target: File('${out.path}/g.zip'), format: ArchiveFormat.zip), throwsStateError);
+    });
+
+    test('a locked export round trip: folders, placement, dates and empty folders come back, with new IDs', () async {
+      final pjx = File('${out.path}/office.pjx');
+      await exports.export(projectIds: [office], target: pjx, lock: const LockedWith('pw'));
+      final raw = latin1.decode(await pjx.readAsBytes());
+      expect(raw, isNot(contains('Invoices')), reason: 'folder names are only inside the encryption');
+      final before = await service.readProject(office);
+      final opened = await exports.openLocked(pjx, 'pw');
+      addTearDown(opened.dispose);
+      expect(opened.projects.single.folders.length, 3);
+
+      final id = (await exports.import(opened)).single;
+      final after = await service.readProject(id);
+      String pathOf(ProjectIndex index, String? folderId) => index.pathTo(folderId).map((f) => f.name).join('/');
+      expect({for (final f in after.folders) pathOf(after, f.id)}, {'Invoices', 'Invoices/2026', 'Empty'});
+      expect({for (final f in after.files) '${pathOf(after, f.folderId)}|${f.name}'}, {for (final f in before.files) '${pathOf(before, f.folderId)}|${f.name}'});
+      expect({for (final f in after.folders) f.name: f.createdAt}, {for (final f in before.folders) f.name: f.createdAt});
+      expect(after.folders.map((f) => f.id).toSet().intersection(before.folders.map((f) => f.id).toSet()), isEmpty, reason: 'imported folders get new IDs');
+      for (final f in after.files) {
+        expect(await content(id, f), await content(office, before.files.firstWhere((b) => b.name == f.name)));
+      }
+    });
+
+    test('an export from before folders (manifest format 1) still imports, with everything at the top level', () async {
+      final file = await craft(manifest(1, const [], [manifestFile(0)]), files: {'files/0/0': utf8.encode('abc')});
+      final opened = await exports.openLocked(file, 'pw');
+      addTearDown(opened.dispose);
+      final id = (await exports.import(opened)).single;
+      final index = await service.readProject(id);
+      expect(index.folders, isEmpty);
+      expect(index.filesIn(null).single.name, 'f0.txt');
+    });
+
+    test('a manifest with a folder inside itself, a loop, or a file in a missing folder is refused', () async {
+      for (final (folders, files) in [
+        ([manifestFolder('A', 0)], <Map<String, Object?>>[]),
+        ([manifestFolder('A', 1), manifestFolder('B', 0)], <Map<String, Object?>>[]),
+        ([manifestFolder('A', null)], [manifestFile(0, folder: 1)]),
+        ([manifestFolder('A', -1)], <Map<String, Object?>>[]),
+      ]) {
+        final file = await craft(manifest(2, folders, files), files: {for (final f in files) f['path']! as String: utf8.encode('abc')});
+        await expectLater(exports.openLocked(file, 'pw'), throwsA(isA<BadArchive>()), reason: '$folders $files');
+      }
+    });
+
+    test('folder names that are unsafe or clash are repaired on import, so the project always opens', () async {
+      final names = ['', 'a/b', 'X', 'x', '..', 'ok\n'];
+      final file = await craft(manifest(2, [for (final n in names) manifestFolder(n, null)], const []));
+      final opened = await exports.openLocked(file, 'pw');
+      addTearDown(opened.dispose);
+      final id = (await exports.import(opened)).single;
+      expect((await service.readProject(id)).folders.map((f) => f.name), ['Folder', 'a_b', 'X', 'x (2)', 'Folder (2)', 'ok']);
+    });
+
+    test('a ZIP that would need a path over 65,535 bytes is refused before anything is written; TAR still works', () async {
+      var parent = invoices;
+      for (var i = 0; i < 340; i++) {
+        parent = (await service.createFolder(office, name: 'x' * 199 + (i % 10).toString(), parentId: parent)).id;
+      }
+      await addFile('deep.txt', 'deep', folderId: parent);
+      await expectLater(exports.export(projectIds: [office], target: File('${out.path}/deep.zip'), lock: const Unlocked(ArchiveFormat.zip)), throwsA(isA<ArchivePathTooLong>()));
+      await expectLater(exports.exportFolder(projectId: office, folderId: invoices, target: File('${out.path}/deep2.zip'), format: ArchiveFormat.zip), throwsA(isA<ArchivePathTooLong>()));
+      expect(await out.list().toList(), isEmpty);
+
+      final tar = File('${out.path}/deep.tar');
+      await exports.export(projectIds: [office], target: tar, lock: const Unlocked(ArchiveFormat.tar));
+      expect(decode(tar, ArchiveFormat.tar).keys.any((name) => name.endsWith('/deep.txt')), isTrue);
     });
   });
 }

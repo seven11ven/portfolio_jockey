@@ -7,12 +7,12 @@
 ## Step 0: stop VS Code from flagging the backups
 **Time:** 2026-10-22 16:14 UTC
 
-- **Why:** VS Code showed 794 "Problems". They all came from the backed-up `.dart` files in `version-control/local-app/2026-10-22_before-trash/`. Outside `app/`, their imports can't be resolved. The app itself had no problems, and `flutter analyze` was clean.
+- **Why:** VS Code showed 794 "Problems". They all came from the backed-up `.dart` files in `version-control/local-app/edit006-2026-10-22_before-trash/`. Outside `app/`, their imports can't be resolved. The app itself had no problems, and `flutter analyze` was clean.
 - **Change:** `"dart.analysisExcludedFolders": ["version-control"]` in `.devcontainer/devcontainer.json`, next to the other Dart settings, with a comment. The same setting was added to this container's VS Code machine settings, which are untracked.
 - **Verification:**
   - After a window reload, the Problems panel was empty.
   - `app/` is still analysed: a temporary lint probe was flagged, then deleted.
-- **Backup:** `version-control/local-app/2026-10-22_before-analysis-exclude/`.
+- **Backup:** `version-control/local-app/edit007-2026-10-22_before-analysis-exclude/`.
 - **Impact:** editor only. The app, its tests and `flutter analyze` are unchanged.
 
 ## Step 1: research and decision point 1
@@ -66,7 +66,7 @@ The research came from reading the packages' code. It is checked again in the co
 ## Step 3a: backups and system libraries
 **Time:** 2026-10-22 18:01–18:03 UTC
 
-- **Backup:** `version-control/local-app/2026-10-22_before-phase6/` holds 20 files that phase 6 changes, each at its repo path, with a README on how to restore. They include `setup.sh`, the pubspec files, the Linux CMake and plugin files, the privacy-check lists and script, `main.dart`, the controller, `ProjectService`, the screens that get the banner or menu items, `libc.dart` and `vault.dart`.
+- **Backup:** `version-control/local-app/edit008-2026-10-22_before-phase6/` holds 20 files that phase 6 changes, each at its repo path, with a README on how to restore. They include `setup.sh`, the pubspec files, the Linux CMake and plugin files, the privacy-check lists and script, `main.dart`, the controller, `ProjectService`, the screens that get the banner or menu items, `libc.dart` and `vault.dart`.
 - **`.devcontainer/setup.sh`:** now also installs the following from Debian 12:
   - `libmpv-dev` (mpv 0.35.1) and `libepoxy-dev` (1.5.10), which media_kit's video player builds against
   - `libpoppler-glib8` (22.12.0), for PDF previews

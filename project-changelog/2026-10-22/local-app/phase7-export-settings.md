@@ -23,7 +23,7 @@
     - scene 5: the confirmation, which says files are re-encrypted with new keys
   - The intro text describes the two options.
 - **`project-mockups/settings.html` scene 3:** the note about old exports needing the old passphrase is replaced with "Exports aren't affected", since exports never use the vault passphrase.
-- **Backup:** `version-control/local-app/2026-10-22_before-phase7/`.
+- **Backup:** `version-control/local-app/edit009-2026-10-22_before-phase7/`.
 - **Shown to the PM** as a private page. Waiting for approval.
 - **Approved** by the PM ("the mockup is good").
 

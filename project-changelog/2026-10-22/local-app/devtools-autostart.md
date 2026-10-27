@@ -33,4 +33,4 @@ After phase 3 created `app/`, the VS Code Dart extension began starting local ba
 ## Impacts
 - **New dev containers** won't start DevTools until it's asked for.
 - **In this container,** a "Developer: Reload Window" applies the setting to the running extension. Until then, the extension could restart DevTools if a debug session asks for it.
-- **Backup:** `version-control/local-app/2026-10-22_before-devtools-autostart/` holds the previous `devcontainer.json`.
+- **Backup:** `version-control/local-app/edit003-2026-10-22_before-devtools-autostart/` holds the previous `devcontainer.json`.

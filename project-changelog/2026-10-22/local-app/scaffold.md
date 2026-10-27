@@ -67,4 +67,4 @@
 - **Phase 4 (vault core) is next.** `sodium_libs` will be the first real dependency. It must pass the full review: its license, cost and code, including its native libsodium build and any build hooks. Then it gets added to the allowlist and reviewed hits.
 - **Every `flutter pub get` or package upgrade** must be followed by `bash app/tool/check-privacy.sh`. A version change fails until its code is re-reviewed.
 - **A Flutter upgrade** changes the SDK packages' identity (`flutter@flutter-<version>`), so their reviewed hits must be re-checked too.
-- **Backup:** `version-control/local-app/2026-10-22_before-scaffold/` holds the previous root `.gitignore`. To restore, copy it back and delete `app/`.
+- **Backup:** `version-control/local-app/edit002-2026-10-22_before-scaffold/` holds the previous root `.gitignore`. To restore, copy it back and delete `app/`.

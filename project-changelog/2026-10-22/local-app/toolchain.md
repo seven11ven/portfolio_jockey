@@ -49,7 +49,7 @@ All of this was checked in source code rather than docs or summaries:
 - **Android build tools:** their analytics settings file isn't documented in any source found, so no unverified file was written. This no longer matters, because Android isn't installed.
 
 ## Version control
-- Backed up the previous `devcontainer.json` and `.gitignore` to `version-control/local-app/2026-10-22_before-flutter-toolchain/`. No secrets.
+- Backed up the previous `devcontainer.json` and `.gitignore` to `version-control/local-app/edit001-2026-10-22_before-flutter-toolchain/`. No secrets.
 
 ## Verification (in this Codespace)
 - `setup.sh` ran end to end with exit code 0. The checksum matched (`flutter_linux_3.47.7-stable.tar.xz: OK`), and Flutter reports 3.47.7, Dart 3.13.5.

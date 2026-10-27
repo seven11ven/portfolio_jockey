@@ -7,18 +7,24 @@ import 'package:portfolio_jockey/services/export_service.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/ui/common.dart';
 import 'package:portfolio_jockey/vault/native/libc.dart';
+import 'package:portfolio_jockey/vault/project_index.dart';
 
 /// Export scenes 1, 1b, 2 and 3: one project (from its "…" menu) or several
 /// (bulk, from Settings). Exactly two options (PM decision, 2026-10-22):
 /// lock with a custom passphrase, or a regular unlocked ZIP/TAR. The dialog
 /// is the confirmation; it then shows progress with Cancel, and pops true
 /// once the export is saved.
+///
+/// With [folder], it exports that one folder of the single project as a
+/// readable copy: ZIP or TAR only, with no lock option, like the readable copy
+/// of one file.
 class ExportDialog extends StatefulWidget {
-  const ExportDialog({required this.projects, this.bulk = false, this.format = ArchiveFormat.zip, super.key});
+  const ExportDialog({required this.projects, this.bulk = false, this.format = ArchiveFormat.zip, this.folder, super.key});
 
   final List<ProjectSummary> projects;
   final bool bulk;
   final ArchiveFormat format;
+  final FolderEntry? folder;
 
   @override
   State<ExportDialog> createState() => _ExportDialogState();
@@ -44,9 +50,9 @@ class _ExportDialogState extends State<ExportDialog> {
 
   List<ProjectSummary> get _chosen => [for (final p in widget.projects) if (_selected.contains(p.id)) p];
 
-  int get _bytes => _chosen.fold(0, (sum, p) => sum + p.index.totalSize);
+  int get _bytes => widget.folder != null ? widget.projects.single.index.statsOf(widget.folder!.id).bytes : _chosen.fold(0, (sum, p) => sum + p.index.totalSize);
 
-  int get _fileCount => _chosen.fold(0, (sum, p) => sum + p.index.files.length);
+  int get _fileCount => widget.folder != null ? widget.projects.single.index.statsOf(widget.folder!.id).files : _chosen.fold(0, (sum, p) => sum + p.index.files.length);
 
   String get _extension => _locked ? lockedExtension : _format.extension;
 
@@ -57,7 +63,7 @@ class _ExportDialogState extends State<ExportDialog> {
 
   bool get _enoughSpace => _free == null || _free! >= _needed;
 
-  bool get _canExport => _target != null && _chosen.isNotEmpty && _enoughSpace && (!_locked || _passphraseOk);
+  bool get _canExport => _target != null && _chosen.isNotEmpty && _enoughSpace && (!_locked || _passphraseOk) && (widget.folder == null || _fileCount > 0);
 
   @override
   void initState() {
@@ -77,7 +83,7 @@ class _ExportDialogState extends State<ExportDialog> {
   String get _baseName {
     final now = DateTime.now();
     final date = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    return widget.bulk ? 'Portfolio Jockey projects $date' : safeName(widget.projects.single.index.name, fallback: 'Project');
+    return widget.bulk ? 'Portfolio Jockey projects $date' : safeName(widget.folder?.name ?? widget.projects.single.index.name, fallback: 'Project');
   }
 
   String _defaultTarget() {
@@ -143,17 +149,18 @@ class _ExportDialogState extends State<ExportDialog> {
     });
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await controller.exports.export(
-        projectIds: [for (final p in _chosen) p.id],
-        target: target,
-        lock: lock,
-        cancel: cancel,
-        onProgress: (progress) {
-          if (mounted) {
-            setState(() => _progress = progress);
-          }
-        },
-      );
+      final folder = widget.folder;
+      void progress(ExportProgress p) {
+        if (mounted) {
+          setState(() => _progress = p);
+        }
+      }
+
+      if (folder != null) {
+        await controller.exports.exportFolder(projectId: widget.projects.single.id, folderId: folder.id, target: target, format: _format, cancel: cancel, onProgress: progress);
+      } else {
+        await controller.exports.export(projectIds: [for (final p in _chosen) p.id], target: target, lock: lock, cancel: cancel, onProgress: progress);
+      }
       _passphrase.clear();
       _confirm.clear();
       messenger.showSnackBar(SnackBar(content: Text('Exported to ${target.path}')));
@@ -184,7 +191,7 @@ class _ExportDialogState extends State<ExportDialog> {
     final total = progress?.bytesTotal ?? _bytes;
     final done = progress?.bytesDone ?? 0;
     return PjDialog(
-      title: widget.bulk ? 'Exporting ${plural(_chosen.length, 'project')}…' : 'Exporting “${widget.projects.single.index.name}”…',
+      title: widget.bulk ? 'Exporting ${plural(_chosen.length, 'project')}…' : 'Exporting “${widget.folder?.name ?? widget.projects.single.index.name}”…',
       content: [
         LinearProgressIndicator(value: total == 0 ? null : done / total),
         Muted(
@@ -201,11 +208,12 @@ class _ExportDialogState extends State<ExportDialog> {
     final colors = PjColors.of(context);
     final mismatch = _confirm.text.isNotEmpty && _confirm.text != _passphrase.text;
     return PjDialog(
-      title: widget.bulk ? 'Export projects' : 'Export “${widget.projects.single.index.name}”',
+      title: widget.bulk ? 'Export projects' : (widget.folder != null ? 'Export the folder “${widget.folder!.name}”' : 'Export “${widget.projects.single.index.name}”'),
       width: 520,
       content: [
         if (widget.bulk) _projectList(context),
-        CheckboxListTile(
+        if (widget.folder == null)
+          CheckboxListTile(
           key: const Key('export-lock'),
           value: _locked,
           contentPadding: EdgeInsets.zero,
@@ -250,9 +258,11 @@ class _ExportDialogState extends State<ExportDialog> {
             ],
           ),
           Muted(
-            widget.bulk
-                ? 'One archive with a folder per project: each file once, with its real name, plus project.json listing the description and tags.'
-                : 'Each file once, with its real name, plus project.json listing the description and tags.',
+            widget.folder != null
+                ? 'Each file once, with its real name, in the same folders. Empty folders aren\'t included.'
+                : widget.bulk
+                ? 'One archive with a folder per project: each file once, with its real name, in the same folders, plus project.json listing the description and tags.'
+                : 'Each file once, with its real name, in the same folders, plus project.json listing the description and tags.',
           ),
           const Notice('This export is not protected. Anyone who gets the archive can open every file in it.'),
         ],
@@ -279,6 +289,7 @@ class _ExportDialogState extends State<ExportDialog> {
         if (!_enoughSpace) Notice('Not enough free space at the destination: about ${formatBytes(_needed)} is needed. Choose another location.', danger: true),
         if (_error case final error?) Notice(error, danger: true),
         if (widget.bulk && _chosen.isEmpty) Text('Choose at least one project.', style: TextStyle(color: colors.muted)),
+        if (widget.folder != null && _fileCount == 0) Text('This folder has no files to export.', style: TextStyle(color: colors.muted)),
       ],
       actions: [
         OutlinedButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),

@@ -54,4 +54,4 @@ Inside a Flatpak, picked files arrive as document-portal paths. The portal docs 
 ## Impacts
 - **Originals are never permanently deleted by the app.** Users can restore them from the Trash.
 - **On drives without a Trash** (some USB sticks or network drives), moving to the Trash fails with GLib's message, and nothing is changed.
-- **Backup:** `version-control/local-app/2026-10-22_before-trash/` holds the previous files.
+- **Backup:** `version-control/local-app/edit006-2026-10-22_before-trash/` holds the previous files.

@@ -7,10 +7,10 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 
 - **PM decision:** Settings shows the license as "AGPL-3.0-or-later · Show licenses", matching the metainfo and the README.
   - Changed one line in `app/lib/ui/settings/settings_screen.dart`. No layout change, so no mockup; the mockups don't show the license line.
-  - Backup: `version-control/local-app/2026-10-23_before-license-text/`.
+  - Backup: `version-control/local-app/edit014-2026-10-23_before-license-text/`.
   - `flutter analyze` is clean, and the settings tests pass.
 - **PM decision:** renamed the nested `.gitignore` copies in two older backups to `root.gitignore`, as done for the step 3 backup. The project keeps a single root `.gitignore`, and Git would otherwise apply those copies as rules inside their folders.
-  - The folders are `version-control/local-app/2026-10-22_before-flutter-toolchain/` and `version-control/local-app/2026-10-22_before-scaffold/`.
+  - The folders are `version-control/local-app/edit001-2026-10-22_before-flutter-toolchain/` and `version-control/local-app/edit002-2026-10-22_before-scaffold/`.
   - Their README restore steps now say to copy `root.gitignore` back as `/.gitignore`.
   - No tracked nested `.gitignore` files remain.
 - **Impact:** one visible text change in Settings. The backups' contents are unchanged.
@@ -30,7 +30,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - troubleshooting: portals, the memory-only folder, codecs, terminal output
   - a pointer to the packaging files
 - **`app/tool/package-bundle.sh`:** the kit now includes `docs/install.md` as `INSTALL.md`, and `TESTING.md` is always included.
-  - Backup: `version-control/local-app/2026-10-23_before-install-doc/`.
+  - Backup: `version-control/local-app/edit015-2026-10-23_before-install-doc/`.
 - **Kit rebuilt** with the Settings license text: 172 tests pass (13 skipped), and the privacy check and `flutter analyze` are clean.
   - Bundle SHA-256: `79161474…be503`. Kit SHA-256: `bb6d8696…9872f`.
 - **Known limit:** `INSTALL.md` links to other repo files by relative path. Those links don't work inside the kit, only in the repo.
@@ -45,7 +45,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **Fix:** pinned the library folder to `lib/` in the manifest: `--libdir=lib` for libplacebo and libmpv (meson), and `-DCMAKE_INSTALL_LIBDIR=lib` for Poppler (CMake), which could otherwise do the same. A comment in the manifest explains why.
 - **Kit rebuilt:** 172 tests pass (13 skipped), and the privacy check and `flutter analyze` are clean. Kit SHA-256: `5aad2810…2061b`.
 - **Correction:** the bundle's SHA-256 (`79161474…be503`) matched the previous build of the same app code exactly. So "Flutter's build isn't reproducible" was too strong: one pair of builds differed, this pair matched. Reworded in `docs/dependencies.md` and `package-bundle.sh`, to say it's not guaranteed.
-- **Backup:** `version-control/local-app/2026-10-23_before-libdir-fix/`. The earlier `package-bundle.sh` is already in `2026-10-23_before-install-doc/`; only comments changed since.
+- **Backup:** `version-control/local-app/edit016-2026-10-23_before-libdir-fix/`. The earlier `package-bundle.sh` is already in `edit015-2026-10-23_before-install-doc/`; only comments changed since.
 - **Impact:** packaging only. **Not committed.**
 
 ## Test A5: the app wasn't in the menu until a log-out
@@ -55,7 +55,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - The desktop file was exported to `~/.local/share/flatpak/exports/share/applications/`, and `desktop-file-validate` printed nothing (valid).
   - After logging out and back in, the app appeared. Flatpak adds the per-user exports folder to `XDG_DATA_DIRS` at login, and this was the PM's first per-user Flatpak app.
 - **Change:** a note about this in `build.sh`'s closing message, `TESTING.md` A5 and `docs/install.md`. No packaging change was needed.
-- **Backup:** `version-control/local-app/2026-10-23_before-menu-note/`.
+- **Backup:** `version-control/local-app/edit017-2026-10-23_before-menu-note/`.
 - **Impact:** messages and docs only. The next kit build includes them; the PM's current build doesn't need rebuilding. **Not committed.**
 
 ## License files and source for the Flatpak's libraries
@@ -85,7 +85,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - `TESTING.md`: new check A6
   - a release checklist in `public-notes/phase8-packaging.md`
 - **Checks here:** `bash -n` on both scripts, and `package-bundle.sh` correctly refuses to run with uncommitted changes. The full kit build has to wait for a commit.
-- **Backup:** `version-control/local-app/2026-10-23_before-license-files/`.
+- **Backup:** `version-control/local-app/edit018-2026-10-23_before-license-files/`.
 - **Impact:** packaging and docs. No app change. The PM's current test build stays valid for `TESTING.md`. **Not committed.**
 
 ## Test D4/D5: audio and video crashed; mpv needs LC_NUMERIC=C
@@ -100,7 +100,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **Test:** `test/linux_runner_test.dart` checks the reset is in `my_application_startup`, after the parent startup call. It fails if the line is removed (checked). A real check needs GTK and a display.
 - **Docs:** a media_kit rule in `CLAUDE.md`, and a note in `docs/dependencies.md`.
 - **Checks:** `flutter analyze` is clean, the privacy check passes, and the release build works.
-- **Backup:** `version-control/local-app/2026-10-23_before-mpv-locale/`.
+- **Backup:** `version-control/local-app/edit019-2026-10-23_before-mpv-locale/`.
 - **Also seen in the log, not fixed yet:**
   - `media_kit: VideoOutput: EGL display or context is invalid` and `S/W rendering`: video is drawn by the CPU.
   - `Failed to open VDPAU backend libvdpau_radeonsi.so`: no hardware decoding through VDPAU, which is harmless.
@@ -118,7 +118,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - `MediaPreview` calls it before `player.dispose()`, so mpv closes its video output while the main thread is still free. The readable copy is wiped afterwards, as before.
 - **Tests:** `test/ui/media_release_test.dart` (4 tests, with fakes for mpv): the order of steps, an immediate return for audio, the time limit instead of a hang, and errors swallowed.
 - **Docs:** a media_kit rule in `CLAUDE.md`, a note in `docs/dependencies.md`, and `TESTING.md` D5 now asks to close the preview while it's playing.
-- **Backup:** `version-control/local-app/2026-10-23_before-video-close-fix/`.
+- **Backup:** `version-control/local-app/edit020-2026-10-23_before-video-close-fix/`.
 - **Note:** the PM's first approval of this plan was a misclick, and the code change was made before they said so. The PM then re-read the plan and approved it as-is.
 - **Impact:** to confirm on the PM's PC after the next kit build. **Not committed.**
 
@@ -126,7 +126,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 **Time:** 2026-10-23 13:03 UTC
 - **PM-approved plan:** run the real app on a virtual screen here, covering the locale, close-while-playing, a tour of every screen, TESTING.md D6–H, and packaging checks.
 - **Installed** via `.devcontainer/setup.sh`: `xvfb`, `xdotool`, `xclip`, `python3-yaml`, `appstream`, `desktop-file-utils`. The licence and telemetry check is recorded in `docs/dependencies.md` ("Desktop check tools"): no telemetry; `appstreamcli` links libcurl and is always run with `--no-net`.
-- **Backup:** `version-control/local-app/2026-10-23_before-desktop-check/` (`setup.sh` and `.gitignore`).
+- **Backup:** `version-control/local-app/edit021-2026-10-23_before-desktop-check/` (`setup.sh` and `.gitignore`).
 - **Impact:** the dev container only. **Not committed.**
 
 ## Delete project: the name to type is now in quotation marks
@@ -136,7 +136,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - `app/lib/ui/home/project_dialogs.dart`
   - the mockup `project-mockups/home.html`
 - **Test:** `projects_test.dart` checks the quoted label, and that a name with a missing space still doesn't enable the button. It passes, and `flutter analyze` is clean.
-- **Backup:** `version-control/local-app/2026-10-23_before-delete-label/`.
+- **Backup:** `version-control/local-app/edit022-2026-10-23_before-delete-label/`.
 - **Impact:** one label in one dialog. **Not committed.**
 
 ## The video-close freeze, properly: one shared player
@@ -154,10 +154,10 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **Found and fixed during testing:** the first version paused and stopped mpv directly, so media_kit's own playing flag went stale, and Play could act as Pause on the next file. It now uses media_kit's `pause()`/`stop()` (no files written; checked in the source).
 - **Not established:** a several-second main-thread wait after closing. With the CPU renderer, short waits for frames are normal here. The 250 ms pause before `stop` is kept as harmless.
 - **Tests:** `test/ui/shared_player_test.dart` (4 tests). Full run: 177 pass (13 skipped); `flutter analyze` is clean, and the privacy check passes.
-- **Desktop check tools:** `app/tool/desktop_check/` (`lib.sh`, `xwd2png.py`, `make_files.py`, `under_gdb.sh`), plus gdb in `setup.sh` (backup in `2026-10-23_before-gdb/`). The test log is in `project-notes/phase8-tests.md` (private). The full `desktop-check.sh` is still to do.
+- **Desktop check tools:** `app/tool/desktop_check/` (`lib.sh`, `xwd2png.py`, `make_files.py`, `under_gdb.sh`), plus gdb in `setup.sh` (backup in `edit023-2026-10-23_before-gdb/`). The test log is in `project-notes/phase8-tests.md` (private). The full `desktop-check.sh` is still to do.
 - **Known limit:** the last video frame stays in media_kit's buffer in RAM (never on disk) until another video plays or the app quits.
 - **PM decisions:** previews open paused; Flatpak only for now, with a `.deb` as an open idea.
-- **Backup:** `version-control/local-app/2026-10-23_before-shared-player/`.
+- **Backup:** `version-control/local-app/edit024-2026-10-23_before-shared-player/`.
 - **Impact:** to confirm on the PM's PC: TESTING.md D4–D6, and Play on a second file.
 
 ## "Edit in another app" through the portal, and the "Open vault folder" button
@@ -183,7 +183,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - the folder button opens the file manager
   - **Open risk:** readable copies live in the sandbox's own memory-only folder, and the host may not be able to reach it. The portal should still pass the file by its fd. If not, the copies need to go somewhere the host can see, which needs the PM's decision.
 - **TESTING.md:** D notes previews open paused; new D5b (Play on a second file) and H6 (folder button); E1 says the chooser appears every time.
-- **Backup:** `version-control/local-app/2026-10-23_before-portal-open/`.
+- **Backup:** `version-control/local-app/edit025-2026-10-23_before-portal-open/`.
 - **Impact:** app code and packaging docs. **Not committed.**
 
 ## Edit safeguards (readable copies stay private)
@@ -204,7 +204,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - `test/app/edit_session_test.dart`, 4 new: still writing, empty needs confirmation, a folder in the copy's place, and an unreadable copy keeps the old version and the open edit
   - `test/ui/preview_test.dart`: new texts, and a new empty-copy flow
 - **TESTING.md:** E6–E8.
-- **Backup:** `version-control/local-app/2026-10-23_before-edit-safeguards/`.
+- **Backup:** `version-control/local-app/edit026-2026-10-23_before-edit-safeguards/`.
 - **Impact:** wording and save checks in the edit flow. **Not committed.**
 
 ## Crash and power-cut safety
@@ -232,7 +232,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - the move UI test gets more settle rounds (the extra fsyncs make it slower, not stuck)
   - Full run: 201 pass (13 skipped); analyze clean; privacy check passes; release build works.
 - **Not verified here:** a real process kill. The tests recreate the disk state a crash leaves; the real kill is TESTING.md J1–J5 on the PM's PC. J5 also settles whether Flatpak keeps the memory folder across a restart.
-- **Backup:** `version-control/local-app/2026-10-23_before-crash-safety/`.
+- **Backup:** `version-control/local-app/edit027-2026-10-23_before-crash-safety/`.
 - **Impact:** an index format addition (backward compatible), a new journal file, and messages after unlock. **Not committed.**
 
 ## Edit copies in Flatpak's shared memory folder
@@ -247,7 +247,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **The notice (approved mockup, preview.html scene 8):** inside the Flatpak, the edit dialog says other apps on the device can read the copy while it's open, that it's never on disk, and that it's wiped at Save or Discard.
 - **`GioAppLauncher`** refuses clearly if a copy is outside the shared folder. Listening for the portal's late "Response" is an open item.
 - **Tests:** `test/services/private_folder_edit_test.dart` (3), and an edit-versus-media folder test.
-- **Backup:** `version-control/local-app/2026-10-23_before-shared-edit-folder/`.
+- **Backup:** `version-control/local-app/edit028-2026-10-23_before-shared-edit-folder/`.
 - **Impact:** to confirm with E1–E5 on the PM's PC. **Not committed.**
 
 ## The edit path check, and the missing folder icon
@@ -255,7 +255,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **"Edit in another app" refused with my own new error.** Inside the sandbox, `$XDG_RUNTIME_DIR/app/<id>` is a link to `/run/flatpak/app/<id>`, and the copy's path is the resolved one. The check now accepts both forms (`isInFolder` in `gio_apps.dart`; `test/services/gio_apps_test.dart`, including a look-alike name that's still refused).
 - **The "Open vault folder" icon was blank** in the PM's build. Reproduced with the release build on the virtual screen: the button and its tooltip were there, but not the glyph. Another folder icon was blank too, and `--no-tree-shake-icons` showed it, so the release build's icon-font shrinking dropped it. `package-bundle.sh` now builds with `--no-tree-shake-icons` (about 1.5 MB more) so no icon can disappear this way.
 - **Audio and video "stuck loading" after a few opens** (PM's D4/D5): not reproducible outside the Flatpak (6 rounds loaded fine here). Waiting for the PM's terminal log.
-- **Backup:** `version-control/local-app/2026-10-23_before-edit-path-fix/`. **Not committed.**
+- **Backup:** `version-control/local-app/edit029-2026-10-23_before-edit-path-fix/`. **Not committed.**
 
 ## PM decision: inbox dismissals need no confirmation
 **Time:** 2026-10-23 17:54 UTC
@@ -281,7 +281,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - the inbox with the notice and its ✕; dismissing it; the empty inbox
   - 8 media open/close rounds: no timeouts, and the copies were wiped
 - **Full run:** 212 pass (13 skipped); analyze clean; privacy check passes.
-- **Backups:** `version-control/local-app/2026-10-23_before-inbox/` (with `journal.dart` and `project_service.dart`).
+- **Backups:** `version-control/local-app/edit030-2026-10-23_before-inbox/` (with `journal.dart` and `project_service.dart`).
 - **Next requests from the PM:** a Settings button to clear the app's temporary files (needs a mockup), and a look at slow clicks, low video frame rate and memory leaks. **Not committed.**
 
 ## Temporary files, instant clicks, and memory
@@ -300,7 +300,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - single clicks opening previews in all 30 rounds
 - **Full run:** 216 pass (13 skipped); the 10 screenshot tests pass; analyze clean.
 - **Docs:** `docs/dependencies.md`, `docs/install.md`, TESTING.md (D click note, H8).
-- **Backup:** `version-control/local-app/2026-10-23_before-temp-clear/`.
+- **Backup:** `version-control/local-app/edit031-2026-10-23_before-temp-clear/`.
 - **Next:** the video frame rate investigation. **Not committed.**
 
 ## Video playback settings: hardware decoding
@@ -316,7 +316,7 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
   - On the virtual screen, a playing video can make the app stop responding for up to a minute. gdb showed Mesa's software renderer busy on both of the container's cores; it recovers, and the last commit (`a03d5a1`) does the same. Not an app bug.
   - **A video bigger than the free space in the memory folder spins forever** instead of showing an error (a 124 MB video against a 64 MB `/dev/shm` here). Needs a fix: an error that says the file is too big to preview.
 - **Docs:** `docs/dependencies.md` ("Video playback settings"), `CLAUDE.md` (media rules), TESTING.md (D7).
-- **Backup:** `version-control/local-app/2026-10-23_before-video-settings/` (with the mockup from before the card).
+- **Backup:** `version-control/local-app/edit032-2026-10-23_before-video-settings/` (with the mockup from before the card).
 
 ## PM test results recorded
 **Time:** 2026-10-23 21:33 UTC
@@ -349,4 +349,4 @@ The earlier phase 8 entries are in `project-changelog/2026-10-22/local-app/phase
 - **Docs:** `CLAUDE.md`, `docs/dependencies.md`, `docs/install.md`, TESTING.md (A4, A6, D4–D7 rewritten), `public-notes/phase8-packaging.md`.
 - **Full run:** 208 pass (13 skipped); analyze clean; privacy check passes (38 reviewed hits).
 - **Checked in the release build on the virtual screen** (with a fake default player registered): the video and audio stages and icons; no copy before Play; Play launched the default app with a readable copy; Play again; closing wiped the copy; the 124 MB file showed the "too big" error and left nothing behind; Settings without the Video playback card.
-- **Backup:** `version-control/local-app/2026-10-23_before-desktop-player/`.
+- **Backup:** `version-control/local-app/edit033-2026-10-23_before-desktop-player/`.

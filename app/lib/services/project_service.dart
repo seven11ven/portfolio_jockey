@@ -66,6 +66,25 @@ final class ReplaceCover extends CoverChange {
   final Uint8List image;
 }
 
+/// A folder name that can't be used; [message] says why, in plain words.
+final class FolderNameError implements Exception {
+  const FolderNameError(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+/// What a move did: how many items moved, and the ones renamed (old name, new
+/// name) because the target already had that name.
+final class MoveResult {
+  const MoveResult({required this.moved, required this.renamed});
+
+  final int moved;
+  final List<(String, String)> renamed;
+}
+
 /// Progress while adding files: which file, and how far through it.
 final class AddProgress {
   const AddProgress({required this.fileNumber, required this.fileCount, required this.fileName, required this.bytesDone, required this.bytesTotal});
@@ -345,15 +364,18 @@ final class ProjectService {
 
   /// Encrypts each file into the project, saving the index after every file,
   /// so an interruption loses at most the file in progress. Originals aren't
-  /// touched. [newTags] are added to the project's tags first.
+  /// touched. [newTags] are added to the project's tags first. Files go into
+  /// [folderId] (null is the top level).
   Future<AddResult> addFiles(
     String id,
     List<String> paths, {
     List<String> tags = const [],
     List<String> newTags = const [],
+    String? folderId,
     void Function(AddProgress progress)? onProgress,
   }) async {
     final index = await vault.readIndex(id);
+    _checkFolder(index, folderId);
     _addProjectTags(index, newTags);
     final added = <FileEntry>[];
     final failed = <String, String>{};
@@ -363,7 +385,7 @@ final class ProjectService {
       try {
         final size = await source.length();
         final original = source.absolute.path;
-        final entry = FileEntry.create(name: name, size: size, tags: [...tags], originalPath: original, originalShownPath: _hostPathOf(original));
+        final entry = FileEntry.create(name: name, size: size, tags: [...tags], originalPath: original, originalShownPath: _hostPathOf(original), folderId: folderId);
         var done = 0;
         final counted = source.openRead().map((chunk) {
           done += chunk.length;
@@ -391,6 +413,90 @@ final class ProjectService {
 
   Future<void> renameFile(String id, String fileId, String name) =>
       _update(id, (index) => _file(index, fileId).name = name.trim());
+
+  /// Creates a folder inside [parentId] (null is the top level). Throws
+  /// [FolderNameError] for a name that's empty, unsafe, or already used by
+  /// another folder there (ignoring case).
+  Future<FolderEntry> createFolder(String id, {required String name, String? parentId}) async {
+    late FolderEntry folder;
+    await _update(id, (index) {
+      _checkFolder(index, parentId);
+      folder = FolderEntry.create(name: _checkedFolderName(index, name, parentId), parentId: parentId);
+      index.folders.add(folder);
+    });
+    return folder;
+  }
+
+  /// Renames a folder, with the same name rules as [createFolder].
+  Future<void> renameFolder(String id, String folderId, String name) => _update(id, (index) {
+    final folder = _folder(index, folderId);
+    folder.name = _checkedFolderName(index, name, folder.parentId, ignoring: folderId);
+  });
+
+  /// Moves files and folders into [targetFolderId] (null is the top level) in
+  /// one saved change. A name the target already has gets "(2)", "(3)"… so
+  /// nothing clashes. Throws [StateError] if a folder would go into itself or
+  /// a folder inside it. Items already in the target are left alone, and
+  /// nothing is written if nothing moves.
+  Future<MoveResult> moveItems(String id, {List<String> fileIds = const [], List<String> folderIds = const [], String? targetFolderId}) async {
+    final index = await vault.readIndex(id);
+    _checkFolder(index, targetFolderId);
+    final folders = [for (final folderId in folderIds) _folder(index, folderId)];
+    final files = [for (final fileId in fileIds) _file(index, fileId)];
+    for (final folder in folders) {
+      if (!index.canMoveFolder(folder.id, targetFolderId)) {
+        throw StateError('A folder can\'t be moved into itself or into a folder inside it');
+      }
+    }
+    final takenFolders = {for (final f in index.foldersIn(targetFolderId)) f.name.toLowerCase()};
+    final takenFiles = {for (final f in index.filesIn(targetFolderId)) f.name.toLowerCase()};
+    final renamed = <(String, String)>[];
+    var moved = 0;
+    for (final folder in folders.where((f) => f.parentId != targetFolderId)) {
+      final name = _uniqueName(folder.name, takenFolders);
+      if (name != folder.name) {
+        renamed.add((folder.name, name));
+      }
+      folder
+        ..name = name
+        ..parentId = targetFolderId;
+      moved++;
+    }
+    for (final file in files.where((f) => f.folderId != targetFolderId)) {
+      final name = _uniqueName(file.name, takenFiles, isFile: true);
+      if (name != file.name) {
+        renamed.add((file.name, name));
+      }
+      file
+        ..name = name
+        ..folderId = targetFolderId;
+      moved++;
+    }
+    if (moved > 0) {
+      await _save(id, index);
+    }
+    return MoveResult(moved: moved, renamed: renamed);
+  }
+
+  /// Permanently deletes a folder and everything inside it, at any depth, and
+  /// returns what was removed. Like [deleteFromProject], the index is saved
+  /// first and the encrypted files are deleted after: a crash in between
+  /// leaves only unlisted files, which [cleanUp] removes at the next unlock.
+  Future<FolderStats> deleteFolder(String id, String folderId) async {
+    final index = await vault.readIndex(id);
+    _folder(index, folderId);
+    final stats = index.statsOf(folderId);
+    final inside = index.subtreeIds(folderId);
+    final blobs = [for (final f in index.files) if (inside.contains(f.folderId)) f.blob];
+    index.folders.removeWhere((f) => inside.contains(f.id));
+    index.files.removeWhere((f) => inside.contains(f.folderId));
+    await _save(id, index);
+    crashPoint?.call('index saved');
+    for (final blob in blobs) {
+      await vault.deleteBlob(id, blob);
+    }
+    return stats;
+  }
 
   /// Sets the tags of the files in [tagsByFile] (file ID → its new tags).
   /// [newTags] are added to the project's tags.
@@ -521,9 +627,11 @@ final class ProjectService {
     required List<String> tags,
     required DateTime addedAt,
     required Stream<List<int>> content,
+    String? folderId,
   }) async {
     final index = await vault.readIndex(id);
-    final entry = FileEntry.create(name: name, size: size, tags: [...tags], addedAt: addedAt);
+    _checkFolder(index, folderId);
+    final entry = FileEntry.create(name: name, size: size, tags: [...tags], addedAt: addedAt, folderId: folderId);
     var received = 0;
     final counted = content.map((chunk) {
       received += chunk.length;
@@ -542,6 +650,32 @@ final class ProjectService {
     _addProjectTags(index, tags);
     index.files.add(entry);
     await _save(id, index);
+  }
+
+  /// Adds folders to project [id] in one saved change, for imports. Each has
+  /// the position of its parent in [folders] (always an earlier one), or null
+  /// at the top level. An unsafe name is repaired, and one a sibling already
+  /// has gets "(2)"…, so nothing from a damaged or hand-made export can make
+  /// the index unreadable. Returns the new folders' IDs, in order.
+  Future<List<String>> importFolders(String id, List<({String name, int? parent, DateTime createdAt})> folders) async {
+    final ids = <String>[];
+    await _update(id, (index) {
+      final taken = <String?, Set<String>>{};
+      for (final folder in folders) {
+        final parent = folder.parent == null ? null : ids[folder.parent!];
+        var name = folder.name.trim();
+        if (folderNameProblem(name) != null) {
+          name = name.replaceAll(RegExp(r'[/\x00-\x1F\x7F]'), '_').trim();
+        }
+        if (folderNameProblem(name) != null) {
+          name = 'Folder';
+        }
+        final created = FolderEntry.create(name: _uniqueName(name, taken.putIfAbsent(parent, () => {})), parentId: parent, createdAt: folder.createdAt);
+        index.folders.add(created);
+        ids.add(created.id);
+      }
+    });
+    return ids;
   }
 
   /// Decrypts file [fileId] into [target], which must be in a private
@@ -649,6 +783,41 @@ final class ProjectService {
     (f) => f.id == fileId,
     orElse: () => throw StateError('No file $fileId in this project'),
   );
+
+  static FolderEntry _folder(ProjectIndex index, String folderId) => index.folderById(folderId) ?? (throw StateError('No folder $folderId in this project'));
+
+  /// Checks that [folderId] exists; null (the top level) always does.
+  static void _checkFolder(ProjectIndex index, String? folderId) {
+    if (folderId != null) {
+      _folder(index, folderId);
+    }
+  }
+
+  static String _checkedFolderName(ProjectIndex index, String name, String? parentId, {String? ignoring}) {
+    final clean = name.trim();
+    final problem = folderNameProblem(clean);
+    if (problem != null) {
+      throw FolderNameError(problem);
+    }
+    final lower = clean.toLowerCase();
+    if (index.foldersIn(parentId).any((f) => f.id != ignoring && f.name.toLowerCase() == lower)) {
+      throw FolderNameError('A folder named “$clean” already exists here. Pick another name.');
+    }
+    return clean;
+  }
+
+  /// [name], or "name (2)", "name (3)"… if [taken] (lowercase) has it; a file's
+  /// number goes before its extension. The chosen name is added to [taken].
+  static String _uniqueName(String name, Set<String> taken, {bool isFile = false}) {
+    final dot = isFile ? name.lastIndexOf('.') : -1;
+    final (stem, ext) = dot > 0 ? (name.substring(0, dot), name.substring(dot)) : (name, '');
+    var candidate = name;
+    for (var n = 2; taken.contains(candidate.toLowerCase()); n++) {
+      candidate = '$stem ($n)$ext';
+    }
+    taken.add(candidate.toLowerCase());
+    return candidate;
+  }
 }
 
 /// Whether [path] is inside a document portal mount, where files picked

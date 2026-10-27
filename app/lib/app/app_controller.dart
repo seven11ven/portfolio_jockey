@@ -14,6 +14,7 @@ import 'package:portfolio_jockey/services/private_folder.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/services/sandbox.dart';
 import 'package:portfolio_jockey/services/storage_move.dart';
+import 'package:portfolio_jockey/ui/project/explorer.dart' show ExplorerPrefs;
 import 'package:portfolio_jockey/vault/errors.dart';
 import 'package:portfolio_jockey/vault/ids.dart';
 import 'package:portfolio_jockey/vault/inbox.dart';
@@ -62,6 +63,9 @@ class AppController extends ChangeNotifier {
 
   /// "Edit in another app", and the memory-only copies media plays from.
   final EditSessions edits;
+
+  /// Grid or list, and the sort order, for the project screen. Never saved.
+  final ExplorerPrefs explorer = ExplorerPrefs();
 
   /// Argon2id settings for new vaults. Null means libsodium MODERATE; tests
   /// pass smaller ones.

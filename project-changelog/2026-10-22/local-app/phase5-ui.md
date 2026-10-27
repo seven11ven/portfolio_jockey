@@ -69,4 +69,4 @@
 ## Impacts
 - **The app is usable end to end** for projects, files and tags.
 - **Phase 6** adds preview and "Edit in another app" to the greyed menu items. Decrypting a stream must discard everything if the stream ends in an error (see the "Known limits" in `docs/dependencies.md`).
-- **Backup:** `version-control/local-app/2026-10-22_before-phase5-ui/` holds the previous `pubspec.yaml`, `pubspec.lock` and privacy-check files.
+- **Backup:** `version-control/local-app/edit005-2026-10-22_before-phase5-ui/` holds the previous `pubspec.yaml`, `pubspec.lock` and privacy-check files.

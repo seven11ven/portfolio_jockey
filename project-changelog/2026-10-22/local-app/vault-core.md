@@ -65,4 +65,4 @@
 ## Impacts
 - **Phase 5 (UI) builds on `Vault` / `UnlockedVault`.** It must show a confirm/cancel step before every call that writes.
 - **The dev container needs `libsodium23`.** `setup.sh` installs it. The Flatpak (phase 8) must bundle a signature-checked libsodium.
-- **Backup:** `version-control/local-app/2026-10-22_before-libsodium/` holds the previous `setup.sh` and `check-privacy.sh`.
+- **Backup:** `version-control/local-app/edit004-2026-10-22_before-libsodium/` holds the previous `setup.sh` and `check-privacy.sh`.

@@ -160,10 +160,15 @@ The vault calls these through Dart's built-in `dart:ffi`. That keeps the app fre
 | File | Holds | Protection |
 |---|---|---|
 | `<root>/.pj/vault` (112 bytes) | Argon2id settings, salt, and the 256-bit master key | The master key is encrypted with XChaCha20-Poly1305 under a key derived from the passphrase with Argon2id: libsodium's MODERATE preset, 3 passes over 256 MiB, about 0.5 s on a 2-core cloud machine. The settings, salt and nonce are authenticated. Settings beyond 10 passes or 2 GiB are refused before any work is done. |
-| `<root>/<id>/index.enc` | Project name, description, tags, file list, and each file's own key | XChaCha20-Poly1305 under the master key. The project ID is authenticated, so indexes can't be swapped between projects. |
+| `<root>/<id>/index.enc` | Project name, description, tags, folders, file list (with the folder each file is in), and each file's own key | XChaCha20-Poly1305 under the master key. The project ID is authenticated, so indexes can't be swapped between projects. |
 | `<root>/<id>/blobs/<id>.enc`, `cover.enc` | File contents | libsodium secretstream (XChaCha20-Poly1305) in 64 KiB chunks, each file with its own random key. Changed, reordered, dropped or extra chunks are detected, and so is a file cut short. |
 
 - **Folder and file names** are random 128-bit IDs, so they reveal nothing about the contents.
+- **Folders (2026-10-26)** exist only inside the encrypted index: `ProjectIndex.folders` (`id`, `name`, `parentId`, `createdAt`) and an optional `FileEntry.folderId`. Moving a file or folder rewrites the index, never an encrypted file, so the encrypted files stay flat in `blobs/` and a move is one atomic write. Both fields are optional in the JSON and only written when used, so the index format version is still 1: older vaults open unchanged with every file at the top level, and a vault without folders is written exactly as before.
+  - **Checked on every load and save** (`ProjectIndex.validate`, which throws a `FormatException` the loader reports as a damaged project): a vault-ID for every folder, no repeated IDs, a name with no slash or control character that isn't empty, `.` or `..`, a parent that exists, no loop (a folder can't be inside itself or its own contents), and files only in folders that exist. What can't be read is never written.
+  - **No depth limit and no name length limit.** Nothing walks the tree recursively (path, contents, totals, delete and export all use loops), so a 50,000-deep chain works (tested).
+  - **Names** need not be unique in the index. The app refuses a clash in the same folder (ignoring case) when creating or renaming, and numbers it ("name (2)") when moving or importing.
+  - **Deleting a folder** saves the index first and then deletes the encrypted files; a crash in between leaves only unlisted files, which the clean-up at unlock removes (same rule as deleting one file).
 - **Every write** goes to a temporary file, is flushed, and is then renamed into place, so a crash can't leave a half-written file.
 - **In memory:** keys and the passphrase are held in libsodium's guarded memory, which is locked against reading except while in use, and wiped when freed.
 - **Known limits:**
@@ -191,7 +196,9 @@ What happens if the app is killed or the device loses power partway through a ch
 Every export, of one project or several, offers exactly two options (PM decision, 2026-10-22). The vault passphrase is never used for exports.
 
 - **Unlocked: ZIP or TAR.** This is readable by anyone, and the dialog says so.
-  - **Layout:** `<Project>/project.json` (name, description, tags, and each file's tags, size and date), `<Project>/cover.<ext>` and `<Project>/files/<real name>`. Clashing names become "name (2).ext".
+  - **Layout:** `<Project>/project.json` (name, description, tags, the list of all folders including empty ones, and each file's tags, size and date), `<Project>/cover.<ext>` and `<Project>/files/<folders>/<real name>`, with the project's folders as real folders. A name that clashes with another in the same folder (a file and a folder count too) becomes "name (2).ext", and a name over 200 characters is shortened. Empty folders appear only in `project.json`, because the archive writers hold only files.
+  - **Path length:** a ZIP can't hold a path of 65,535 bytes or more. With no depth limit, the export checks every path first and stops with a clear message before writing anything (`ArchivePathTooLong`); TAR has no such limit.
+  - **One folder:** a folder's menu has "Export a readable copy…": ZIP or TAR only, with no lock option (like the readable copy of one file), holding `<Folder>/<its subfolders and files>`.
   - **Not included:** original device paths and keys.
   - **Writers:** the app's own streaming writers in `app/lib/services/archive/`.
     - **ZIP:** data descriptors, ZIP64, UTF-8 names, deflate through `dart:io`, and already-compressed formats stored as they are.
@@ -210,9 +217,11 @@ Every export, of one project or several, offers exactly two options (PM decision
 
   - **Header checks:** the header has no separate tag. Changing the settings or salt changes the key, so the first chunk fails. The magic, version and reserved bytes are checked exactly, and settings beyond 10 passes or 2 GiB are refused before any work.
   - **Passphrase rules:** none for strength (PM decision). It must only be non-empty and confirmed.
-  - **Inside the encryption:** a tar holding `manifest.json` (projects, file names, sizes, dates, tags), then `covers/<p>` and `files/<p>/<f>`. Real names exist only in the encrypted manifest.
+  - **Inside the encryption:** a tar holding `manifest.json` (projects, folders, file names, sizes, dates, tags), then `covers/<p>` and `files/<p>/<f>`. Real names exist only in the encrypted manifest, and the tar's own paths stay flat, because the strict reader allows only short ASCII paths.
+  - **Manifest format 2 (2026-10-26)** added folders. Each project lists its `folders` parents-first, each with a `name`, a `parent` (the position of an earlier folder in the list, or null) and a `createdAt`; each file has a `folder` (a position, or null). The vault's own folder IDs are never written. The `.pjx` container (version 1, above) is unchanged. **Exports of format 1 still import**, with everything at the top level.
+  - **Reading a manifest:** a parent that isn't an earlier folder, a loop, a file in a folder that doesn't exist, or a bad date is refused. On import, an unsafe folder name is repaired, and a clash with a sibling becomes "(2)", so an odd or hand-made export can't make the project unreadable.
   - **Reading it:** the reader accepts only regular files with safe ASCII paths, verifies every header checksum, and reads to the end, so a cut-off export is detected.
-  - **Import:** imported files get **new keys**, and a project whose name is taken becomes "Name (2)". Import is all or nothing: on any error, a wrong size or Cancel, every project it created is deleted.
+  - **Import:** imported files get **new keys** (and imported folders new IDs, with their dates kept), and a project whose name is taken becomes "Name (2)". Import is all or nothing: on any error, a wrong size or Cancel, every project it created is deleted.
 - **Writing:** exports go to a temporary file next to the target and are renamed into place. On failure or Cancel the temporary file is deleted, and an unlocked one is overwritten with zeros first.
 - **Known limits:**
   - **A forgotten export passphrase** can't be recovered.

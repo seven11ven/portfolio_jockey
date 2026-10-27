@@ -137,6 +137,113 @@ void main() {
       await _shot(tester, '03-unlock-wrong-$theme');
     }, skip: _outDir == null);
 
+    testWidgets('folders and the file-explorer view ($theme)', (tester) async {
+      tester.platformDispatcher.platformBrightnessTestValue = brightness;
+      addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+      final app = await startApp(tester, unlocked: true, wrap: _wrap);
+      final service = app.controller.projects;
+      late String project;
+      await tester.runAsync(() async {
+        final originals = await tempFolder();
+        Future<String> make(String name, int size) async {
+          final file = File('${originals.path}/$name');
+          await file.writeAsBytes(List.filled(size, 7));
+          return file.path;
+        }
+
+        project = await service.createProject(name: 'Kitchen Remodel', description: 'Contractor quotes, receipts and before/after photos.');
+        await service.applyTagChanges(project, TagChanges(added: ['Photos', 'Receipts', 'Plans', 'Inspiration']));
+        final invoices = await service.createFolder(project, name: 'Invoices');
+        final year = await service.createFolder(project, name: '2026', parentId: invoices.id);
+        final plans = await service.createFolder(project, name: 'Plans');
+        final photos = await service.createFolder(project, name: 'Site photos');
+        Future<void> add(String name, int size, {String? folder, List<String> tags = const []}) async {
+          final added = await service.addFiles(project, [await make(name, size)], folderId: folder);
+          await service.setFileTags(project, {added.added.single.id: tags});
+        }
+
+        await add('invoice-aug.pdf', 1400000, folder: invoices.id, tags: ['Receipts']);
+        await add('invoice-sep.pdf', 1700000, folder: invoices.id, tags: ['Receipts']);
+        await add('quote-electrician.pdf', 1600000, folder: year.id, tags: ['Receipts']);
+        await add('quote-tile.pdf', 820000, folder: plans.id, tags: ['Plans']);
+        await add('floor-plan.pdf', 5200000, folder: plans.id, tags: ['Plans']);
+        await add('before-01.jpg', 4200000, folder: photos.id, tags: ['Photos']);
+        await add('before-02.jpg', 3900000, folder: photos.id, tags: ['Photos']);
+        await add('contractor-quote.pdf', 310000, tags: ['Receipts', 'Plans']);
+        await add('inspiration-board.jpg', 2400000, tags: ['Inspiration']);
+        await add('measurements.txt', 4000, tags: ['Plans']);
+        await add('plumber-voicemail.m4a', 1100000);
+        await add('walkthrough.mp4', 18600000, tags: ['Photos']);
+      });
+      app.controller.lock();
+      await settle(tester);
+      await tester.enterText(find.byKey(const Key('unlock-passphrase')), 'test passphrase');
+      await tester.pump();
+      await tester.tap(find.text('Unlock'));
+      await settleUntil(tester, find.text('Kitchen Remodel'));
+      await tester.tap(find.text('Kitchen Remodel'));
+      await settleUntil(tester, find.text('Site photos'));
+      await _shot(tester, '13-folders-grid-$theme');
+
+      await tester.tap(find.text('Invoices'));
+      await settleUntil(tester, find.text('2026'));
+      await _shot(tester, '14-inside-folder-$theme');
+
+      await tester.tap(find.byTooltip('List view'));
+      await tester.pumpAndSettle();
+      await _shot(tester, '15-list-view-$theme');
+      await tester.tap(find.byTooltip('Sort'));
+      await tester.pumpAndSettle();
+      await _shot(tester, '16-sort-menu-$theme');
+      await _escape(tester);
+
+      await tester.enterText(find.byKey(const Key('project-search')), 'quote');
+      await tester.pumpAndSettle();
+      await _shot(tester, '17-search-$theme');
+      await tester.tap(find.byTooltip('Clear search'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Grid view'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kitchen Remodel').first);
+      await settleUntil(tester, find.text('Site photos'));
+      final gesture = await tester.startGesture(tester.getCenter(find.text('contractor-quote.pdf')));
+      await gesture.moveBy(const Offset(0, 20));
+      await tester.pump(const Duration(milliseconds: 50));
+      await gesture.moveTo(tester.getCenter(find.text('Plans').first));
+      await tester.pump(const Duration(milliseconds: 100));
+      await _shot(tester, '18-dragging-$theme');
+      await gesture.up();
+      await tester.pumpAndSettle();
+      await _shot(tester, '19-confirm-move-$theme');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('New folder'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('folder-name')), 'plans');
+      await _shot(tester, '20-new-folder-clash-$theme');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Invoices'), buttons: kSecondaryButton);
+      await tester.pumpAndSettle();
+      await _shot(tester, '21-folder-menu-$theme');
+      await tester.tap(find.text('Move to…'));
+      await tester.pumpAndSettle();
+      await _shot(tester, '22-move-to-$theme');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Invoices'), buttons: kSecondaryButton);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete folder…'));
+      await tester.pumpAndSettle();
+      await _shot(tester, '23-delete-folder-$theme');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+    }, skip: _outDir == null);
+
     testWidgets('home, project and tags ($theme)', (tester) async {
       tester.platformDispatcher.platformBrightnessTestValue = brightness;
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);

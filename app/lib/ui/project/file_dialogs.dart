@@ -19,10 +19,13 @@ final class AddFilesRequest {
 /// "Add N files to …?": lists the picked files, with optional tags for the batch.
 /// Returns the request when confirmed; the caller then runs [AddProgressDialog].
 class AddFilesDialog extends StatefulWidget {
-  const AddFilesDialog({required this.index, required this.paths, super.key});
+  const AddFilesDialog({required this.index, required this.paths, this.where, super.key});
 
   final ProjectIndex index;
   final List<String> paths;
+
+  /// The folder the files go into, as a path ("Project / Folder"); null is the project's top level.
+  final String? where;
 
   @override
   State<AddFilesDialog> createState() => _AddFilesDialogState();
@@ -79,7 +82,7 @@ class _AddFilesDialogState extends State<AddFilesDialog> {
   Widget build(BuildContext context) {
     final count = widget.paths.length;
     return PjDialog(
-      title: 'Add ${plural(count, 'file')} to “${widget.index.name}”?',
+      title: 'Add ${plural(count, 'file')} to “${widget.where ?? widget.index.name}”?',
       content: [
         SummaryBox(
           children: [
@@ -140,11 +143,12 @@ class _AddFilesDialogState extends State<AddFilesDialog> {
 
 /// Encrypts the files with a progress bar, then returns the [AddResult].
 class AddProgressDialog extends StatefulWidget {
-  const AddProgressDialog({required this.projectId, required this.paths, required this.request, super.key});
+  const AddProgressDialog({required this.projectId, required this.paths, required this.request, this.folderId, super.key});
 
   final String projectId;
   final List<String> paths;
   final AddFilesRequest request;
+  final String? folderId;
 
   @override
   State<AddProgressDialog> createState() => _AddProgressDialogState();
@@ -167,6 +171,7 @@ class _AddProgressDialogState extends State<AddProgressDialog> {
         widget.paths,
         tags: widget.request.tags,
         newTags: widget.request.newTags,
+        folderId: widget.folderId,
         onProgress: (p) {
           if (mounted) {
             setState(() => _progress = p);

@@ -104,6 +104,18 @@ These check that a crash or power cut never loses data or leaves a readable file
 - [x] **J4. Edit save.** Open a file with **Edit in another app**, change and save it in the editor, press **Save changes** and confirm, and kill the app right away. After unlocking, the file opens and shows either the old version or the new one, complete. Export it as a readable copy to be sure it isn't damaged.
 - [x] **J5. Edit open.** Open a file with **Edit in another app**, make a change in the editor, and kill the app **without** saving in Portfolio Jockey. After unlocking, note what happens: either "An edit wasn't finished" is offered (save or discard), or a message says the edit's changes weren't saved. Either is fine; which one shows tells us how Flatpak treats the memory folder.
 
+## K. Folders and the file-explorer view
+Use throwaway files. In a Flatpak, files you add and archives you export go through your desktop's own file dialogs.
+- [ ] **K1. Old vault.** A project made before folders opens as before: every file is at the top level, with nothing missing and no error.
+- [ ] **K2. New folder.** **New folder** asks for a name and says where it will be created. It then appears under FOLDERS, among the files. A name you already used (even in other capitals) is refused with a message, and so is a name with a `/`. **Cancel** changes nothing.
+- [ ] **K3. Nesting.** Open a folder (single click). The path row shows `Project > Folder`, and **New folder** there creates a folder inside it. Click any part of the path to go back up. **Add files here** puts the files you pick in that folder (they arrive through the file dialog), and the folder's card, back at the top level, shows the right count and size.
+- [ ] **K4. Views and sorting.** The grid is the default. The list toggle shows Name, Size and Date added; a folder shows its total size and the date it was created. Sort by name, size and date added, both directions, from the menu and from the column headings. Folders always stay above files. Leave a project and open another: the choice is still there. Close the app: it's back to the grid.
+- [ ] **K5. Search and tags.** Typing in the search bar lists matches from every folder, each with its folder path. A tag chip does the same. **Show in folder** (right-click a result) opens its folder. Clearing the search returns to the folder you were in.
+- [ ] **K6. Drag and drop.** Drag a file onto a folder: a confirmation appears, **Cancel** changes nothing, and **Move** moves it. Select several (**Select**) and drag one of them: they all move. Drag a folder onto another folder, and drag a folder onto a part of the path row to move it up. A folder can't be dropped on itself. If the target has the same name, the moved item gets "(2)" and the message says so.
+- [ ] **K7. Move to…, Rename, Delete.** **Move to…** (file menu, folder menu, selection bar) greys out a folder's own contents. **Rename** works. **Delete folder…** shows how many files and folders are inside and their size; **Cancel** changes nothing; confirming deletes it all, and the originals on your device are untouched.
+- [ ] **K8. Export and import with folders.** Export a project with nested folders as ZIP: in your archive manager the folders are real folders. Export it locked (`.pjx`), then **Import** it: the folders, who is in which, and the empty folders come back. On a folder's menu, **Export a readable copy…** has no lock option and saves a ZIP or TAR of just that folder.
+- [ ] **K9. Pull the plug.** Delete a folder with a large file in it and kill the app (`flatpak kill io.github.seven11ven.portfolio_jockey`) right away. After unlocking, the project opens, and the folder is either gone with its files or still whole, never half there.
+
 ## I. Clean up
 - [ ] **I1.** Remove the test data: `flatpak uninstall --user --delete-data io.github.seven11ven.portfolio_jockey`. Only do this if you won't keep using this build. It deletes the vault in the app's own data folder; a storage folder moved elsewhere (H3) stays.
 - [ ] **I2.** Delete the test exports and the moved storage folder by hand.
@@ -124,6 +136,7 @@ These check that a crash or power cut never loses data or leaves a readable file
 | G1–G7 | Pass | PM, 2026-10-23 |
 | H1–H8 | Pass | PM, 2026-10-23 |
 | J1–J5 | Pass | PM, 2026-10-23 |
+| K1–K9 | | (new: folders) |
 
 Also include:
 - your distribution and version (`cat /etc/os-release | head -3`)

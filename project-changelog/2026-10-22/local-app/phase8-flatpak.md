@@ -56,7 +56,7 @@ A research agent read the primary sources (freedesktop-sdk and gnome-build-meta 
 
 - **`project-mockups/first-run.html`, new scene 1b:** inside the Flatpak, the suggested storage folder is the app's own data folder (`~/.var/app/io.github.seven11ven.portfolio_jockey/data/Portfolio Jockey`), which the sandbox may always use. "Change…" uses the desktop's folder picker.
 - **`project-mockups/export.html`, new scene 7:** inside the Flatpak no save location is suggested. The field shows "No location chosen yet" with "Choose…", and Export (or "Save readable copy") stays disabled until a location is chosen. This applies to every export dialog.
-- **Backup:** `version-control/local-app/2026-10-22_before-phase8/`.
+- **Backup:** `version-control/local-app/edit010-2026-10-22_before-phase8/`.
 - **Shown to the PM** as private pages. Waiting for approval.
 
 ## Step 2b: show/hide passphrase and the confirm field (PM request)
@@ -68,7 +68,7 @@ A research agent read the primary sources (freedesktop-sdk and gnome-build-meta 
 - **Confirm field (PM chose option 2):** "Confirm passphrase" appears only once the strength bar reaches Fair or better. This applies to first run and the new passphrase in Settings. Export passphrases have no strength rules, so their confirm field stays visible as soon as the lock box is ticked, as approved.
   - **New first-run scene 1a:** a too-short passphrase, with no confirm field and "Create vault" disabled.
 - **Mockup files:** `first-run.html`, `settings.html`, `export.html` and `styles.css` (the `.pw` and `.eye` styles).
-- **Backup:** `version-control/local-app/2026-10-22_before-phase8/`.
+- **Backup:** `version-control/local-app/edit010-2026-10-22_before-phase8/`.
 - **Shown to the PM** together with the step 2a Flatpak scenes. Waiting for approval.
 - **Update (20:24 UTC), PM decision:** copying is **the user's choice**. Settings → Security gets an "Allow copying passphrases" switch, **on by default**. It comes with a note that some desktops keep copied text in a clipboard history. `settings.html` scene 1 shows the switch, the first-run note mentions it, and `styles.css` has a `.switch` style.
 
@@ -107,7 +107,7 @@ A research agent read the primary sources (freedesktop-sdk and gnome-build-meta 
 - **Screens (text only, no layout change):** the preview details, the "Move to Trash" and delete dialogs, and the "no longer at…" note show `shownOriginal`. Trash and the "original missing" check still use the portal path, which is the only one the sandbox can reach.
 - **Exports:** unchanged. Device paths, including this one, are never exported (tested).
 - **Tests:** `getxattr` on a temp file with the attribute set (real read, including non-ASCII), null for an ordinary or missing file; portal path matching; the service stores the real path while Trash gets the portal path; index round trip and old entries; a UI test of the Trash dialog. Full run: 167 pass, 13 skipped. `flutter analyze` is clean, the privacy check passes, and the debug build works. Negative check: binding libc's `socket` next to `getxattr` fails the privacy check.
-- **Backups:** `version-control/local-app/2026-10-22_before-host-path/` (8 files, with a README).
+- **Backups:** `version-control/local-app/edit011-2026-10-22_before-host-path/` (8 files, with a README).
 - **Slip, fixed:** a `dart format` run reformatted about 30 unrelated files. They were restored from git before any other change, and my edits were applied again without the formatter. Nothing else changed.
 - **Impact:** step 2 is done. The real check happens inside the Flatpak on the PM's PC (`TESTING.md`, step 4). **Not committed.**
 
@@ -146,7 +146,7 @@ A research agent read the primary sources (freedesktop-sdk and gnome-build-meta 
 - **Fixed during the step:**
   - The kit's manifest comment had its placeholders filled in too; the comment was reworded.
   - The mpv licence entry first said LGPL; it's GPL-2.0+ (mpv's default build), which is compatible with AGPL-3.0.
-- **Backups:** `version-control/local-app/2026-10-22_before-packaging/`.
+- **Backups:** `version-control/local-app/edit012-2026-10-22_before-packaging/`.
 - **Impact:** no app behaviour changes. Next is step 4 (`TESTING.md`), then the kit is rebuilt so it includes the checklist. **Not committed.**
 
 ## Metainfo homepage link
@@ -171,5 +171,5 @@ A research agent read the primary sources (freedesktop-sdk and gnome-build-meta 
 - **Kit rebuilt** with `TESTING.md` inside: 172 tests pass (13 skipped), and the privacy check and `flutter analyze` are clean.
   - Bundle SHA-256: `c1867dfb…26bc`. Kit SHA-256: `8f0dcc64…8406`.
 - **Correction:** the bundle's checksum changed between two builds of the same code, so Flutter's release build isn't byte-for-byte reproducible. The packing step is still deterministic. `package-bundle.sh` and `docs/dependencies.md` no longer call the tarball "reproducible".
-- **Backup:** `version-control/local-app/2026-10-22_before-testing-doc/`.
+- **Backup:** `version-control/local-app/edit013-2026-10-22_before-testing-doc/`.
 - **Impact:** documentation and packaging only. **Not committed.**
