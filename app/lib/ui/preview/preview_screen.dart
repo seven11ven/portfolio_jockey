@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:portfolio_jockey/app/theme.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
 import 'package:portfolio_jockey/ui/common.dart';
-import 'package:portfolio_jockey/ui/export/readable_copy_dialog.dart';
 import 'package:portfolio_jockey/ui/preview/edit_dialogs.dart';
 import 'package:portfolio_jockey/ui/preview/preview_views.dart';
 import 'package:portfolio_jockey/vault/project_index.dart';
@@ -18,12 +17,13 @@ import 'package:portfolio_jockey/vault/project_index.dart';
 /// from a memory-only copy, made only when Play is pressed ([MediaHandoff]).
 /// Nothing readable is written to disk.
 class PreviewScreen extends StatefulWidget {
-  const PreviewScreen({required this.projectId, required this.projectName, required this.files, required this.initial, super.key});
+  const PreviewScreen({required this.projectId, required this.projectName, required this.files, required this.initial, required this.onFileMenu, super.key});
 
   final String projectId;
   final String projectName;
   final List<FileEntry> files;
   final int initial;
+  final void Function(BuildContext menuContext, FileEntry file, Offset position) onFileMenu;
 
   @override
   State<PreviewScreen> createState() => _PreviewScreenState();
@@ -34,6 +34,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
   Object? _content; // Uint8List, [_media], or an error message String.
   String? _detail;
   int _loadToken = 0;
+  final GlobalKey _moreKey = GlobalKey();
 
   FileEntry get _file => widget.files[_at];
 
@@ -103,6 +104,14 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   Future<void> _edit() => editInAnotherApp(context, projectId: widget.projectId, projectName: widget.projectName, file: _file);
 
+  void _openFileMenu() {
+    final renderObject = _moreKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderBox) {
+      return;
+    }
+    widget.onFileMenu(context, _file, renderObject.localToGlobal(renderObject.size.bottomRight(Offset.zero)));
+  }
+
   Widget _stage() {
     final file = _file;
     return switch (_content) {
@@ -130,23 +139,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
         actions: [
           IconButton(tooltip: 'Previous file', onPressed: _at > 0 ? () => _go(-1) : null, icon: const Icon(Icons.chevron_left)),
           IconButton(tooltip: 'Next file', onPressed: _at < widget.files.length - 1 ? () => _go(1) : null, icon: const Icon(Icons.chevron_right)),
-          PopupMenuButton<VoidCallback>(
-            tooltip: 'More',
-            icon: const Icon(Icons.more_horiz),
-            onSelected: (action) => action(),
-            itemBuilder: (_) => [
-              PopupMenuItem(value: () => unawaited(_edit()), child: const Row(spacing: 10, children: [Icon(Icons.open_in_new, size: 20), Flexible(child: Text('Edit in another app…', maxLines: 1, overflow: TextOverflow.ellipsis))])),
-              PopupMenuItem(
-                value: () => unawaited(
-                  showDialog<bool>(
-                    context: context,
-                    builder: (_) => ReadableCopyDialog(projectId: widget.projectId, projectName: widget.projectName, file: _file),
-                  ),
-                ),
-                child: const Row(spacing: 10, children: [Icon(Icons.ios_share, size: 20), Flexible(child: Text('Export a readable copy…', maxLines: 1, overflow: TextOverflow.ellipsis))]),
-              ),
-            ],
-          ),
+          IconButton(key: _moreKey, tooltip: 'More', onPressed: _openFileMenu, icon: const Icon(Icons.more_horiz)),
           const SizedBox(width: 8),
         ],
       ),

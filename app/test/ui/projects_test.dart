@@ -10,8 +10,14 @@ import 'ui_helpers.dart';
 
 void main() {
   /// Starts unlocked with one project, "Kitchen Remodel", and returns its ID.
-  Future<(TestApp, String)> withProject(WidgetTester tester, {List<String> tags = const [], String? Function(String path)? hostPathOf}) async {
-    final app = await startApp(tester, unlocked: true, hostPathOf: hostPathOf);
+  Future<(TestApp, String)> withProject(
+    WidgetTester tester, {
+    List<String> tags = const [],
+    String? Function(String path)? hostPathOf,
+    FakeLauncher? launcher,
+    Size size = const Size(1280, 900),
+  }) async {
+    final app = await startApp(tester, unlocked: true, hostPathOf: hostPathOf, launcher: launcher, size: size);
     late String id;
     await tester.runAsync(() async {
       id = await app.controller.projects.createProject(name: 'Kitchen Remodel', description: 'Quotes and photos.');
@@ -235,6 +241,41 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Move to Trash'));
     await settleUntil(tester, find.text('contractor-quote.pdf: original moved to Trash'));
     expect((app.controller.trasher as FakeTrash).trashed, [path]);
+  });
+
+  testWidgets('Flatpak reveals the original through the file manager, not direct Trash', (tester) async {
+    const shown = '/home/example/Pictures/contractor-quote.pdf';
+    final launcher = FakeLauncher(usesDesktopChooser: true);
+    final (app, id) = await withProject(tester, hostPathOf: (_) => shown, launcher: launcher, size: const Size(1280, 1200));
+    late String original;
+    await tester.runAsync(() async {
+      final directory = await tempFolder();
+      original = '${directory.path}/contractor-quote.pdf';
+      await File(original).writeAsString('quote');
+      await app.controller.projects.addFiles(id, [original]);
+    });
+
+    await tester.tap(find.text('Kitchen Remodel'));
+    await settleUntil(tester, find.text('contractor-quote.pdf'));
+    await tester.tap(find.text('contractor-quote.pdf'), buttons: kSecondaryButton);
+    await settleUntil(tester, find.text('Show original in file manager'));
+
+    expect(find.text('Move to Trash'), findsNothing);
+    final reveal = tester.widget<PopupMenuItem<VoidCallback>>(
+      find.ancestor(of: find.text('Show original in file manager'), matching: find.byType(PopupMenuItem<VoidCallback>)),
+    );
+    expect(reveal.enabled, isTrue);
+    final combined = tester.widget<PopupMenuItem<VoidCallback>>(
+      find.ancestor(of: find.text('Trash original, delete copy'), matching: find.byType(PopupMenuItem<VoidCallback>)),
+    );
+    expect(combined.enabled, isFalse);
+
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Show original in file manager'));
+    await tester.tap(find.text('Show original in file manager'));
+    await settle(tester);
+    expect(launcher.shownFilesInFolder, [original]);
+    expect(launcher.shownFilesInFolder, isNot(contains(shown)));
   });
 
   testWidgets('The tag review lists exactly the pending changes, and Back changes nothing', (tester) async {

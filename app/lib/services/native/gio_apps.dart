@@ -41,6 +41,10 @@ abstract interface class AppLauncher {
   /// Shows the folder [path] in the desktop's file manager. Throws
   /// [FileSystemException] if it can't.
   Future<void> openFolder(String path);
+
+  /// Shows the file [path] in its containing folder. Inside a Flatpak,
+  /// OpenDirectory resolves document-portal paths to their host originals.
+  Future<void> showFileInFolder(String path);
 }
 
 /// GLib's app-info functions (GIO).
@@ -137,6 +141,22 @@ final class GioAppLauncher implements AppLauncher {
     final error = await Isolate.run(() => _launch(path, null));
     if (error != null) {
       throw FileSystemException("Couldn't open the folder: $error", path);
+    }
+  }
+
+  @override
+  Future<void> showFileInFolder(String path) async {
+    if (usesDesktopChooser) {
+      try {
+        await OpenUriPortal.openContainingFolder(path);
+      } on PortalException catch (e) {
+        throw FileSystemException("Couldn't show the original in your file manager: ${e.message}", path);
+      }
+      return;
+    }
+    final error = await Isolate.run(() => _launch(File(path).parent.path, null));
+    if (error != null) {
+      throw FileSystemException("Couldn't show the original in your file manager: $error", path);
     }
   }
 

@@ -28,13 +28,11 @@ Flatpak can't run in this Codespace, because the sandbox it needs isn't allowed 
 1. **The file picker hands the app portal paths.** Files picked with "Add files" arrive as `/run/user/<uid>/doc/<id>/<name>`. Check that:
    - Adding and encrypting them works.
    - The path saved as the "original" still works after the app restarts. The portal docs say picked files "stay accessible across sessions".
-2. **Moving to the Trash through a portal path.**
-   - The Trash portal only trashes a file the app "can open in r/w mode". Check whether the picker grants **read/write** (the portal docs don't say).
-   - If it grants only read access, choose between:
-     - opening the picker in a mode that grants write access
-     - asking again at delete time
-     - greying the option with an explanation
-   - Confirm the file really lands in the desktop's Trash and can be restored.
+2. **Showing an original in the file manager through a portal path.**
+   - Direct Trash through xdg-desktop-portal 1.20.0 failed because it attempted to create a Trash directory inside `/run/user/<uid>/doc`, the document-portal mount. The sanitized result is in `project-changelog/2026-10-27/local-app/flatpak-trash-portal-failure.md`.
+   - The Flatpak now uses the OpenDirectory portal with the picked file descriptor. The portal resolves the document-portal entry to its host path and asks the desktop file manager to show it; the user moves it to Trash there.
+   - Verify the file manager reveals the same original, the user can move it to Trash and restore it, and the encrypted project copy remains until separately deleted in the app.
+   - The combined automatic Trash-and-delete action is unavailable in Flatpak because the app cannot confirm the manual Trash step.
 3. **Built 2026-10-22, to be tested on the PM's PC.** **Show the real location, not the portal path,** in the "Original location" box and the delete dialogs. Use the `user.document-portal.host-path` file attribute, or the Documents portal's `GetHostPaths` (interface version 5+). The attribute can be read through a libc call such as `getxattr`, which needs a line in `app/tool/allowed-native-libs.txt`.
    - Built: when a file is added from a portal path, the app reads the attribute once and stores it in the encrypted index (`originalShownPath`). The screens show it; Trash and the "original missing" check still use the portal path. Check that the real path shows in the file details and in the "Move to Trash" dialog.
 4. **"Original missing" detection** (greying "Move to Trash") should still be correct with portal paths, including after the original is deleted outside the app.

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -216,7 +217,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
     final visible = [for (final i in _shownItems(index)) if (!i.isFolder) i.file!];
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => PreviewScreen(projectId: widget.projectId, projectName: index.name, files: visible, initial: visible.indexOf(file).clamp(0, visible.length - 1)),
+        builder: (_) => PreviewScreen(
+          projectId: widget.projectId,
+          projectName: index.name,
+          files: visible,
+          initial: visible.indexOf(file).clamp(0, visible.length - 1),
+          onFileMenu: (menuContext, file, position) => unawaited(_openFileMenu(file, position, fromPreview: true, menuContext: menuContext)),
+        ),
       ),
     );
     await _reload();
@@ -280,10 +287,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
 
   void _showMoved(MoveResult result, String targetLabel) => showError(context, movedMessage(result, targetLabel));
 
-  Future<void> _moveTo({required List<String> fileIds, required List<String> folderIds}) async {
+  Future<void> _moveTo({required List<String> fileIds, required List<String> folderIds, bool closePreview = false}) async {
     final moved = await _show(MoveItemsDialog(projectId: widget.projectId, index: _index!, fileIds: fileIds, folderIds: folderIds, pick: true, targetFolderId: _folderId, onMoved: _showMoved));
     if (moved && mounted) {
       setState(_selected.clear);
+      if (closePreview) {
+        Navigator.of(context).pop();
+      }
     }
   }
 
@@ -356,40 +366,87 @@ class _ProjectScreenState extends State<ProjectScreen> {
     action?.call();
   }
 
-  Future<void> _openFileMenu(FileEntry file, Offset position) async {
+  Future<void> _showOriginalInFileManager(FileEntry file) async {
+    final path = file.originalPath;
+    if (path == null) {
+      return;
+    }
+    try {
+      await AppScope.read(context).edits.launcher.showFileInFolder(path);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Move the original to Trash in the file manager, then delete the encrypted copy here.')));
+      }
+    } on FileSystemException catch (e) {
+      if (mounted) {
+        showError(context, e.message);
+      }
+    }
+  }
+
+  Future<void> _openFileMenu(FileEntry file, Offset position, {bool fromPreview = false, BuildContext? menuContext}) async {
     final index = _index!;
     final originalThere = await _service.originalExists(file);
     if (!mounted) {
       return;
     }
-    final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
+    final flatpak = AppScope.read(context).edits.launcher.usesDesktopChooser;
+    final activeContext = menuContext ?? context;
+    if (!activeContext.mounted) {
+      return;
+    }
+    final overlay = Overlay.of(activeContext).context.findRenderObject()! as RenderBox;
     final item = _menuItem;
 
     Future<void> delete(DeleteTarget target) async {
       final done = await _show(DeleteFileDialog(projectId: widget.projectId, projectName: index.name, file: file, target: target));
       if (done && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(deletedMessage(target, file.name))));
+        if (fromPreview && target != DeleteTarget.device) {
+          Navigator.of(context).pop();
+        }
       }
     }
 
     final action = await showMenu<VoidCallback>(
-      context: context,
+      context: activeContext,
       // Wide enough for the mockup's labels and their hints ("the original").
       constraints: const BoxConstraints(minWidth: 300, maxWidth: 380),
       position: RelativeRect.fromRect(position & const Size(1, 1), Offset.zero & overlay.size),
       items: [
         PopupMenuItem(enabled: false, height: 32, child: Text(file.name, style: const TextStyle(fontWeight: FontWeight.w700))),
-        item(Icons.visibility_outlined, 'Preview', () => _preview(file)),
-        if (_isFlat) item(Icons.folder_open_outlined, 'Show in folder', () => _openFolder(file.folderId)),
+        item(Icons.visibility_outlined, 'Preview', fromPreview ? () {} : () => _preview(file)),
+        if (_isFlat)
+          item(Icons.folder_open_outlined, 'Show in folder', () {
+            if (fromPreview) {
+              Navigator.of(context).pop();
+            }
+            _openFolder(file.folderId);
+          }),
         item(Icons.open_in_new, 'Edit in another app…', () => editInAnotherApp(context, projectId: widget.projectId, projectName: index.name, file: file)),
-        item(Icons.sell_outlined, 'Edit tags…', () => _show(EditFileTagsDialog(projectId: widget.projectId, index: index, files: [file]))),
-        item(Icons.edit_outlined, 'Rename…', () => _show(RenameFileDialog(projectId: widget.projectId, file: file))),
-        item(Icons.drive_file_move_outline, 'Move to…', () => _moveTo(fileIds: [file.id], folderIds: const [])),
+        item(Icons.sell_outlined, 'Edit tags…', () async {
+          final changed = await _show(EditFileTagsDialog(projectId: widget.projectId, index: index, files: [file]));
+          if (changed && fromPreview && mounted) {
+            Navigator.of(context).pop();
+          }
+        }),
+        item(Icons.edit_outlined, 'Rename…', () async {
+          final changed = await _show(RenameFileDialog(projectId: widget.projectId, file: file));
+          if (changed && fromPreview && mounted) {
+            Navigator.of(context).pop();
+          }
+        }),
+        item(Icons.drive_file_move_outline, 'Move to…', () => _moveTo(fileIds: [file.id], folderIds: const [], closePreview: fromPreview)),
         item(Icons.ios_share, 'Export a readable copy…', () => showDialog<bool>(context: context, builder: (_) => ReadableCopyDialog(projectId: widget.projectId, projectName: index.name, file: file))),
         const PopupMenuDivider(),
-        item(Icons.delete_outline, 'Move to Trash', originalThere ? () => delete(DeleteTarget.device) : null, danger: true, hint: 'the original'),
+        if (flatpak)
+          item(Icons.folder_open_outlined, 'Show original in file manager', originalThere ? () => _showOriginalInFileManager(file) : null, hint: 'the original')
+        else
+          item(Icons.delete_outline, 'Move to Trash', originalThere ? () => delete(DeleteTarget.device) : null, danger: true, hint: 'the original'),
         item(Icons.delete_outline, 'Delete from project', () => delete(DeleteTarget.project), danger: true, hint: 'the encrypted copy'),
-        item(Icons.delete_outline, 'Trash original, delete copy', originalThere ? () => delete(DeleteTarget.both) : null, danger: true),
+        if (flatpak)
+          item(Icons.delete_outline, 'Trash original, delete copy', null, danger: true, hint: 'manual step')
+        else
+          item(Icons.delete_outline, 'Trash original, delete copy', originalThere ? () => delete(DeleteTarget.both) : null, danger: true),
         if (!originalThere)
           PopupMenuItem(
             enabled: false,
@@ -397,8 +454,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
               width: 340,
               child: Muted(
                 file.originalPath == null
-                    ? "The original's location isn't known, so it can't be moved to the Trash. Only the project copy can be deleted."
-                    : "The original is no longer at ${file.shownOriginal}, so it can't be moved to the Trash. Only the project copy can be deleted.",
+                  ? "The original's location isn't known, so it can't be ${flatpak ? 'shown in the file manager' : 'moved to the Trash'}. Only the project copy can be deleted."
+                  : "The original is no longer at ${file.shownOriginal}, so it can't be ${flatpak ? 'shown in the file manager' : 'moved to the Trash'}. Only the project copy can be deleted.",
               ),
             ),
           ),

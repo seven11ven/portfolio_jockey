@@ -37,6 +37,38 @@
   </section>
 
   <section class="scene">
+    <div class="scene-title">1b. Preview actions menu (three dots)</div>
+    <div class="scene-note">The preview menu shows the same file actions as the explorer menu. In the Flatpak, Show original in file manager reveals the original so the user can move it to Trash there; Preview remains listed for consistency.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Screenshot from 2026-09-17 09-53-00.png</h3><span class="icon-btn" title="Previous">‹</span><span class="icon-btn" title="Next">›</span><span class="icon-btn">⋯</span></header>
+      <div class="preview-wrap">
+        <div class="preview-stage image-canvas"><div class="mock-landscape" role="img" aria-label="Sample landscape photo"></div></div>
+        <div class="card preview-side">
+          <div><span class="label">Size</span>107 KB · 635 × 431</div>
+          <div><span class="label">Added</span>Oct 26, 2026</div>
+          <div><span class="label">Original</span><span class="small muted">~/Pictures/Screenshot.png</span></div>
+        </div>
+      </div>
+      <div class="overlay light" style="display:block">
+        <div class="menu" style="right:12px;top:44px;width:300px">
+          <div class="menu-title">Screenshot from 2026-09-17 09-53-00.png</div>
+          <button class="menu-item">👁 Preview</button>
+          <button class="menu-item">↗ Edit in another app…</button>
+          <button class="menu-item">◇ Edit tags…</button>
+          <button class="menu-item">✎ Rename…</button>
+          <button class="menu-item">⇥ Move to…</button>
+          <button class="menu-item">⇪ Export a readable copy…</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item">📂 Show original in file manager</button>
+          <button class="menu-item danger">🗑 Delete from project <span class="hint">the encrypted copy</span></button>
+          <button class="menu-item danger" disabled>🗑 Trash original, delete copy</button>
+          <p class="small muted" style="padding:4px 10px 6px">Move the original to Trash in the desktop file manager, then delete the encrypted project copy here.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
     <div class="scene-title">2. Preview (video): built-in player, paused</div>
     <div class="scene-note">Exploratory concept, dependent on a media-engine security and Linux compatibility review. The video starts only when Play is pressed. A readable copy lives only in the private memory folder and is wiped when the preview closes or the vault locks.</div>
     <div class="screen" hidden>

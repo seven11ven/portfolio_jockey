@@ -88,4 +88,9 @@ class FakeLauncher implements AppLauncher {
 
   @override
   Future<void> openFolder(String path) async => openedFolders.add(path);
+
+  final List<String> shownFilesInFolder = [];
+
+  @override
+  Future<void> showFileInFolder(String path) async => shownFilesInFolder.add(path);
 }

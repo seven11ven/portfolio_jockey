@@ -33,10 +33,11 @@ void main() {
     Map<String, List<int>> files, {
     FakeLauncher? launcher,
     PrivateFolders? privateFolders,
+    String? Function(String path)? hostPathOf,
   }) async {
     late PrivateFolders folders;
     await tester.runAsync(() async => folders = privateFolders ?? await fakePrivateFolders());
-    final app = await startApp(tester, unlocked: true, launcher: launcher, privateFolders: folders);
+    final app = await startApp(tester, unlocked: true, launcher: launcher, privateFolders: folders, hostPathOf: hostPathOf);
     late String id;
     await tester.runAsync(() async {
       id = await app.controller.projects.createProject(name: 'Kitchen Remodel');
@@ -101,6 +102,38 @@ void main() {
     await settleUntil(tester, find.text('Hello'));
     expect(find.text('Hello'), findsOneWidget);
     expect(find.text('Rename…'), findsNothing, reason: 'no menu on a left click');
+  });
+
+  testWidgets('Preview three-dot menu has the file actions and Flatpak handoff', (tester) async {
+    const shown = '/home/example/Pictures/measurements.txt';
+    final launcher = FakeLauncher(usesDesktopChooser: true);
+    final (app, id) = await withFiles(
+      tester,
+      {'measurements.txt': utf8.encode('Counter: 240 cm')},
+      launcher: launcher,
+      hostPathOf: (_) => shown,
+    );
+    final file = await entry(tester, app, id, 'measurements.txt');
+
+    await fileMenu(tester, 'measurements.txt', 'Preview');
+    await settleUntil(tester, find.text('Counter: 240 cm'));
+    await tester.tap(find.byTooltip('More'));
+    await settleUntil(tester, find.text('Show original in file manager'));
+    expect(find.text('Edit tags…'), findsOneWidget);
+    expect(find.text('Rename…'), findsOneWidget);
+    expect(find.text('Move to…'), findsOneWidget);
+    expect(find.text('Move to Trash'), findsNothing);
+    expect(find.text('Delete from project'), findsOneWidget);
+    final reveal = tester.widget<PopupMenuItem<VoidCallback>>(
+      find.ancestor(of: find.text('Show original in file manager'), matching: find.byType(PopupMenuItem<VoidCallback>)),
+    );
+    expect(reveal.enabled, isTrue);
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Show original in file manager'));
+    await settle(tester);
+    expect(launcher.shownFilesInFolder, [file.originalPath]);
+    expect(launcher.shownFilesInFolder, isNot(contains(shown)));
   });
 
   testWidgets('Preview renders an image and a PDF from memory', (tester) async {

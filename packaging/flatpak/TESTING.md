@@ -70,12 +70,12 @@ Open each type by **clicking it once** (right-click or a long press opens the fi
 - [x] **E7. Empty file.** In the editor, delete all the text and save. **Save changes** shows "The edited copy is empty" and only saves after **Save the empty file**. Cancel keeps the old version.
 - [x] **E8. Save As.** In the editor, use **Save As** to a different place, then **Save changes** in the app. It says there are no changes and that the editor may have saved to a different place.
 
-## F. Moving originals to the Trash (test items 2, 4, 6)
-- [x] **F1.** On a file you added, open the menu and choose **Move to Trash**. The dialog shows the **real** location (not a portal path). Cancel changes nothing.
-- [ ] **F2.** Confirm. The app says the original was moved to the Trash, and the project copy stays. **Latest result (2026-10-27): failed;** the Trash portal rejected the document-portal path. Nothing was changed; the original and project copy remain.
-- [x] **F3.** Open your desktop's Trash. The file is there and can be **restored** to where it was.
-- [x] **F4.** If F2 fails, record the error without the username or private filename (this is a public repo). A likely cause is that the portal gave the app read-only access to the file. The latest error is recorded in the 2026-10-27 changelog.
-- [x] **F5. Original missing** (test item 4). Add another test file, then delete that original yourself in your file manager. Back in the app, **Move to Trash** is greyed out, with a note saying the original is no longer there.
+## F. Original files and the Trash
+- [x] **F1.** On a file you added, open the menu. Outside Flatpak, **Move to Trash** is available. In Flatpak, **Show original in file manager** is available instead; direct Trash is not supported by the host portal.
+- [ ] **F2. Flatpak handoff.** Choose **Show original in file manager**. The desktop file manager should reveal the same real original shown in the file details, not a document-portal path. Move the throwaway original to Trash there, then restore it. Portfolio Jockey's encrypted copy must remain.
+- [x] **F3.** Outside Flatpak, confirm **Move to Trash** still moves the original and the file can be restored.
+- [x] **F4.** The 2026-10-27 Flatpak direct-Trash failure is recorded in `flatpak-trash-portal-failure.md`. The portal reported that it could not create a Trash directory under its document-portal mount; spaces were not the cause. The app now uses the file-manager handoff instead.
+- [ ] **F5. Original missing.** After moving the original outside the app, the file-manager action is greyed out with a note that the original is no longer at its recorded location. Deleting the encrypted project copy remains available.
 
 ## G. Export, import and readable copies (test items 11 and 12)
 - [x] **G1.** **Export projects…**: no location is preset ("No location chosen yet"). **Choose…** opens your desktop's save dialog. Export as **ZIP** to your Documents folder. The ZIP opens in your archive manager, and the files are readable.
@@ -133,7 +133,7 @@ Use throwaway files. In a Flatpak, files you add and archives you export go thro
 | D4–D7 | Pass | PM, 2026-10-27 |
 | E1–E8 | Pass | PM, 2026-10-23 |
 | F1 | Pass | PM, 2026-10-23 |
-| F2 | Fail | PM, 2026-10-27; see `flatpak-trash-portal-failure.md` |
+| F2 | Failed (old direct-Trash flow); handoff retest pending | PM, 2026-10-27; see `flatpak-trash-portal-failure.md` |
 | F3 | Pass | PM, 2026-10-23 |
 | F4 | Recorded | PM, 2026-10-27 |
 | F5 | Pass | PM, 2026-10-23 |

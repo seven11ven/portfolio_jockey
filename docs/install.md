@@ -65,6 +65,7 @@ flatpak info --show-permissions io.github.seven11ven.portfolio_jockey
 - **Not allowed:**
   - **the network**: the `shared=` line says `ipc` only, never `network`
   - **your files**: the app sees only the files and folders you pick in your desktop's own file dialogs
+- **Original files:** inside the Flatpak, **Show original in file manager** uses the portal to reveal a picked original. Move it to Trash in the file manager, then delete the encrypted project copy separately in Portfolio Jockey.
 
 ## Licenses and source code
 - **In the app:** Settings → "Show licenses" lists the licenses of Flutter and every package the app uses.
@@ -101,7 +102,7 @@ flatpak uninstall --user --delete-data io.github.seven11ven.portfolio_jockey
 A storage location you moved outside the app's data folder isn't touched; delete it by hand if you want it gone. To remove runtimes no other app needs any more, run `flatpak uninstall --user --unused`.
 
 ## If something doesn't work
-- **The file dialogs don't open, or "Move to Trash" says the Trash portal isn't available.** Your desktop needs its portal service: `xdg-desktop-portal` plus one for your desktop, such as `xdg-desktop-portal-gnome`, `-kde` or `-gtk`. Most desktops install them already. Install the missing one with your package manager and log in again.
+- **"Show original in file manager" fails in the Flatpak.** Your desktop needs its portal service: `xdg-desktop-portal` plus one for your desktop, such as `xdg-desktop-portal-gnome`, `-kde` or `-gtk`. Most desktops install them already. Install the missing one with your package manager and log in again. Move the original to Trash from the file manager; the app does not directly trash document-portal files.
 - **Audio, video or "Edit in another app" refuses, saying no memory-only folder is available.** The app keeps the readable copies these need only in memory (`$XDG_RUNTIME_DIR`, a tmpfs), never on disk, and refuses rather than fall back to the disk. That folder exists on all normal desktop logins. It can be missing in unusual sessions, such as a root shell or some remote logins.
 - **Play doesn't open anything, or opens the wrong app.** Audio and video play in your desktop's default app for that file type. Set one in your desktop's settings (for example "Preferred Applications" or "Default Applications"), then press Play again.
 - **Something else.** Start the app from a terminal with `flatpak run io.github.seven11ven.portfolio_jockey` to see its messages. Before sharing them, remove anything personal, such as your username or folder names.
