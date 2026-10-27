@@ -146,17 +146,18 @@ class TypeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kind = fileKind(fileName);
+    final image = kind.icon == Icons.image_outlined;
+    final label = Text(kind.label, style: TextStyle(color: kind.color, fontWeight: FontWeight.w700, fontSize: 12));
     return DecoratedBox(
+      key: image ? const Key('image-type-badge-cover') : null,
       decoration: BoxDecoration(color: kind.color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(kind.icon, color: kind.color, size: 28),
-            const SizedBox(height: 4),
-            Text(kind.label, style: TextStyle(color: kind.color, fontWeight: FontWeight.w700, fontSize: 12)),
-          ],
-        ),
+        child: image
+            ? label
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [Icon(kind.icon, color: kind.color, size: 28), const SizedBox(height: 4), label],
+              ),
       ),
     );
   }

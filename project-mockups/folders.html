@@ -20,7 +20,7 @@
 
   <section class="scene">
     <div class="scene-title">1. Project view, grid (the default)</div>
-    <div class="scene-note">The new toolbar sits under the tag chips: search, sort, grid/list toggle and New folder. Folders come first, then files, like Google Drive. The path row shows where you are. Each folder card shows how many files it holds (everything inside it, subfolders included) and its total size.</div>
+    <div class="scene-note">The new toolbar sits under the tag chips: search, sort, grid/list toggle and New folder. Folders come first, then files, like Google Drive. Image files show small in-memory thumbnails; other types keep their badges. The path row shows where you are. Each folder card shows how many files it holds (everything inside it, subfolders included) and its total size.</div>
     <div class="screen" hidden>
       <header class="topbar">
         <span class="icon-btn">←</span>
@@ -56,7 +56,9 @@
         <div class="section-label">Files</div>
         <div class="file-grid">
           <div class="card file"><div class="thumb pdf">PDF</div><div class="fname">contractor-quote.pdf</div><div class="ftags"><span class="chip">Receipts</span><span class="chip">Plans</span></div></div>
-          <div class="card file"><div class="thumb img2">JPG</div><div class="fname">inspiration-board.jpg</div><div class="ftags"><span class="chip">Inspiration</span></div></div>
+          <div class="card file"><div class="thumb image-type"><span class="generic-image-label">PNG</span></div><div class="fname">inspiration-board.png</div><div class="ftags"><span class="chip">Inspiration</span></div></div>
+          <div class="card file"><div class="thumb image-type"><span class="generic-image-label">JPG</span></div><div class="fname">countertop-after.jpg</div><div class="ftags"><span class="chip">Photos</span></div></div>
+          <div class="card file"><div class="thumb image-type"><span class="generic-image-label">SVG</span></div><div class="fname">brand-mark.svg</div><div class="ftags"><span class="chip">Inspiration</span></div></div>
           <div class="card file"><div class="thumb">TXT</div><div class="fname">measurements.txt</div><div class="ftags"><span class="chip">Plans</span></div></div>
           <div class="card file"><div class="thumb aud">♪ 3:05</div><div class="fname">plumber-voicemail.m4a</div><div class="ftags"></div></div>
           <div class="card file"><div class="thumb vid">▶ 2:18</div><div class="fname">walkthrough.mp4</div><div class="ftags"><span class="chip">Photos</span></div></div>
@@ -195,7 +197,7 @@
         <div class="file-grid">
           <div class="card file selected dragging"><div class="thumb pdf">PDF</div><div class="fname">contractor-quote.pdf</div><div class="ftags"><span class="chip">Receipts</span></div></div>
           <div class="card file selected dragging"><div class="thumb">TXT</div><div class="fname">measurements.txt</div><div class="ftags"><span class="chip">Plans</span></div></div>
-          <div class="card file"><div class="thumb img2">JPG</div><div class="fname">inspiration-board.jpg</div><div class="ftags"><span class="chip">Inspiration</span></div></div>
+          <div class="card file"><div class="thumb image-type"><span class="generic-image-label">JPG</span></div><div class="fname">inspiration-board.jpg</div><div class="ftags"><span class="chip">Inspiration</span></div></div>
         </div>
       </div>
       <div class="drag-ghost" style="left:80px;top:150px">📄 contractor-quote.pdf <span class="count">2</span></div>

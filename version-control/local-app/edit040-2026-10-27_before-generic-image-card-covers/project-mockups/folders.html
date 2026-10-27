@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Folders and file explorer · Portfolio Jockey mockup</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="mock-bar">
+  <span>Design mockup · fake data</span><a href="index.html">All mockups</a>
+  <span class="seg"><button data-set-theme="light">Light</button><button data-set-theme="dark">Dark</button></span>
+  <span class="seg"><button data-set-view="both">Both</button><button data-set-view="desktop">Desktop</button><button data-set-view="phone">Phone</button></span>
+</div>
+<main class="mock-page">
+  <header>
+    <h1>Folders and the file-explorer view</h1>
+    <p class="muted">Folders live inside a project and can sit inside other folders, without a depth limit. A new folder appears right where the files are. The grid stays the default; the list view is a toggle. Search, tag chips and sorting work across the whole project. Folders are only labels inside the project's encrypted index: moving things never rewrites an encrypted file.</p>
+  </header>
+
+  <section class="scene">
+    <div class="scene-title">1. Project view, grid (the default)</div>
+    <div class="scene-note">The new toolbar sits under the tag chips: search, sort, grid/list toggle and New folder. Folders come first, then files, like Google Drive. Image files show small in-memory thumbnails; other types keep their badges. The path row shows where you are. Each folder card shows how many files it holds (everything inside it, subfolders included) and its total size.</div>
+    <div class="screen" hidden>
+      <header class="topbar">
+        <span class="icon-btn">←</span>
+        <h3 style="flex:1">Kitchen Remodel</h3>
+        <span class="icon-btn">⋯</span>
+        <span class="icon-btn hide-phone">⚙</span>
+      </header>
+      <div class="content stack">
+        <div class="project-head">
+          <div class="cover c1">🏠</div>
+          <div class="info">
+            <p class="muted">Contractor quotes, receipts and before/after photos.</p>
+            <span class="small muted">24 files · 412 MB · encrypted</span>
+            <div class="row" style="margin-top:6px"><button class="btn btn-primary">＋ Add files</button><button class="btn">🏷 Manage tags</button><button class="btn">☑ Select</button></div>
+          </div>
+        </div>
+        <div class="chips">
+          <span class="chip chip-on">All 24</span><span class="chip">Photos 14</span><span class="chip">Receipts 6</span><span class="chip">Plans 3</span><span class="chip">Inspiration 5</span><span class="chip">Untagged 2</span>
+        </div>
+        <div class="toolbar">
+          <div class="tb-search"><span class="mag">🔍</span><input class="input" placeholder="Search this whole project" readonly></div>
+          <button class="btn">⇅ <span class="btn-label">Name ▲</span></button>
+          <span class="seg-app"><span class="icon on">▦</span><span class="icon">☰</span></span>
+          <button class="btn">📁 <span class="btn-label">New folder</span></button>
+        </div>
+        <div class="crumbs"><span class="crumb here">Kitchen Remodel</span></div>
+        <div class="section-label">Folders</div>
+        <div class="folder-grid">
+          <div class="card folder-card"><span class="ficon">📁</span><div class="fmeta"><div class="fname">Invoices</div><div class="fsub">4 files · 6.2 MB</div></div></div>
+          <div class="card folder-card"><span class="ficon">📁</span><div class="fmeta"><div class="fname">Plans</div><div class="fsub">3 files · 14 MB</div></div></div>
+          <div class="card folder-card"><span class="ficon">📁</span><div class="fmeta"><div class="fname">Site photos</div><div class="fsub">12 files · 190 MB</div></div></div>
+        </div>
+        <div class="section-label">Files</div>
+        <div class="file-grid">
+          <div class="card file"><div class="thumb pdf">PDF</div><div class="fname">contractor-quote.pdf</div><div class="ftags"><span class="chip">Receipts</span><span class="chip">Plans</span></div></div>
+          <div class="card file"><div class="thumb photo-preview"><span>PNG preview</span></div><div class="fname">inspiration-board.png</div><div class="ftags"><span class="chip">Inspiration</span></div></div>
+          <div class="card file"><div class="thumb photo-preview"><span>JPG preview</span></div><div class="fname">countertop-after.jpg</div><div class="ftags"><span class="chip">Photos</span></div></div>
+          <div class="card file"><div class="thumb svg-preview"><span>SVG</span><div class="svg-mark"></div></div><div class="fname">brand-mark.svg</div><div class="ftags"><span class="chip">Inspiration</span></div></div>
+          <div class="card file"><div class="thumb">TXT</div><div class="fname">measurements.txt</div><div class="ftags"><span class="chip">Plans</span></div></div>
+          <div class="card file"><div class="thumb aud">♪ 3:05</div><div class="fname">plumber-voicemail.m4a</div><div class="ftags"></div></div>
+          <div class="card file"><div class="thumb vid">▶ 2:18</div><div class="fname">walkthrough.mp4</div><div class="ftags"><span class="chip">Photos</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">2. Inside a folder</div>
+    <div class="scene-note">Opening a folder shows its own folders and files in the same layout. Every part of the path row is clickable (and a drop target, see scene 7). Add files adds to the folder you're in. The tag chips and search still cover the whole project.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span><span class="icon-btn hide-phone">⚙</span></header>
+      <div class="content stack">
+        <div class="row"><button class="btn btn-primary">＋ Add files here</button><button class="btn">🏷 Manage tags</button><button class="btn">☑ Select</button></div>
+        <div class="chips"><span class="chip chip-on">All 24</span><span class="chip">Photos 14</span><span class="chip">Receipts 6</span><span class="chip">Plans 3</span><span class="chip">Inspiration 5</span><span class="chip">Untagged 2</span></div>
+        <div class="toolbar">
+          <div class="tb-search"><span class="mag">🔍</span><input class="input" placeholder="Search this whole project" readonly></div>
+          <button class="btn">⇅ <span class="btn-label">Name ▲</span></button>
+          <span class="seg-app"><span class="icon on">▦</span><span class="icon">☰</span></span>
+          <button class="btn">📁 <span class="btn-label">New folder</span></button>
+        </div>
+        <div class="crumbs"><span class="crumb">Kitchen Remodel</span><span class="crumb-sep">›</span><span class="crumb here">Invoices</span></div>
+        <div class="section-label">Folders</div>
+        <div class="folder-grid">
+          <div class="card folder-card"><span class="ficon">📁</span><div class="fmeta"><div class="fname">2026</div><div class="fsub">2 files · 3.1 MB</div></div></div>
+        </div>
+        <div class="section-label">Files</div>
+        <div class="file-grid">
+          <div class="card file"><div class="thumb pdf">PDF</div><div class="fname">invoice-aug.pdf</div><div class="ftags"><span class="chip">Receipts</span></div></div>
+          <div class="card file"><div class="thumb pdf">PDF</div><div class="fname">invoice-sep.pdf</div><div class="ftags"><span class="chip">Receipts</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">3. List view (the toggle)</div>
+    <div class="scene-note">Columns for name, size and date. Click a column heading to sort by it; click again to flip the direction. Folders always stay above files. In the Date column, a file shows the date it was added and a folder shows the date it was created. A folder's size is the total of everything inside it. On a phone the date column is hidden to save room.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span><span class="icon-btn hide-phone">⚙</span></header>
+      <div class="content stack">
+        <div class="chips"><span class="chip chip-on">All 24</span><span class="chip">Photos 14</span><span class="chip">Receipts 6</span><span class="chip">Plans 3</span><span class="chip">Inspiration 5</span><span class="chip">Untagged 2</span></div>
+        <div class="toolbar">
+          <div class="tb-search"><span class="mag">🔍</span><input class="input" placeholder="Search this whole project" readonly></div>
+          <button class="btn">⇅ <span class="btn-label">Name ▲</span></button>
+          <span class="seg-app"><span class="icon">▦</span><span class="icon on">☰</span></span>
+          <button class="btn">📁 <span class="btn-label">New folder</span></button>
+        </div>
+        <div class="crumbs"><span class="crumb here">Kitchen Remodel</span></div>
+        <div class="flist">
+          <div class="frow head"><span class="c-name sorted">Name ▲</span><span class="c-size">Size</span><span class="c-date">Date added</span></div>
+          <div class="frow"><span class="c-name"><span>📁</span><span class="nm"><span>Invoices</span></span></span><span class="c-size">6.2 MB</span><span class="c-date">Oct 3, 2026</span></div>
+          <div class="frow"><span class="c-name"><span>📁</span><span class="nm"><span>Plans</span></span></span><span class="c-size">14 MB</span><span class="c-date">Oct 5, 2026</span></div>
+          <div class="frow"><span class="c-name"><span>📁</span><span class="nm"><span>Site photos</span></span></span><span class="c-size">190 MB</span><span class="c-date">Oct 9, 2026</span></div>
+          <div class="frow"><span class="c-name"><span>📄</span><span class="nm"><span>contractor-quote.pdf</span></span></span><span class="c-size">310 KB</span><span class="c-date">Oct 21, 2026</span></div>
+          <div class="frow"><span class="c-name"><span>🖼</span><span class="nm"><span>inspiration-board.jpg</span></span></span><span class="c-size">2.4 MB</span><span class="c-date">Oct 20, 2026</span></div>
+          <div class="frow"><span class="c-name"><span>📝</span><span class="nm"><span>measurements.txt</span></span></span><span class="c-size">4 KB</span><span class="c-date">Oct 18, 2026</span></div>
+          <div class="frow"><span class="c-name"><span>🎵</span><span class="nm"><span>plumber-voicemail.m4a</span></span></span><span class="c-size">1.1 MB</span><span class="c-date">Oct 15, 2026</span></div>
+          <div class="frow"><span class="c-name"><span>🎞</span><span class="nm"><span>walkthrough.mp4</span></span></span><span class="c-size">186 MB</span><span class="c-date">Oct 12, 2026</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">4. Sort menu</div>
+    <div class="scene-note">The sort button works in both views: name, size or date added, each ascending or descending. The choice is remembered for the session.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="content stack">
+        <div class="toolbar">
+          <div class="tb-search"><span class="mag">🔍</span><input class="input" placeholder="Search this whole project" readonly></div>
+          <button class="btn">⇅ <span class="btn-label">Name ▲</span></button>
+          <span class="seg-app"><span class="icon on">▦</span><span class="icon">☰</span></span>
+          <button class="btn">📁 <span class="btn-label">New folder</span></button>
+        </div>
+        <div class="crumbs"><span class="crumb here">Kitchen Remodel</span></div>
+        <div class="folder-grid">
+          <div class="card folder-card"><span class="ficon">📁</span><div class="fmeta"><div class="fname">Invoices</div><div class="fsub">4 files · 6.2 MB</div></div></div>
+          <div class="card folder-card"><span class="ficon">📁</span><div class="fmeta"><div class="fname">Plans</div><div class="fsub">3 files · 14 MB</div></div></div>
+        </div>
+      </div>
+      <div class="overlay light" style="display:block">
+        <div class="menu" style="left:520px;top:150px;min-width:200px">
+          <div class="menu-title">Sort by</div>
+          <button class="menu-item">✓ Name</button>
+          <button class="menu-item">　Size</button>
+          <button class="menu-item">　Date added</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item">✓ Ascending (A to Z, small to large, old to new)</button>
+          <button class="menu-item">　Descending</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5. Search, and tag chips: the whole project</div>
+    <div class="scene-note">Typing in the search bar (or tapping a tag chip) switches to a flat list of matches from every folder, each with the path it lives in. Clicking a result opens its preview; "Show in folder" in its menu jumps to its folder. Clearing the search returns to the folder you were in. Sorting still applies.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span><span class="icon-btn hide-phone">⚙</span></header>
+      <div class="content stack">
+        <div class="chips"><span class="chip chip-on">All 24</span><span class="chip">Photos 14</span><span class="chip">Receipts 6</span><span class="chip">Plans 3</span><span class="chip">Inspiration 5</span><span class="chip">Untagged 2</span></div>
+        <div class="toolbar">
+          <div class="tb-search"><span class="mag">🔍</span><input class="input" value="quote" readonly><span class="clear">✕</span></div>
+          <button class="btn">⇅ <span class="btn-label">Name ▲</span></button>
+          <span class="seg-app"><span class="icon">▦</span><span class="icon on">☰</span></span>
+          <button class="btn">📁 <span class="btn-label">New folder</span></button>
+        </div>
+        <div class="small muted">3 results for “quote” in the whole project</div>
+        <div class="flist">
+          <div class="frow head"><span class="c-name sorted">Name ▲</span><span class="c-size">Size</span><span class="c-date">Date added</span></div>
+          <div class="frow"><span class="c-name"><span>📄</span><span class="nm"><span>contractor-quote.pdf</span><span class="fpath">Kitchen Remodel</span></span></span><span class="c-size">310 KB</span><span class="c-date">Oct 21, 2026</span></div>
+          <div class="frow"><span class="c-name"><span>📄</span><span class="nm"><span>quote-electrician.pdf</span><span class="fpath">Kitchen Remodel › Invoices › 2026</span></span></span><span class="c-size">1.6 MB</span><span class="c-date">Oct 7, 2026</span></div>
+          <div class="frow"><span class="c-name"><span>📄</span><span class="nm"><span>quote-tile.pdf</span><span class="fpath">Kitchen Remodel › Plans</span></span></span><span class="c-size">820 KB</span><span class="c-date">Oct 6, 2026</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">6. Drag a file into a folder</div>
+    <div class="scene-note">Press and drag a file (or several selected files: the badge shows how many). The folder under the pointer lights up as the drop target. The dragged file fades in place. Folders can be dragged onto other folders the same way, but not onto themselves or anything inside them. Dropping asks for confirmation (scene 8) before anything changes. On a phone, use "Move to…" from the menu instead (scene 11).</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span><span class="icon-btn hide-phone">⚙</span></header>
+      <div class="content stack">
+        <div class="crumbs"><span class="crumb here">Kitchen Remodel</span></div>
+        <div class="section-label">Folders</div>
+        <div class="folder-grid">
+          <div class="card folder-card drop"><span class="ficon">📁</span><div class="fmeta"><div class="fname">Invoices</div><div class="fsub">4 files · 6.2 MB</div></div></div>
+          <div class="card folder-card"><span class="ficon">📁</span><div class="fmeta"><div class="fname">Plans</div><div class="fsub">3 files · 14 MB</div></div></div>
+          <div class="card folder-card"><span class="ficon">📁</span><div class="fmeta"><div class="fname">Site photos</div><div class="fsub">12 files · 190 MB</div></div></div>
+        </div>
+        <div class="section-label">Files</div>
+        <div class="file-grid">
+          <div class="card file selected dragging"><div class="thumb pdf">PDF</div><div class="fname">contractor-quote.pdf</div><div class="ftags"><span class="chip">Receipts</span></div></div>
+          <div class="card file selected dragging"><div class="thumb">TXT</div><div class="fname">measurements.txt</div><div class="ftags"><span class="chip">Plans</span></div></div>
+          <div class="card file"><div class="thumb img2">JPG</div><div class="fname">inspiration-board.jpg</div><div class="ftags"><span class="chip">Inspiration</span></div></div>
+        </div>
+      </div>
+      <div class="drag-ghost" style="left:80px;top:150px">📄 contractor-quote.pdf <span class="count">2</span></div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">7. Drag up to a parent folder</div>
+    <div class="scene-note">The path row is a set of drop targets too: drop onto any part of it to move up. This is how you take something out of a folder.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span><span class="icon-btn hide-phone">⚙</span></header>
+      <div class="content stack">
+        <div class="crumbs"><span class="crumb drop">Kitchen Remodel</span><span class="crumb-sep">›</span><span class="crumb">Invoices</span><span class="crumb-sep">›</span><span class="crumb here">2026</span></div>
+        <div class="section-label">Files</div>
+        <div class="file-grid">
+          <div class="card file selected dragging"><div class="thumb pdf">PDF</div><div class="fname">quote-electrician.pdf</div><div class="ftags"><span class="chip">Receipts</span></div></div>
+          <div class="card file"><div class="thumb pdf">PDF</div><div class="fname">invoice-oct.pdf</div><div class="ftags"><span class="chip">Receipts</span></div></div>
+        </div>
+      </div>
+      <div class="drag-ghost" style="left:60px;top:60px">📄 quote-electrician.pdf</div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">8. Confirm a move</div>
+    <div class="scene-note">Dropping, or choosing "Move to…", always asks first. Nothing about the files themselves changes: they stay encrypted exactly as they are, only the label of where they sit changes. If a name already exists in the target, the moved item is renamed "name (2)".</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Move 2 files to “Invoices”?</h2>
+          <div class="summary-box">
+            <div class="list-row"><span>📄</span><span style="flex:1">contractor-quote.pdf</span><span class="muted small">310 KB</span></div>
+            <div class="list-row"><span>📝</span><span style="flex:1">measurements.txt</span><span class="muted small">4 KB</span></div>
+          </div>
+          <p class="small muted">From Kitchen Remodel to Kitchen Remodel › Invoices. Tags stay as they are.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Move 2 files</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">9. New folder, and rename</div>
+    <div class="scene-note">"New folder" creates it inside the folder you're in, and it appears straight away among the folders. Rename uses the same dialog. There's no length limit on names. A name can't be empty, can't be "." or "..", and can't contain a slash or control characters. A clashing name is refused with a message (second state).</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>New folder</h2>
+          <p class="small muted">It will be created in Kitchen Remodel › Invoices.</p>
+          <div><span class="label">Folder name</span><input class="input" value="Permits" readonly></div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Create folder</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">9b. New folder: name already used</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>New folder</h2>
+          <p class="small muted">It will be created in Kitchen Remodel › Invoices.</p>
+          <div><span class="label">Folder name</span><input class="input bad" value="2026" readonly><div class="field-error">A folder named “2026” already exists here. Pick another name.</div></div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary" disabled>Create folder</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">10. Folder menu (right-click / long-press)</div>
+    <div class="scene-note">Open, rename, move, export and delete. "Export a readable copy…" exports the folder (and everything in it) as ZIP or TAR through the existing export dialog. Delete is the red item and always asks first (scene 12).</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="content stack">
+        <div class="crumbs"><span class="crumb here">Kitchen Remodel</span></div>
+        <div class="folder-grid">
+          <div class="card folder-card" style="border-color:var(--accent)"><span class="ficon">📁</span><div class="fmeta"><div class="fname">Invoices</div><div class="fsub">4 files · 6.2 MB</div></div></div>
+          <div class="card folder-card"><span class="ficon">📁</span><div class="fmeta"><div class="fname">Plans</div><div class="fsub">3 files · 14 MB</div></div></div>
+        </div>
+      </div>
+      <div class="overlay light" style="display:block">
+        <div class="menu" style="left:60px;top:200px">
+          <div class="menu-title">Invoices · folder</div>
+          <button class="menu-item">📂 Open</button>
+          <button class="menu-item">✎ Rename…</button>
+          <button class="menu-item">➜ Move to…</button>
+          <button class="menu-item">⇪ Export a readable copy…</button>
+          <div class="menu-sep"></div>
+          <button class="menu-item danger">🗑 Delete folder… <span class="hint">and what's inside</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">11. Move to… (without dragging)</div>
+    <div class="scene-note">A picker showing every folder in the project, for moving files or folders when dragging isn't convenient, and on a phone. The folder being moved, and everything inside it, is greyed out, so a folder can never end up inside itself.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Move “Invoices” to…</h2>
+          <div class="tree">
+            <div class="node">🏠 Kitchen Remodel (top level)</div>
+            <div class="node d1 off">📁 Invoices <span class="muted small">(this folder)</span></div>
+            <div class="node d2 off">📁 2026</div>
+            <div class="node d1 on">📁 Plans</div>
+            <div class="node d1">📁 Site photos</div>
+            <div class="node d2">📁 Before</div>
+            <div class="node d2">📁 After</div>
+          </div>
+          <p class="small muted">A folder can't be moved into itself or into a folder inside it.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Move here</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">12. Delete a folder: confirmation</div>
+    <div class="scene-note">Counts everything inside, subfolders included. The encrypted copies are permanently deleted; the originals on your device are not touched (use "Move to Trash" on individual files for that). The button repeats the number.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Delete the folder “Invoices”?</h2></div>
+          <div class="summary-box">
+            <div class="list-row"><span>📄</span><span style="flex:1">Files inside</span><strong>4</strong></div>
+            <div class="list-row"><span>📁</span><span style="flex:1">Folders inside</span><strong>1</strong></div>
+            <div class="list-row"><span>💾</span><span style="flex:1">Total size</span><strong>6.2 MB</strong></div>
+          </div>
+          <p>The folder and the <strong>4 encrypted files</strong> inside it, with their tags, are permanently deleted from Kitchen Remodel.</p>
+          <p class="small muted">The originals on your device are not touched. This can't be undone.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Delete folder and 4 files</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">13. Empty folder</div>
+    <div class="scene-note">A new or emptied folder shows a hint. Deleting an empty folder still asks, but the dialog says "This folder is empty", and the button reads "Delete folder".</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="content stack">
+        <div class="row"><button class="btn btn-primary">＋ Add files here</button><button class="btn">🏷 Manage tags</button></div>
+        <div class="toolbar">
+          <div class="tb-search"><span class="mag">🔍</span><input class="input" placeholder="Search this whole project" readonly></div>
+          <button class="btn">⇅ <span class="btn-label">Name ▲</span></button>
+          <span class="seg-app"><span class="icon on">▦</span><span class="icon">☰</span></span>
+          <button class="btn">📁 <span class="btn-label">New folder</span></button>
+        </div>
+        <div class="crumbs"><span class="crumb">Kitchen Remodel</span><span class="crumb-sep">›</span><span class="crumb here">Permits</span></div>
+        <div class="empty-state"><div style="font-size:40px">📂</div><strong>This folder is empty</strong><span class="small">Add files here, or drag files in from another folder.</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="mockup.js"></script>
+</body>
+</html>

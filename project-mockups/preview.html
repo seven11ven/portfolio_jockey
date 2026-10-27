@@ -20,11 +20,11 @@
 
   <section class="scene">
     <div class="scene-title">1. Preview (image)</div>
-    <div class="scene-note">Images, PDF, text and Markdown render directly. Audio and video play in the app with player controls (media_kit + libmpv, local files only, decided in phase 6).</div>
+    <div class="scene-note">Raster images open in memory and fit the available space. SVG files render as vectors on a transparent checkerboard; scripts and external references are not loaded. Image bytes and decoded images are cleared when the preview closes.</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">countertop-after.jpg</h3><span class="icon-btn" title="Previous">‹</span><span class="icon-btn" title="Next">›</span><span class="icon-btn">⋯</span></header>
       <div class="preview-wrap">
-        <div class="preview-stage" style="background:linear-gradient(135deg,#bae6fd,#818cf8);color:#1b1f24">countertop-after.jpg</div>
+        <div class="preview-stage image-canvas"><div class="mock-landscape" role="img" aria-label="Sample landscape photo"></div></div>
         <div class="card preview-side">
           <div><span class="label">Tags</span><div class="chips"><span class="chip">Photos</span><span class="chip">Inspiration</span></div></div>
           <div><span class="label">Size</span>3.8 MB · 4032 × 3024</div>
@@ -37,23 +37,69 @@
   </section>
 
   <section class="scene">
-    <div class="scene-title">2. Preview (video): plays in the desktop's player</div>
-    <div class="scene-note">Nothing readable exists until Play. Play puts a copy in the memory folder the desktop can reach and opens it in the default player; closing the preview deletes it. Audio is the same, with a note icon and "audio player".</div>
+    <div class="scene-title">2. Preview (video): built-in player, paused</div>
+    <div class="scene-note">Exploratory concept, dependent on a media-engine security and Linux compatibility review. The video starts only when Play is pressed. A readable copy lives only in the private memory folder and is wiped when the preview closes or the vault locks.</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">walkthrough.mp4</h3><span class="icon-btn">‹</span><span class="icon-btn">›</span><span class="icon-btn">⋯</span></header>
       <div class="preview-wrap">
-        <div class="preview-stage" style="flex-direction:column;gap:12px;padding:24px;text-align:center">
-          <span style="font-size:48px;color:var(--primary,#4f46e5)">▶</span>
-          <h3 style="margin:0">Plays in your desktop's video player.</h3>
-          <div class="notice" style="max-width:420px">While it plays, other apps can read the readable copy. Closing this preview deletes it and stops playback.</div>
-          <button class="btn btn-primary">▶ Play</button>
-          <div class="small muted">After Play: "Playing in your desktop's video player." and the button becomes "Play again".</div>
+        <div class="preview-stage" style="padding:16px;background:#0d1214">
+          <div class="player-wrap">
+            <div class="player-picture"><span class="play-overlay">▶</span></div>
+            <div class="player-controls"><div class="player-track"><span style="width:0"></span></div><div class="player-actions"><button class="btn btn-primary">▶ Play</button><span>0:00 / 2:18</span><span class="spacer"></span><span>🔊</span><span>⛶</span></div></div>
+          </div>
         </div>
         <div class="card preview-side">
           <div><span class="label">Tags</span><div class="chips"><span class="chip">Photos</span></div></div>
           <div><span class="label">Size</span>48 MB</div>
           <div><span class="label">Added</span>Oct 20, 2026</div>
+          <div class="notice">The readable copy stays in memory only. Closing this preview wipes it.</div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">2b. Preview (video): playing</div>
+    <div class="scene-note">The controls stay inside Portfolio Jockey. The user can pause, seek, change volume, or go full screen without opening a separate desktop app.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">walkthrough.mp4</h3><span class="icon-btn">‹</span><span class="icon-btn">›</span><span class="icon-btn">⋯</span></header>
+      <div class="preview-wrap">
+        <div class="preview-stage" style="padding:16px;background:#0d1214">
+          <div class="player-wrap">
+            <div class="player-picture"></div>
+            <div class="player-controls"><div class="player-track"><span></span></div><div class="player-actions"><button class="btn">Ⅱ Pause</button><span>0:51 / 2:18</span><span class="spacer"></span><span>🔊</span><span>⛶ Full screen</span></div></div>
+          </div>
+        </div>
+        <div class="card preview-side"><div><span class="label">Playback</span>Playing in Portfolio Jockey</div><div class="notice">A temporary readable copy is held in the private memory folder and wiped when playback ends or the vault locks.</div><button class="btn">Stop playback</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">2c. Preview (audio)</div>
+    <div class="scene-note">Audio uses the same in-app controls and memory-only handling, with a waveform in place of the video frame.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">plumber-voicemail.m4a</h3><span class="icon-btn">‹</span><span class="icon-btn">›</span><span class="icon-btn">⋯</span></header>
+      <div class="preview-wrap">
+        <div class="preview-stage" style="padding:16px;background:#0d1214">
+          <div class="player-wrap">
+            <div class="player-audio"><div class="wave"></div></div>
+            <div class="player-controls"><div class="player-track"><span style="width:42%"></span></div><div class="player-actions"><button class="btn">Ⅱ Pause</button><span>1:16 / 3:05</span><span class="spacer"></span><span>🔊</span></div></div>
+          </div>
+        </div>
+        <div class="card preview-side"><div><span class="label">Tags</span>Untagged</div><div><span class="label">Size</span>1.1 MB</div><div class="notice">A temporary readable copy is held in the private memory folder and wiped when playback ends or the vault locks.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">2d. Preview (SVG)</div>
+    <div class="scene-note">SVG is vector content, not a raster thumbnail. It scales cleanly. The viewer doesn't load scripts, external images, or linked resources; unsupported SVG features show a clear error instead of fetching anything.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">brand-mark.svg</h3><span class="icon-btn">‹</span><span class="icon-btn">›</span><span class="icon-btn">⋯</span></header>
+      <div class="preview-wrap">
+        <div class="preview-stage svg-preview-canvas"><div class="svg-art" role="img" aria-label="Sample vector mark"></div></div>
+        <div class="card preview-side"><div><span class="label">Type</span>SVG image · vector</div><div><span class="label">Size</span>24 KB</div><div><span class="label">Added</span>Oct 22, 2026</div><button class="btn">✎ Edit in another app…</button></div>
       </div>
     </div>
   </section>

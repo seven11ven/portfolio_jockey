@@ -5,12 +5,24 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:portfolio_jockey/services/project_service.dart';
+import 'package:portfolio_jockey/ui/common.dart';
 import 'package:portfolio_jockey/vault/project_index.dart';
 
 import '../vault/test_helpers.dart';
 import 'ui_helpers.dart';
 
 void main() {
+  testWidgets('raster and SVG type labels are centered in the image cover', (tester) async {
+    for (final (name, label) in [('photo.jpg', 'JPG'), ('drawing.svg', 'SVG')]) {
+      await tester.pumpWidget(MaterialApp(home: Scaffold(body: Center(child: SizedBox(width: 120, height: 90, child: TypeBadge(fileName: name))))));
+      final cover = tester.getRect(find.byKey(const Key('image-type-badge-cover')));
+      final text = tester.getRect(find.text(label));
+      expect(text.center.dx, closeTo(cover.center.dx, 0.1));
+      expect(text.center.dy, closeTo(cover.center.dy, 0.1));
+      expect(find.byIcon(Icons.image_outlined), findsNothing);
+    }
+  });
+
   /// Starts unlocked with a project, "Kitchen Remodel", set up by [setup],
   /// and opens it. Its name then shows up three times: on the home screen
   /// underneath, in the path (see [crumb]), and as the app bar's title.

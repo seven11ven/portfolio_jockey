@@ -72,9 +72,9 @@ Open each type by **clicking it once** (right-click or a long press opens the fi
 
 ## F. Moving originals to the Trash (test items 2, 4, 6)
 - [x] **F1.** On a file you added, open the menu and choose **Move to Trash**. The dialog shows the **real** location (not a portal path). Cancel changes nothing.
-- [x] **F2.** Confirm. The app says the original was moved to the Trash, and the project copy stays.
+- [ ] **F2.** Confirm. The app says the original was moved to the Trash, and the project copy stays. **Latest result (2026-10-27): failed;** the Trash portal rejected the document-portal path. Nothing was changed; the original and project copy remain.
 - [x] **F3.** Open your desktop's Trash. The file is there and can be **restored** to where it was.
-- [x] **F4.** If F2 fails, write down the exact error. A likely one is that the portal gave the app read-only access to the file.
+- [x] **F4.** If F2 fails, record the error without the username or private filename (this is a public repo). A likely cause is that the portal gave the app read-only access to the file. The latest error is recorded in the 2026-10-27 changelog.
 - [x] **F5. Original missing** (test item 4). Add another test file, then delete that original yourself in your file manager. Back in the app, **Move to Trash** is greyed out, with a note saying the original is no longer there.
 
 ## G. Export, import and readable copies (test items 11 and 12)
@@ -132,7 +132,11 @@ Use throwaway files. In a Flatpak, files you add and archives you export go thro
 | D1–D3 | Pass | PM, 2026-10-23 |
 | D4–D7 | Pass | PM, 2026-10-27 |
 | E1–E8 | Pass | PM, 2026-10-23 |
-| F1–F5 | Pass | PM, 2026-10-23 |
+| F1 | Pass | PM, 2026-10-23 |
+| F2 | Fail | PM, 2026-10-27; see `flatpak-trash-portal-failure.md` |
+| F3 | Pass | PM, 2026-10-23 |
+| F4 | Recorded | PM, 2026-10-27 |
+| F5 | Pass | PM, 2026-10-23 |
 | G1–G7 | Pass | PM, 2026-10-23 |
 | H1–H8 | Pass | PM, 2026-10-23 |
 | J1–J5 | Pass | PM, 2026-10-23 |

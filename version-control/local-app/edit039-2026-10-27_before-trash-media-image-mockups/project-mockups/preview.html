@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview and editing · Portfolio Jockey mockup</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="mock-bar">
+  <span>Design mockup · fake data</span><a href="index.html">All mockups</a>
+  <span class="seg"><button data-set-theme="light">Light</button><button data-set-theme="dark">Dark</button></span>
+  <span class="seg"><button data-set-view="both">Both</button><button data-set-view="desktop">Desktop</button><button data-set-view="phone">Phone</button></span>
+</div>
+<main class="mock-page">
+  <header>
+    <h1>Preview and "Edit in another app"</h1>
+    <p class="muted">Previews are decrypted in memory. Editing makes a private, temporary readable copy, which is re-encrypted and wiped when you're done.</p>
+  </header>
+
+  <section class="scene">
+    <div class="scene-title">1. Preview (image)</div>
+    <div class="scene-note">Images, PDF, text and Markdown render directly. Audio and video play in the app with player controls (media_kit + libmpv, local files only, decided in phase 6).</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">countertop-after.jpg</h3><span class="icon-btn" title="Previous">‹</span><span class="icon-btn" title="Next">›</span><span class="icon-btn">⋯</span></header>
+      <div class="preview-wrap">
+        <div class="preview-stage" style="background:linear-gradient(135deg,#bae6fd,#818cf8);color:#1b1f24">countertop-after.jpg</div>
+        <div class="card preview-side">
+          <div><span class="label">Tags</span><div class="chips"><span class="chip">Photos</span><span class="chip">Inspiration</span></div></div>
+          <div><span class="label">Size</span>3.8 MB · 4032 × 3024</div>
+          <div><span class="label">Added</span>Oct 21, 2026</div>
+          <div><span class="label">Original</span><span class="small muted">~/Pictures/countertop-after.jpg</span></div>
+          <button class="btn">✎ Edit in another app…</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">2. Preview (video): plays in the desktop's player</div>
+    <div class="scene-note">Nothing readable exists until Play. Play puts a copy in the memory folder the desktop can reach and opens it in the default player; closing the preview deletes it. Audio is the same, with a note icon and "audio player".</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">walkthrough.mp4</h3><span class="icon-btn">‹</span><span class="icon-btn">›</span><span class="icon-btn">⋯</span></header>
+      <div class="preview-wrap">
+        <div class="preview-stage" style="flex-direction:column;gap:12px;padding:24px;text-align:center">
+          <span style="font-size:48px;color:var(--primary,#4f46e5)">▶</span>
+          <h3 style="margin:0">Plays in your desktop's video player.</h3>
+          <div class="notice" style="max-width:420px">While it plays, other apps can read the readable copy. Closing this preview deletes it and stops playback.</div>
+          <button class="btn btn-primary">▶ Play</button>
+          <div class="small muted">After Play: "Playing in your desktop's video player." and the button becomes "Play again".</div>
+        </div>
+        <div class="card preview-side">
+          <div><span class="label">Tags</span><div class="chips"><span class="chip">Photos</span></div></div>
+          <div><span class="label">Size</span>48 MB</div>
+          <div><span class="label">Added</span>Oct 20, 2026</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">3. Edit in another app: confirmation</div>
+    <div class="scene-note">The app picker lists editors installed on the device. The warning is always shown, because a readable copy exists while editing.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">measurements.txt</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Edit measurements.txt in another app?</h2>
+          <div><span class="label">Open with</span>
+            <div class="stack" style="gap:8px">
+              <label class="radio-card on"><input type="radio" checked><span><strong>Text Editor</strong><br><span class="small muted">Default for .txt</span></span></label>
+              <label class="radio-card"><input type="radio"><span><strong>LibreOffice Writer</strong></span></label>
+            </div>
+          </div>
+          <div class="notice">While you edit, a readable copy of this file exists in a private temporary folder. It's wiped when you save or discard your changes.</div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Decrypt and open</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">4. While editing</div>
+    <div class="scene-note">The banner stays on every screen until the edit is saved or discarded. Only one file can be edited at a time. New: a second line says what to do if the other app couldn't open or save the file.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="edit-banner">
+        <span>✎ Editing <strong>measurements.txt</strong> in Text Editor. Changed 2 min ago.<br><span class="small muted">If the other app couldn't open or save the file, choose Discard. The project still has its own copy.</span></span>
+        <span class="spacer"></span>
+        <button class="btn">Discard</button><button class="btn btn-primary">Save changes</button>
+      </div>
+      <div class="content">
+        <div class="file-grid">
+          <div class="card file"><div class="thumb img">JPG</div><div class="fname">countertop-before.jpg</div></div>
+          <div class="card file selected"><div class="thumb">TXT</div><div class="fname">measurements.txt</div><div class="ftags"><span class="chip">Plans</span></div></div>
+          <div class="card file"><div class="thumb pdf">PDF</div><div class="fname">contractor-quote.pdf</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5. Save changes: confirmation</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Save your changes to measurements.txt?</h2>
+          <div class="summary-box">
+            <div class="list-row"><span style="flex:1">Current version</span><span class="muted small">2.1 KB · Oct 19</span></div>
+            <div class="list-row"><span style="flex:1">Edited version</span><span class="muted small">2.4 KB · just now</span></div>
+          </div>
+          <p class="small muted">The edited version is encrypted and replaces the current one. The temporary readable copy is then wiped.</p>
+          <p class="small muted">Close the file in the other app first. Changes it makes later won't be saved.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Encrypt and replace</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5b. Save changes: no changes found</div>
+    <div class="scene-note">The copy is the same as the project's version, for example because the other app saved somewhere else ("Save As") or couldn't save at all.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>No changes to measurements.txt</h2>
+          <p>The edited copy is the same as the current version. Finishing the edit wipes the temporary readable copy.</p>
+          <p class="small muted">If you did save in the other app, it may have saved to a different place, or it wasn't allowed to save this file. Save it there again with its normal Save, not "Save As".</p>
+          <div class="dialog-actions"><button class="btn">Keep editing</button><button class="btn btn-primary">Finish editing</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5c. Save changes: the other app is still saving</div>
+    <div class="scene-note">Before encrypting, the app checks for 1 second that the copy has stopped changing. Nothing is written while it's still changing.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Save your changes to measurements.txt?</h2>
+          <div class="notice">The other app is still saving this file. Wait until it's done, then try again. Nothing has been changed.</div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Try again</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">5d. Save changes: the edited copy is empty</div>
+    <div class="scene-note">Shown when the copy is 0 bytes but the project's version isn't, which usually means the other app failed partway. The current version is kept unless you confirm.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Save your changes to measurements.txt?</h2>
+          <div class="summary-box">
+            <div class="list-row"><span style="flex:1">Current version</span><span class="muted small">2.1 KB · Oct 19</span></div>
+            <div class="list-row"><span style="flex:1"><strong>Edited version</strong></span><span class="muted small">0 bytes · just now</span></div>
+          </div>
+          <div class="notice">The edited copy is empty. If you didn't mean to clear the file, cancel and check it in the other app.</div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Save the empty file</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">6. Preview (PDF)</div>
+    <div class="scene-note">Pages are rendered in memory with Poppler. Nothing readable is written to disk, and links in the PDF are never opened automatically.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">contractor-quote.pdf</h3><span class="icon-btn">‹</span><span class="icon-btn">›</span><span class="icon-btn">⋯</span></header>
+      <div class="preview-wrap">
+        <div class="preview-stage" style="background:#e5e7eb;color:#1b1f24;flex-direction:column;gap:10px">
+          <div style="background:#fff;width:60%;aspect-ratio:1/1.3;box-shadow:0 2px 8px rgba(0,0,0,.15);padding:18px;font-size:11px;text-align:left">ACME Renovations<br><br>Quote #2041<br>Countertops ........ $3,200<br>Labour ............. $1,450</div>
+          <div class="row" style="justify-content:center;gap:8px;font-size:12px"><button class="btn">‹ Prev</button><span>Page 1 of 3</span><button class="btn">Next ›</button><button class="btn">−</button><span>100%</span><button class="btn">＋</button></div>
+        </div>
+        <div class="card preview-side">
+          <div><span class="label">Tags</span><div class="chips"><span class="chip">Receipts</span><span class="chip">Plans</span></div></div>
+          <div><span class="label">Size</span>310 KB · 3 pages</div>
+          <div><span class="label">Added</span>Oct 19, 2026</div>
+          <button class="btn">✎ Edit in another app…</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">7. Preview (Markdown)</div>
+    <div class="scene-note">Formatted text. Images in a Markdown file are never fetched from the internet or read from disk; a placeholder shows instead.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">notes.md</h3><span class="icon-btn">‹</span><span class="icon-btn">›</span><span class="icon-btn">⋯</span></header>
+      <div class="preview-wrap">
+        <div class="preview-stage" style="background:var(--surface);color:var(--text);align-items:flex-start;justify-content:flex-start;text-align:left;padding:20px;flex-direction:column;gap:8px">
+          <h2 style="margin:0">Kitchen plan</h2>
+          <p style="margin:0">Order <strong>quartz</strong> by Nov 3. Measurements are in <em>measurements.txt</em>.</p>
+          <div class="summary-box small">🖼 Image not loaded: images in Markdown files are never fetched.</div>
+          <ul style="margin:0"><li>Tiles: 12 boxes</li><li>Grout: grey</li></ul>
+        </div>
+        <div class="card preview-side">
+          <div><span class="label">Size</span>2.4 KB</div>
+          <div><span class="label">Added</span>Oct 20, 2026</div>
+          <button class="btn">✎ Edit in another app…</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">8. Edit in another app inside a Flatpak</div>
+    <div class="scene-note">A sandboxed app can't list your installed apps, so your desktop's own app chooser appears after this confirmation. Outside a Flatpak, scene 3's list is shown. Inside the Flatpak, the copy has to go in the memory folder Flatpak shares with your desktop, or the other app can't open it (found in testing, 2026-10-23), so the notice says so every time.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <h2>Edit measurements.txt in another app?</h2>
+        <p class="small muted">Your desktop will ask which app to open it with.</p>
+        <div class="notice">While you edit, a readable copy of this file is kept in memory where other apps on this device can read it. Your desktop needs that to let the other app open it. The copy is never written to disk, and it's wiped when you save or discard your changes. The other app may keep its own history of the file.</div>
+        <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Decrypt and open</button></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">9. Discard changes: confirmation</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Discard your changes to measurements.txt?</h2></div>
+        <p>The edited copy is wiped. The version in <strong>Kitchen Remodel</strong> stays as it was.</p>
+        <p class="small muted">Close the file in the other app first. Changes it makes later won't be saved.</p>
+        <div class="dialog-actions"><button class="btn">Keep editing</button><button class="btn btn-danger">Discard changes</button></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">10. Lock while editing</div>
+    <div class="scene-note">Locking must not leave a readable copy behind, so the edit is finished first.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <h2>Finish editing before locking</h2>
+        <p>measurements.txt is still open in Text Editor. Save or discard your changes, then lock.</p>
+        <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn">Discard…</button><button class="btn btn-primary">Save changes…</button></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">11. Unfinished edit found at unlock</div>
+    <div class="scene-note">After a crash or power cut, the next unlock finds the leftover copy and asks what to do with it.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="brand"><span class="brand-mark">PJ</span><span class="hide-phone">Portfolio Jockey</span></span><div class="search">Search projects…</div><span class="icon-btn">⚙</span></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <h2>An edit wasn't finished</h2>
+        <div class="summary-box"><div class="list-row"><span style="flex:1">measurements.txt in Kitchen Remodel</span><span class="muted small">edited Oct 22, 14:05</span></div></div>
+        <p class="small muted">Save it into the project, or discard it. Either way the readable copy is then wiped.</p>
+        <div class="dialog-actions"><button class="btn btn-danger">Discard</button><button class="btn btn-primary">Save into project…</button></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">12. No private memory-only folder</div>
+    <div class="scene-note">The app refuses rather than write a readable copy to disk.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay"><div class="card dialog">
+        <div class="sheet-handle"></div>
+        <h2>Can't open measurements.txt</h2>
+        <div class="notice notice-danger">There's no private memory-only folder on this system (XDG_RUNTIME_DIR isn't set or isn't in memory), so a readable copy can't be made safely.</div>
+        <p class="small muted">This usually means the app was started outside a normal desktop login.</p>
+        <div class="dialog-actions"><button class="btn btn-primary">OK</button></div>
+      </div></div>
+    </div>
+  </section>
+</main>
+<script src="mockup.js"></script>
+</body>
+</html>

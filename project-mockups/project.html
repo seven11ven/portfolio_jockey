@@ -41,8 +41,8 @@
           <span class="chip chip-on">All 24</span><span class="chip">Photos 14</span><span class="chip">Receipts 6</span><span class="chip">Plans 3</span><span class="chip">Inspiration 5</span><span class="chip">Untagged 2</span>
         </div>
         <div class="file-grid">
-          <div class="card file"><div class="thumb img">JPG</div><div class="fname">countertop-before.jpg</div><div class="ftags"><span class="chip">Photos</span></div></div>
-          <div class="card file"><div class="thumb img2">JPG</div><div class="fname">countertop-after.jpg</div><div class="ftags"><span class="chip">Photos</span><span class="chip">Inspiration</span></div></div>
+          <div class="card file"><div class="thumb image-type"><span class="generic-image-label">JPG</span></div><div class="fname">countertop-before.jpg</div><div class="ftags"><span class="chip">Photos</span></div></div>
+          <div class="card file"><div class="thumb image-type"><span class="generic-image-label">JPG</span></div><div class="fname">countertop-after.jpg</div><div class="ftags"><span class="chip">Photos</span><span class="chip">Inspiration</span></div></div>
           <div class="card file"><div class="thumb pdf">PDF</div><div class="fname">contractor-quote.pdf</div><div class="ftags"><span class="chip">Receipts</span><span class="chip">Plans</span></div></div>
           <div class="card file"><div class="thumb vid">▶ 2:18</div><div class="fname">walkthrough.mp4</div><div class="ftags"><span class="chip">Photos</span></div></div>
           <div class="card file"><div class="thumb aud">♪ 3:05</div><div class="fname">plumber-voicemail.m4a</div><div class="ftags"></div></div>
@@ -81,7 +81,7 @@
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
       <div class="content">
         <div class="file-grid">
-          <div class="card file"><div class="thumb img">JPG</div><div class="fname">countertop-before.jpg</div><div class="ftags"><span class="chip">Photos</span></div></div>
+          <div class="card file"><div class="thumb image-type"><span class="generic-image-label">JPG</span></div><div class="fname">countertop-before.jpg</div><div class="ftags"><span class="chip">Photos</span></div></div>
           <div class="card file selected"><div class="thumb pdf">PDF</div><div class="fname">contractor-quote.pdf</div><div class="ftags"><span class="chip">Receipts</span><span class="chip">Plans</span></div></div>
           <div class="card file"><div class="thumb vid">▶ 2:18</div><div class="fname">walkthrough.mp4</div><div class="ftags"><span class="chip">Photos</span></div></div>
         </div>
@@ -104,8 +104,8 @@
   </section>
 
   <section class="scene">
-    <div class="scene-title">4a. Move to Trash (the original)</div>
-    <div class="scene-note">The original goes to the system Trash (through the Trash portal inside a Flatpak), so it can be restored. The encrypted copy in the project is kept. Afterwards a notice says “contractor-quote.pdf: original moved to Trash”.</div>
+    <div class="scene-title">4a. Move to Trash: confirm and reselect the original</div>
+    <div class="scene-note">The confirmation comes first. Pressing Continue opens the desktop's native file chooser to ask for fresh write access. In the next step the app verifies the selected item is the same original recorded when it was added. Nothing moves until the final confirmation. The encrypted project copy stays.</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
       <div class="overlay">
@@ -113,8 +113,42 @@
           <div class="sheet-handle"></div>
           <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Move the original to the Trash?</h2></div>
           <div class="summary-box"><div class="small muted">Original location</div><div class="path" style="padding:0;background:none">~/Downloads/contractor-quote.pdf</div></div>
-          <p>The original is moved to your Trash. You can restore it from there until the Trash is emptied. The encrypted copy in <strong>Kitchen Remodel</strong> stays.</p>
+          <p>The desktop may need you to select the original again to grant Trash access. The app checks that it matches <strong>~/Downloads/contractor-quote.pdf</strong> before moving it. The encrypted copy in <strong>Kitchen Remodel</strong> stays.</p>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Continue to choose original</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">4a2. Confirm the selected original</div>
+    <div class="scene-note">After the desktop chooser returns a file, its resolved original location is compared with the encrypted record. Only a match enables the final Trash action. The chooser itself belongs to the desktop, not Portfolio Jockey.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <div class="row" style="flex-wrap:nowrap"><span class="danger-icon">🗑</span><h2>Move this original to the Trash?</h2></div>
+          <div class="trash-match">✓ The selected file matches the original added to this project.</div>
+          <div class="summary-box"><div class="small muted">Selected original</div><div class="path" style="padding:0;background:none">~/Downloads/contractor-quote.pdf</div></div>
+          <p>The original goes to your Trash and can be restored until the Trash is emptied. The encrypted copy in <strong>Kitchen Remodel</strong> stays.</p>
           <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-danger">Move to Trash</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene">
+    <div class="scene-title">4a3. The selected file doesn't match</div>
+    <div class="scene-note">A different file, or a file whose identity can't be checked, is never trashed. The original and encrypted copy remain untouched.</div>
+    <div class="screen" hidden>
+      <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
+      <div class="overlay">
+        <div class="card dialog">
+          <div class="sheet-handle"></div>
+          <h2>Can't verify this original</h2>
+          <div class="trash-mismatch">The selected file doesn't match the original recorded for contractor-quote.pdf. Nothing was changed.</div>
+          <div class="dialog-actions"><button class="btn">Cancel</button><button class="btn btn-primary">Choose again</button></div>
         </div>
       </div>
     </div>
@@ -138,6 +172,7 @@
 
   <section class="scene">
     <div class="scene-title">4c. Trash the original, delete the copy</div>
+    <div class="scene-note">This combined action uses the same reselect-and-verify step before either copy is changed. If the selected original can't be verified or moved to Trash, the encrypted project copy is kept too.</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
       <div class="overlay">
@@ -163,7 +198,7 @@
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
       <div class="content">
         <div class="file-grid">
-          <div class="card file selected"><div class="thumb img">JPG</div><div class="fname">countertop-before.jpg</div><div class="ftags"><span class="chip">Photos</span></div></div>
+          <div class="card file selected"><div class="thumb image-type"><span class="generic-image-label">JPG</span></div><div class="fname">countertop-before.jpg</div><div class="ftags"><span class="chip">Photos</span></div></div>
         </div>
       </div>
       <div class="overlay light" style="display:block">

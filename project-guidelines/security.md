@@ -12,6 +12,7 @@
 * AI Agents and users should ALWAYS verify the security structure and effeciency of the code they put into this repo and project. This includes but is not limited to:
     - Packages and Dependencies, AI Agents and users should always check for any security vulnerabilities or possible areas of exploitation
     - Webhooks and API Keys, only the necessary permissions should ever be granted through these to minimize attack surfaces
+    - Always research to see what ongoing issues may plaque the Package/Resource/Dependency
 * Code written, borrowed, or reused, should always be up to OWASP and OSINT security standards
 
 ## Always update the ".gitignore" to house the critical components of this project
