@@ -374,7 +374,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
     try {
       await AppScope.read(context).edits.launcher.showFileInFolder(path);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Move the original to Trash in the file manager, then delete the encrypted copy here.')));
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(tapDismissibleSnackBar(messenger, const Text('Move the original to Trash in the file manager, then delete the encrypted copy here.')));
       }
     } on FileSystemException catch (e) {
       if (mounted) {
@@ -400,7 +401,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
     Future<void> delete(DeleteTarget target) async {
       final done = await _show(DeleteFileDialog(projectId: widget.projectId, projectName: index.name, file: file, target: target));
       if (done && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(deletedMessage(target, file.name))));
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(tapDismissibleSnackBar(messenger, Text(deletedMessage(target, file.name))));
         if (fromPreview && target != DeleteTarget.device) {
           Navigator.of(context).pop();
         }

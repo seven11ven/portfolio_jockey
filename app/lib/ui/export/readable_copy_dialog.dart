@@ -80,7 +80,7 @@ class _ReadableCopyDialogState extends WriteDialogState<ReadableCopyDialog> {
     final messenger = ScaffoldMessenger.of(context);
     final target = File(_target!);
     await controller.exports.exportReadableCopy(widget.projectId, widget.file, target);
-    messenger.showSnackBar(SnackBar(content: Text('Saved a readable copy to ${target.path}')));
+    messenger.showSnackBar(tapDismissibleSnackBar(messenger, Text('Saved a readable copy to ${target.path}')));
   }
 
   @override

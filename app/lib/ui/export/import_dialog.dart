@@ -103,12 +103,12 @@ class _ImportDialogState extends State<ImportDialog> {
           }
         },
       );
-      messenger.showSnackBar(SnackBar(content: Text('Imported ${plural(ids.length, 'project')}')));
+      messenger.showSnackBar(tapDismissibleSnackBar(messenger, Text('Imported ${plural(ids.length, 'project')}')));
       if (mounted) {
         Navigator.of(context).pop(true);
       }
     } on Cancelled {
-      messenger.showSnackBar(const SnackBar(content: Text('Import cancelled. Nothing was added.')));
+      messenger.showSnackBar(tapDismissibleSnackBar(messenger, const Text('Import cancelled. Nothing was added.')));
       if (mounted) {
         Navigator.of(context).pop(false);
       }

@@ -277,8 +277,9 @@ class _MoveStorageDialogState extends WriteDialogState<MoveStorageDialog> {
         },
       );
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(
+        tapDismissibleSnackBar(
+          messenger,
+          Text(
             removed
                 ? 'Moved to ${widget.move.target.path}'
                 : 'Moved to ${widget.move.target.path}. The old folder ($oldPath) couldn\'t be removed; you can delete it yourself.',
@@ -379,7 +380,7 @@ class _ChangePassphraseDialogState extends WriteDialogState<ChangePassphraseDial
       for (final c in [_current, _new, _confirm]) {
         c.clear();
       }
-      messenger.showSnackBar(const SnackBar(content: Text('Passphrase changed')));
+      messenger.showSnackBar(tapDismissibleSnackBar(messenger, const Text('Passphrase changed')));
       if (mounted) {
         Navigator.of(context).pop(true);
       }
@@ -459,7 +460,8 @@ Future<void> _clearTemporaryFiles(BuildContext context) async {
   try {
     await controller.edits.clearTemporaryFiles();
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Temporary files cleared.')));
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(tapDismissibleSnackBar(messenger, const Text('Temporary files cleared.')));
     }
   } on Exception catch (e) {
     if (context.mounted) {

@@ -163,12 +163,12 @@ class _ExportDialogState extends State<ExportDialog> {
       }
       _passphrase.clear();
       _confirm.clear();
-      messenger.showSnackBar(SnackBar(content: Text('Exported to ${target.path}')));
+      messenger.showSnackBar(tapDismissibleSnackBar(messenger, Text('Exported to ${target.path}')));
       if (mounted) {
         Navigator.of(context).pop(true);
       }
     } on Cancelled {
-      messenger.showSnackBar(const SnackBar(content: Text('Export cancelled. Nothing was saved.')));
+      messenger.showSnackBar(tapDismissibleSnackBar(messenger, const Text('Export cancelled. Nothing was saved.')));
       if (mounted) {
         Navigator.of(context).pop(false);
       }

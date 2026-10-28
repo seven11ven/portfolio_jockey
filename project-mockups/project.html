@@ -76,7 +76,7 @@
 
   <section class="scene">
     <div class="scene-title">3. File menu (right-click / long-press)</div>
-    <div class="scene-note">In the Flatpak, the app opens the original in the desktop file manager so the user can move it to Trash there. Deleting the encrypted project copy remains available; the combined action is disabled because the app cannot verify the manual Trash operation.</div>
+    <div class="scene-note">In the Flatpak, the app opens the original in the desktop file manager so the user can move it to Trash there. The encrypted project copy is deleted separately.</div>
     <div class="screen" hidden>
       <header class="topbar"><span class="icon-btn">←</span><h3 style="flex:1">Kitchen Remodel</h3><span class="icon-btn">⋯</span></header>
       <div class="content">
@@ -97,8 +97,6 @@
           <div class="menu-sep"></div>
           <button class="menu-item">📂 Show original in file manager</button>
           <button class="menu-item danger">🗑 Delete from project <span class="hint">the encrypted copy</span></button>
-          <button class="menu-item danger" disabled>🗑 Trash original, delete copy</button>
-          <p class="small muted" style="padding:4px 10px 6px">The desktop file manager shows the original location. Move it to Trash there, then delete the encrypted project copy here.</p>
         </div>
       </div>
     </div>

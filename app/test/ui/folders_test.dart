@@ -12,6 +12,45 @@ import '../vault/test_helpers.dart';
 import 'ui_helpers.dart';
 
 void main() {
+  testWidgets('a notification dismisses on message tap and keeps its action usable', (tester) async {
+    var undone = false;
+    late ScaffoldMessengerState messenger;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            messenger = ScaffoldMessenger.of(context);
+            return const Scaffold(body: SizedBox.expand());
+          },
+        ),
+      ),
+    );
+
+    messenger.showSnackBar(
+      tapDismissibleSnackBar(
+        messenger,
+        const Text('A notification'),
+        action: SnackBarAction(label: 'Undo', onPressed: () => undone = true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('A notification'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SnackBar), findsNothing);
+
+    messenger.showSnackBar(
+      tapDismissibleSnackBar(
+        messenger,
+        const Text('A notification'),
+        action: SnackBarAction(label: 'Undo', onPressed: () => undone = true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(undone, isTrue);
+  });
+
   testWidgets('raster and SVG type labels are centered in the image cover', (tester) async {
     for (final (name, label) in [('photo.jpg', 'JPG'), ('drawing.svg', 'SVG')]) {
       await tester.pumpWidget(MaterialApp(home: Scaffold(body: Center(child: SizedBox(width: 120, height: 90, child: TypeBadge(fileName: name))))));
@@ -223,6 +262,9 @@ void main() {
     await settleUntilGone(tester, find.text('a.txt'));
     expect(find.text('a.txt'), findsNothing);
     expect(find.text('Moved 1 item to Invoices'), findsOneWidget);
+    await tester.tap(find.text('Moved 1 item to Invoices'));
+    await settleUntilGone(tester, find.text('Moved 1 item to Invoices'));
+    expect(find.byType(SnackBar), findsNothing);
     expect((await readIndex(tester, app, id)).files.single.folderId, invoices);
   });
 

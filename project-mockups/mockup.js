@@ -56,6 +56,10 @@
     b.addEventListener("click", function () { setView(b.getAttribute("data-set-view")); });
   });
 
+  document.querySelectorAll(".move-toast").forEach(function (toast) {
+    toast.addEventListener("click", function () { toast.remove(); });
+  });
+
   var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
   setTheme(dark ? "dark" : "light");
   setView("both");

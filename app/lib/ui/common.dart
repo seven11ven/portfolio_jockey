@@ -347,8 +347,20 @@ class FieldLabel extends StatelessWidget {
 }
 
 void showError(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.showSnackBar(tapDismissibleSnackBar(messenger, Text(message)));
 }
+
+SnackBar tapDismissibleSnackBar(
+  ScaffoldMessengerState messenger,
+  Widget content, {
+  SnackBarAction? action,
+  Duration duration = const Duration(seconds: 4),
+}) => SnackBar(
+  content: InkWell(onTap: () => messenger.hideCurrentSnackBar(), child: content),
+  action: action,
+  duration: duration,
+);
 
 /// A passphrase field: hidden by default, with an eye button to show it so
 /// it can be checked or written down. When Settings → "Allow copying
