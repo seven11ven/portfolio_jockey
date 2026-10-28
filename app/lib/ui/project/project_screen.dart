@@ -373,10 +373,6 @@ class _ProjectScreenState extends State<ProjectScreen> {
     }
     try {
       await AppScope.read(context).edits.launcher.showFileInFolder(path);
-      if (mounted) {
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.showSnackBar(tapDismissibleSnackBar(messenger, const Text('Move the original to Trash in the file manager, then delete the encrypted copy here.')));
-      }
     } on FileSystemException catch (e) {
       if (mounted) {
         showError(context, e.message);
@@ -445,9 +441,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
         else
           item(Icons.delete_outline, 'Move to Trash', originalThere ? () => delete(DeleteTarget.device) : null, danger: true, hint: 'the original'),
         item(Icons.delete_outline, 'Delete from project', () => delete(DeleteTarget.project), danger: true, hint: 'the encrypted copy'),
-        if (flatpak)
-          item(Icons.delete_outline, 'Trash original, delete copy', null, danger: true, hint: 'manual step')
-        else
+        if (!flatpak)
           item(Icons.delete_outline, 'Trash original, delete copy', originalThere ? () => delete(DeleteTarget.both) : null, danger: true),
         if (!originalThere)
           PopupMenuItem(

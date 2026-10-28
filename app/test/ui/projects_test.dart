@@ -265,10 +265,7 @@ void main() {
       find.ancestor(of: find.text('Show original in file manager'), matching: find.byType(PopupMenuItem<VoidCallback>)),
     );
     expect(reveal.enabled, isTrue);
-    final combined = tester.widget<PopupMenuItem<VoidCallback>>(
-      find.ancestor(of: find.text('Trash original, delete copy'), matching: find.byType(PopupMenuItem<VoidCallback>)),
-    );
-    expect(combined.enabled, isFalse);
+    expect(find.text('Trash original, delete copy'), findsNothing);
 
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Show original in file manager'));
@@ -276,6 +273,7 @@ void main() {
     await settle(tester);
     expect(launcher.shownFilesInFolder, [original]);
     expect(launcher.shownFilesInFolder, isNot(contains(shown)));
+    expect(find.textContaining('Move the original to Trash in the file manager'), findsNothing);
   });
 
   testWidgets('The tag review lists exactly the pending changes, and Back changes nothing', (tester) async {
