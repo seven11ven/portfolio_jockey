@@ -129,7 +129,7 @@ mkdir -p "$output_dir" "$logs_dir"
 bash "$packaging/check.sh" --staged "$root"
 candidate="$work/portfolio-jockey_${package_version}_amd64.deb"
 dpkg-deb --root-owner-group --build "$root" "$candidate"
-bash "$packaging/check.sh" "$candidate"
+bash "$packaging/check.sh" --package "$candidate"
 lint_status=0
 lintian --show-overrides "$candidate" > "$work/lintian.log" 2>&1 || lint_status=$?
 cat "$work/lintian.log"
