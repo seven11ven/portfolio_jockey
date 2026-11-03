@@ -1,6 +1,6 @@
 # Installing Portfolio Jockey on Linux
 
-Portfolio Jockey is offered as a single **`.flatpak` file**. Flatpak is a standard way to install desktop apps on Linux. It runs each app in a **sandbox**, walled off from the rest of your computer, and it works on any 64-bit desktop distribution. The supported systems are listed in [`public-notes/linux-support.md`](../public-notes/linux-support.md).
+Portfolio Jockey is not released yet. The instructions below describe the planned single-file **`.flatpak`** installation; use them once a release is published. Flatpak is a standard way to install desktop apps on Linux. It runs each app in a **sandbox**, walled off from the rest of your computer, and it works on any 64-bit desktop distribution. The supported systems are listed in [`public-notes/linux-support.md`](../public-notes/linux-support.md).
 
 - **Processor:** x64 (Intel or AMD) only for now. ARM computers come later.
 - **Price:** free and open source (`AGPL-3.0-or-later`).

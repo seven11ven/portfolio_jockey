@@ -1,0 +1,4 @@
+# The Flutter engine binary is prebuilt by Flutter and statically includes
+# these libraries. Replacing them requires rebuilding the engine itself.
+embedded-library freetype [usr/lib/portfolio-jockey/lib/libflutter_linux_gtk.so]
+embedded-library libjpeg [usr/lib/portfolio-jockey/lib/libflutter_linux_gtk.so]

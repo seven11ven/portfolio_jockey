@@ -27,13 +27,14 @@ export FLUTTER_SUPPRESS_ANALYTICS=true DASH__SUPPRESS_ANALYTICS=true DO_NOT_TRAC
 #    xvfb, xdotool and xclip run the real app on a virtual screen for
 #    app/tool/desktop-check.sh (Xvfb with -nolisten tcp: a local socket only);
 #    python3-yaml, appstream and desktop-file-utils check the Flatpak files
-#    (appstreamcli is always run with --no-net). gdb gives stack traces of a
-#    stuck app (run with DEBUGINFOD_URLS= so it never downloads symbols).
+#    (appstreamcli is always run with --no-net). lintian checks Debian
+#    packages. gdb gives stack traces of a stuck app (run with DEBUGINFOD_URLS=
+#    so it never downloads symbols).
 sudo apt-get update -y
 sudo apt-get install -y --no-install-recommends \
   clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev \
   libsodium23 libpoppler-glib8 \
-  xvfb xdotool xclip python3-yaml appstream desktop-file-utils gdb \
+  xvfb xdotool xclip python3-yaml appstream desktop-file-utils lintian patchelf gdb \
   curl git unzip xz-utils ca-certificates
 
 # 3. Pinned Flutter SDK, checksum verified before anything is unpacked.
