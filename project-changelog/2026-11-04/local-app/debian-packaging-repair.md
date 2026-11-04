@@ -35,3 +35,13 @@ A review of the 2026-11-03 Debian packaging found that `portfolio-jockey_0.1.0-1
 - The real `0.1.0-2` build has not been made yet. `build.sh` needs a clean, committed worktree, and the PM's uncommitted guideline edits are still pending.
 - **Not yet verified:** a clean install and launch on Debian 12, Debian 13, Ubuntu 22.04 and Ubuntu 24.04. It needs a real machine or VM, because this Codespace can't run containers. Don't attach the .deb to the GitHub release until this passes.
 - The old `0.1.0-1` package and logs in `project-builds/` (git-ignored) were left in place. Don't distribute them.
+
+## Follow-up: build cache fix
+**Time:** 2026-11-04 20:20 UTC
+**Performed By:** Claude Opus 5.5 (Anthropic), in Claude Code
+**Approved By:** Jay 3.20 (project manager)
+**Backup:** `version-control/local-app/edit057-2026-11-04_before-build-cache-fix/`
+
+- **What failed:** the first real run of `build.sh`. The checks and all 260 tests passed, but the release build failed. CMake could not find `app/build/native_assets/linux`.
+- **Why:** `build.sh` deleted `app/build` but kept Flutter's build cache in `app/.dart_tool/flutter_build`. The cache treated the native-assets step as done and skipped it. The earlier packages only worked because of leftover files in `app/build`.
+- **Fix:** `build.sh` now also deletes `app/.dart_tool/flutter_build`. `package_config.json` is kept, so no package download is needed.

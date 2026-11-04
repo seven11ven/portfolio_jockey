@@ -81,10 +81,12 @@ bash "$repo/.devcontainer/check-lockdown.sh"
 )
 
 echo "== Clean release build"
-# Remove every earlier build so no leftover files reach the package. Keeps
-# .dart_tool, so no package download is needed. Keep every icon, as in
-# app/tool/package-bundle.sh.
-rm -rf "$app/build"
+# Remove every earlier build and Flutter's build cache, so no leftover files
+# reach the package and every build step really runs (with only app/build
+# removed, the cache skipped the native-assets step and CMake failed). Keeps
+# .dart_tool/package_config.json, so no package download is needed. Keep
+# every icon, as in app/tool/package-bundle.sh.
+rm -rf "$app/build" "$app/.dart_tool/flutter_build"
 (cd "$app" && flutter build linux --release --no-tree-shake-icons)
 if [[ ! -x "$bundle/portfolio_jockey" || ! -f "$bundle/data/flutter_assets/AssetManifest.bin" ]]; then
 	echo "The release build did not produce a complete bundle at $bundle" >&2
