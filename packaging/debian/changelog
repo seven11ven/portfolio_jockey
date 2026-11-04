@@ -1,0 +1,16 @@
+portfolio-jockey (0.1.0-2) unstable; urgency=medium
+
+  * Install on Debian 13 and Ubuntu 24.04 as well as Debian 12 and
+    Ubuntu 22.04: list the 64-bit time_t (t64) library names as
+    alternatives, and accept libsodium26 as well as libsodium23.
+  * Build from a clean Flutter release build.
+  * Use a relative /usr/bin link and add md5sums and Installed-Size.
+  * Set a real maintainer address.
+
+ -- Jay 3.20 <250594910+seven11ven@users.noreply.github.com>  Wed, 04 Nov 2026 20:07:46 +0000
+
+portfolio-jockey (0.1.0-1) unstable; urgency=medium
+
+  * Initial Debian packaging. Not distributed.
+
+ -- Jay 3.20 <250594910+seven11ven@users.noreply.github.com>  Tue, 03 Nov 2026 19:17:00 +0000

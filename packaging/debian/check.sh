@@ -93,14 +93,49 @@ while IFS= read -r -d '' object; do
 	check_dependencies "$object"
 done < <(find "$root/usr/lib/portfolio-jockey/lib" -type f -name '*.so*' -print0)
 
+control_dir="$root/DEBIAN"
 if [[ "$mode" == --package ]]; then
-	depends=$(dpkg-deb -f "$target" Depends)
-	for dependency in libpoppler-glib8 libsodium23; do
-		[[ ",$depends," == *", $dependency,"* || ",$depends," == *",$dependency,"* ]] || {
-			echo "Missing FFI runtime dependency: $dependency" >&2
-			exit 1
-		}
-	done
+	control_dir="$work/control"
+	dpkg-deb -e "$target" "$control_dir"
+fi
+[[ -s "$control_dir/md5sums" ]] || { echo "DEBIAN/md5sums is missing." >&2; exit 1; }
+(cd "$root" && md5sum --quiet -c "$control_dir/md5sums") || {
+	echo "DEBIAN/md5sums does not match the package files." >&2
+	exit 1
+}
+grep -Eq '^Installed-Size: [0-9]+$' "$control_dir/control" || {
+	echo "DEBIAN/control has no Installed-Size." >&2
+	exit 1
+}
+
+# Each pair must be one "first | second" alternative: the t64 names are what
+# Debian 13 and Ubuntu 24.04 ship, the old names what Debian 12 and Ubuntu
+# 22.04 ship. libsodium and Poppler are loaded through dart:ffi.
+depends=$(sed -n 's/^Depends: //p' "$control_dir/control")
+version='( \([^)]*\))?'
+for pair in \
+	'libatk1.0-0t64 libatk1.0-0' \
+	'libglib2.0-0t64 libglib2.0-0' \
+	'libgtk-3-0t64 libgtk-3-0' \
+	'libpoppler-glib8t64 libpoppler-glib8' \
+	'libsodium23 libsodium26'; do
+	first=${pair% *}
+	second=${pair#* }
+	pattern=", ${first//./\\.}${version} \\| ${second//./\\.}${version},"
+	[[ ", $depends," =~ $pattern ]] || {
+		echo "Depends must offer '$first | $second'." >&2
+		exit 1
+	}
+done
+for old in libatk1.0-0 libglib2.0-0 libgtk-3-0 libpoppler-glib8; do
+	pattern=", ${old//./\\.}${version},"
+	[[ ! ", $depends," =~ $pattern ]] || {
+		echo "Depends lists $old without its t64 alternative." >&2
+		exit 1
+	}
+done
+
+if [[ "$mode" == --package ]]; then
 	owner_entries=$(dpkg-deb -c "$target" | grep -v ' root/root ' || true)
 	if [[ -n "$owner_entries" ]]; then
 		echo "Package entries are not root-owned." >&2

@@ -5,3 +5,5 @@ Follow the shared agent instructions in AGENTS.md and the full guidelines in pro
 @AGENTS.md
 @project-guidelines/implementation.md
 @project-guidelines/security.md
+@project-guidelines/linux_packaging.md
+@project-guidelines/documentation.md

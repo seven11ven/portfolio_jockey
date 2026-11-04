@@ -6,6 +6,8 @@ Before doing anything in this repository, read and follow all project guidelines
 
 @project-guidelines/implementation.md
 @project-guidelines/security.md
+@project-guidelines/linux_packaging.md
+@project-guidelines/documentation.md
 
 ## Key reminders
 - Never edit without explicit user permission; plan changes first (plan mode).
@@ -42,6 +44,7 @@ Portfolio Jockey v2 is a fully local, offline, encrypted project tracker built w
 - **Markdown:** always pass an `imageBuilder` to flutter_markdown_plus. Without one, it loads images from the network or disk.
 - **Exports** (PM decision, 2026-10-22): exactly two options, everywhere. Either a **custom passphrase** (a checkbox; it must be filled in and confirmed before Export is enabled; no strength rules), making a Portfolio Jockey-only `.pjx`, or **unlocked** ZIP/TAR. The vault passphrase is never used for exports. Files stream chunk by chunk into the archive: never buffer a whole file or write a readable temp copy. Imports get new file keys and are all or nothing. Folders are kept: unlocked ZIP/TAR hold real folders (`project.json` lists the empty ones too), and the `.pjx` manifest is format 2 (format 1 still imports). "Export a readable copy…" on a folder is ZIP or TAR only, with no lock option.
 - "Delete from device" **moves the original to the Trash** (GLib's `g_file_trash`, through the Trash portal inside a Flatpak). The encrypted project copy is still deleted permanently. This was the PM's decision on 2026-10-22.
+- **Debian package:** `bash packaging/debian/build.sh` (no arguments) runs the checks and tests, makes a clean release build and packages it. Run it on Debian 12 amd64 from a clean, committed worktree. The version, revision and maintainer come from the top entry of `packaging/debian/changelog`: add an entry for every package release. Libraries renamed for 64-bit time (`t64`) are listed as `<name>t64 | <name>`, so one .deb fits Debian 12/13 and Ubuntu 22.04/24.04. A dependency that isn't in the reviewed list in `build.sh` stops the build until it's checked on those four releases.
 - Phase 8 (Flatpak) to-dos and open questions go in `public-notes/phase8-packaging.md`. Add to it whenever a later phase finds something.
 - Supported Linux systems are listed in `public-notes/linux-support.md` (any 64-bit desktop with Flatpak; x64 now, arm64 to be decided in phase 8).
 - The approved plan, including the encryption and storage design and the phase list, is `project-changelog/2026-10-22/local-app/plan.md`.

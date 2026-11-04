@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+# Builds the Debian package from a clean Flutter release build.
+#
+# Usage (from a clean, committed worktree on Debian 12 amd64):
+#   bash packaging/debian/build.sh
+#
+# The version, Debian revision and maintainer come from the top entry of
+# packaging/debian/changelog. Add a new entry there for every package release:
+# the revision starts at 1 for each app version and goes up when only the
+# packaging changes.
 set -euo pipefail
 umask 022
 
@@ -9,18 +18,18 @@ app_id=io.github.seven11ven.portfolio_jockey
 bundle="$app/build/linux/x64/release/bundle"
 output_dir="$repo/project-builds/release-builds"
 logs_dir="$repo/project-builds/logs"
-version=$(sed -nE "s/^const String appVersion = '([^']+)';/\1/p" "$app/lib/app/version.dart")
-maintainer=${1:-}
+changelog_src="$packaging/changelog"
 
-if [[ -z "$maintainer" || "$maintainer" == *$'\n'* ]]; then
-	echo "Usage: bash packaging/debian/build.sh 'Name <email>'" >&2
+if [[ $# -ne 0 ]]; then
+	echo "Usage: bash packaging/debian/build.sh" >&2
+	echo "The version and maintainer come from packaging/debian/changelog." >&2
 	exit 2
 fi
 
-for tool in dpkg dpkg-deb dpkg-shlibdeps desktop-file-validate lintian gzip patchelf; do
+for tool in dpkg dpkg-deb dpkg-shlibdeps dpkg-parsechangelog desktop-file-validate lintian \
+	gzip patchelf strip md5sum git flutter; do
 	command -v "$tool" >/dev/null || { echo "Missing required tool: $tool" >&2; exit 1; }
 done
-command -v strip >/dev/null || { echo "Missing required tool: strip" >&2; exit 1; }
 
 if [[ "$(dpkg --print-architecture)" != amd64 ]]; then
 	echo "Debian packages are currently supported only on amd64." >&2
@@ -36,13 +45,25 @@ if [[ -n "$(git -C "$repo" status --porcelain)" ]]; then
 	echo "Refusing to package a dirty worktree. Commit the reviewed source first." >&2
 	exit 1
 fi
+commit=$(git -C "$repo" rev-parse HEAD)
 
-if [[ -z "$version" || ! -x "$bundle/portfolio_jockey" || ! -f "$bundle/data/flutter_assets/AssetManifest.bin" ]]; then
-	echo "A complete Flutter release bundle is required at $bundle" >&2
+app_version=$(sed -nE "s/^const String appVersion = '([^']+)';/\1/p" "$app/lib/app/version.dart")
+package_version=$(dpkg-parsechangelog -l "$changelog_src" -S Version)
+maintainer=$(dpkg-parsechangelog -l "$changelog_src" -S Maintainer)
+if [[ -z "$app_version" || "${package_version%-*}" != "$app_version" ]]; then
+	echo "The top entry of packaging/debian/changelog ($package_version) does not match" >&2
+	echo "appVersion ($app_version). Add a changelog entry for this version first." >&2
+	exit 1
+fi
+if [[ ! "$package_version" =~ ^[0-9][0-9A-Za-z.+~]*-[1-9][0-9]*$ ]]; then
+	echo "Package version $package_version must be <app version>-<revision>." >&2
+	exit 1
+fi
+if [[ -z "$maintainer" || "$maintainer" == *$'\n'* || "$maintainer" != *'<'*'@'*'>' ]]; then
+	echo "The changelog's maintainer must be 'Name <email>'." >&2
 	exit 1
 fi
 
-package_version="${version}-1"
 output="$output_dir/portfolio-jockey_${package_version}_amd64.deb"
 summary="$logs_dir/portfolio-jockey_${package_version}_amd64.md"
 if [[ -e "$output" || -e "$summary" ]]; then
@@ -50,6 +71,31 @@ if [[ -e "$output" || -e "$summary" ]]; then
 	exit 1
 fi
 
+echo "== Checks"
+bash "$repo/.devcontainer/check-lockdown.sh"
+(
+	cd "$app"
+	bash tool/check-privacy.sh
+	flutter analyze --fatal-infos --fatal-warnings
+	flutter test
+)
+
+echo "== Clean release build"
+# Remove every earlier build so no leftover files reach the package. Keeps
+# .dart_tool, so no package download is needed. Keep every icon, as in
+# app/tool/package-bundle.sh.
+rm -rf "$app/build"
+(cd "$app" && flutter build linux --release --no-tree-shake-icons)
+if [[ ! -x "$bundle/portfolio_jockey" || ! -f "$bundle/data/flutter_assets/AssetManifest.bin" ]]; then
+	echo "The release build did not produce a complete bundle at $bundle" >&2
+	exit 1
+fi
+if [[ -n "$(git -C "$repo" status --porcelain)" || "$(git -C "$repo" rev-parse HEAD)" != "$commit" ]]; then
+	echo "The worktree changed during the build; refusing to package it." >&2
+	exit 1
+fi
+
+echo "== Package"
 work=$(mktemp -d "${TMPDIR:-/tmp}/portfolio-jockey-deb.XXXXXX")
 trap 'rm -rf "$work"' EXIT
 root="$work/root"
@@ -64,7 +110,7 @@ mkdir -p \
 	"$root/usr/share/man/man1" \
 	"$work/debian"
 cp -a "$bundle/." "$root/usr/lib/portfolio-jockey/"
-ln -s /usr/lib/portfolio-jockey/portfolio_jockey "$root/usr/bin/portfolio-jockey"
+ln -s ../lib/portfolio-jockey/portfolio_jockey "$root/usr/bin/portfolio-jockey"
 install -m 0644 "$packaging/$app_id.desktop" "$root/usr/share/applications/$app_id.desktop"
 install -m 0644 "$repo/packaging/flatpak/$app_id.svg" \
 	"$root/usr/share/icons/hicolor/scalable/apps/$app_id.svg"
@@ -73,11 +119,7 @@ gzip -n -9 -c "$packaging/portfolio-jockey.1" > "$root/usr/share/man/man1/portfo
 chmod 0644 "$root/usr/share/man/man1/portfolio-jockey.1.gz"
 install -m 0644 "$packaging/portfolio-jockey.lintian-overrides" \
 	"$root/usr/share/lintian/overrides/portfolio-jockey"
-chmod 0644 "$root/usr/share/man/man1/portfolio-jockey.1.gz"
-
-printf 'portfolio-jockey (%s) unstable; urgency=medium\n\n  * Initial Debian packaging.\n\n -- %s  %s\n' \
-	"$package_version" "$maintainer" "$(date -R)" > "$work/changelog"
-gzip -n -9 -c "$work/changelog" > "$root/usr/share/doc/portfolio-jockey/changelog.Debian.gz"
+gzip -n -9 -c "$changelog_src" > "$root/usr/share/doc/portfolio-jockey/changelog.Debian.gz"
 chmod 0644 "$root/usr/share/doc/portfolio-jockey/changelog.Debian.gz"
 
 strip --strip-unneeded "$root/usr/lib/portfolio-jockey/portfolio_jockey"
@@ -112,19 +154,59 @@ if [[ "$shlibs_depends" == "$shlibs" || -z "$shlibs_depends" ]]; then
 	exit 1
 fi
 
+# Every package dpkg-shlibdeps may return, reviewed on 2026-11-04 against
+# packages.debian.org (bookworm, trixie) and packages.ubuntu.com (jammy, noble).
+# A new name stops the build so it gets the same review first.
+reviewed=" libatk1.0-0 libc6 libcairo-gobject2 libcairo2 libepoxy0 libfontconfig1 libgcc-s1 \
+libgdk-pixbuf-2.0-0 libglib2.0-0 libgtk-3-0 libharfbuzz0b libpango-1.0-0 libpangocairo-1.0-0 \
+libstdc++6 zlib1g "
+# Renamed with a t64 suffix in Debian 13 and Ubuntu 24.04 (64-bit time_t
+# transition). The new packages don't Provide the old names, so the package
+# lists both: "<name>t64 | <name>".
+t64_renamed=" libatk1.0-0 libglib2.0-0 libgtk-3-0 "
+depends=()
+IFS=',' read -ra entries <<< "$shlibs_depends"
+for entry in "${entries[@]}"; do
+	entry="${entry#"${entry%%[![:space:]]*}"}"
+	entry="${entry%"${entry##*[![:space:]]}"}"
+	name=${entry%% *}
+	if [[ "$entry" == *'|'* || "$reviewed" != *" $name "* ]]; then
+		echo "dpkg-shlibdeps returned '$entry', which is not in the reviewed list." >&2
+		echo "Check its name on Debian 12/13 and Ubuntu 22.04/24.04, then add it to build.sh." >&2
+		exit 1
+	fi
+	if [[ "$t64_renamed" == *" $name "* ]]; then
+		depends+=("${name}t64${entry#"$name"} | $entry")
+	else
+		depends+=("$entry")
+	fi
+done
+# Loaded at run time through dart:ffi, so dpkg-shlibdeps can't see them. The
+# app opens libsodium.so.26 or libsodium.so.23, and libpoppler-glib.so.8.
+depends+=("libpoppler-glib8t64 | libpoppler-glib8" "libsodium23 | libsodium26")
+depends_field=$(printf '%s, ' "${depends[@]}")
+depends_field=${depends_field%, }
+
+find "$root" -type d -exec chmod 0755 {} +
+installed_size=$(du -sk --apparent-size "$root/usr" | cut -f1)
+
 cat > "$root/DEBIAN/control" <<EOF
 Package: portfolio-jockey
 Version: $package_version
 Section: utils
 Priority: optional
 Architecture: amd64
+Installed-Size: $installed_size
 Maintainer: $maintainer
-Depends: $shlibs_depends, libpoppler-glib8, libsodium23
+Depends: $depends_field
 Description: Local encrypted project tracker
  Portfolio Jockey keeps project files encrypted in a local vault.
+ Projects, tags and files stay on this device, encrypted with libsodium,
+ and the app never uses the network.
 EOF
+(cd "$root" && find usr -type f -print0 | sort -z | xargs -0 md5sum) > "$root/DEBIAN/md5sums"
+chmod 0644 "$root/DEBIAN/control" "$root/DEBIAN/md5sums"
 
-find "$root" -type d -exec chmod 0755 {} +
 mkdir -p "$output_dir" "$logs_dir"
 bash "$packaging/check.sh" --staged "$root"
 candidate="$work/portfolio-jockey_${package_version}_amd64.deb"
@@ -152,9 +234,12 @@ mv -- "$candidate" "$output"
 	printf '**Package:** portfolio-jockey\n'
 	printf '**Version:** %s\n' "$package_version"
 	printf '**Architecture:** amd64\n'
-	printf '**Source bundle:** Flutter Linux release bundle\n'
+	printf '**Source commit:** %s\n' "$commit"
+	printf '**Source bundle:** clean Flutter Linux release build\n'
+	printf '**SHA-256:** %s\n' "$(sha256sum "$output" | cut -d' ' -f1)"
 	printf '**Depends:** %s\n' "$(dpkg-deb -f "$output" Depends)"
-	printf '**Verification:** package checks passed; lintian reported two documented Flutter-engine overrides and any visible warnings\n'
+	printf '**Verification:** checks, tests and package checks passed; lintian reported the two documented Flutter-engine overrides and any warnings shown in the build output\n'
+	printf '**Not yet verified:** clean install and launch on Debian 12/13 and Ubuntu 22.04/24.04\n'
 } > "$summary"
 
 printf 'Built and checked: %s\nBuild summary: %s\n' "$output" "$summary"

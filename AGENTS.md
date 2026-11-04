@@ -6,6 +6,8 @@ Those files are the single source of truth. The summary below is a quick referen
 
 - [`project-guidelines/implementation.md`](project-guidelines/implementation.md)
 - [`project-guidelines/security.md`](project-guidelines/security.md)
+- [`project-guidelines/linux_packaging.md`](project-guidelines/linux_packaging.md)
+- [`project-guidelines/documentation.md`](project-guidelines/documentation.md)
 
 ## Implementation rules (summary)
 1. **Never edit off the bat.** Reading is fine. Any permanent or temporary change must be planned first (planning mode) and requires explicit permission from the user. Never edit the repo automatically.
