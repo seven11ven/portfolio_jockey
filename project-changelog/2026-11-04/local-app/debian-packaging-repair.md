@@ -45,3 +45,13 @@ A review of the 2026-11-03 Debian packaging found that `portfolio-jockey_0.1.0-1
 - **What failed:** the first real run of `build.sh`. The checks and all 260 tests passed, but the release build failed. CMake could not find `app/build/native_assets/linux`.
 - **Why:** `build.sh` deleted `app/build` but kept Flutter's build cache in `app/.dart_tool/flutter_build`. The cache treated the native-assets step as done and skipped it. The earlier packages only worked because of leftover files in `app/build`.
 - **Fix:** `build.sh` now also deletes `app/.dart_tool/flutter_build`. `package_config.json` is kept, so no package download is needed.
+
+## Release build 0.1.0-2
+**Time:** 2026-11-04 20:27 UTC (built 2026-11-04 20:26 UTC)
+**Performed By:** Claude Opus 5.5 (Anthropic), in Claude Code
+**Approved By:** Jay 3.20 (project manager)
+
+- `bash packaging/debian/build.sh` from commit `32fcd9d` built `project-builds/release-builds/portfolio-jockey_0.1.0-2_amd64.deb` (git-ignored), SHA-256 `2d3c8ce7515a00257f505fe813b152e6ecb04eb5f1c3795ab4fb7dcce23efdf3`.
+- **Checks passed:** lockdown, privacy, analyze, all 260 tests, both `check.sh` modes, and the Lintian gate (two documented overrides; one expected warning on Dart's `libapp.so`).
+- **No leftovers:** no `media_kit` or `wakelock_plus` files are in the package.
+- **Still outstanding before release:** a clean install and launch on Debian 12, Debian 13, Ubuntu 22.04 and Ubuntu 24.04.
